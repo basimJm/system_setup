@@ -1,0 +1,20 @@
+{
+  "localHosts": ["127.0.0.1", "localhost", "::1"],
+  "fakeOtpCode": "123456",
+  "language": "en",
+  "timeoutSeconds": 120,
+  "dialCode": "+962",
+  "countryCode": "JO",
+  "platform": "ANDROID",
+  "appVersion": "1.0.0",
+  "pageSize": 10,
+  "throwawayPrefix": "7999",
+  "bookingDaysAhead": [4, 12],
+  "nearestProbe": {"lat": 31.95, "lng": 35.91},
+  "contentSlugs": ["terms", "privacy"],
+  "signedUrlMarker": "X-Amz-Signature",
+  "signedUrlPlaceholder": "https://example.invalid/presigned-upload",
+  "localMediaRewrite": {"from": "http://127.0.0.1:9000/wab-public/", "to": "https://d3a0ua5olhml0f.cloudfront.net/"},
+  "rateLimitRetries": 6,
+  "rateLimitWaitSeconds": 20
+}

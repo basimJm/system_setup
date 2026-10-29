@@ -1,0 +1,141 @@
+{
+  "app": {
+    "name": "__SYSTEM_NAME__ Admin",
+    "adminLabel": "Admin"
+  },
+  "common": {
+    "loading": "Loading",
+    "retry": "Retry",
+    "close": "Close",
+    "cancel": "Cancel",
+    "back": "Back",
+    "currency": "JOD",
+    "status": "Status",
+    "at": "When",
+    "all": "All",
+    "edit": "Edit",
+    "none": "—",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "items": "Items",
+    "settings": "Settings",
+    "auditLog": "Audit log",
+    "breadcrumbs": "Breadcrumbs",
+    "expand": "Expand {{name}}",
+    "collapse": "Collapse {{name}}",
+    "collapseSidebar": "Collapse",
+    "expandSidebar": "Expand the sidebar"
+  },
+  "topbar": {
+    "language": "Switch language",
+    "lightTheme": "Switch to light theme",
+    "darkTheme": "Switch to dark theme",
+    "logout": "Sign out",
+    "toggleSidebar": "Collapse or expand the sidebar",
+    "openMenu": "Open menu",
+    "adminMenu": "Admin menu",
+    "about": "About this build",
+    "otherLanguageShort": "ع"
+  },
+  "module": {
+    "comingSoon": "This section is coming soon",
+    "comingSoonText": "It will be built in an upcoming task."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "The page you are looking for does not exist.",
+    "home": "Back to the panel"
+  },
+  "table": {
+    "empty": "No results",
+    "pagination": "Pagination",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "pageSize": "Rows per page",
+    "previous": "Previous page",
+    "next": "Next page",
+    "pageOf": "Page {{page}} of {{pages}}",
+    "selectAll": "Select all rows on this page",
+    "selectRow": "Select {{name}}",
+    "rowActions": "Row actions",
+    "clearSelection": "Clear selection",
+    "columns": "Columns",
+    "resetColumns": "Show all columns",
+    "density": "Row density",
+    "comfortable": "Comfortable",
+    "compact": "Compact",
+    "export": "Export",
+    "selected": "{{count}} selected"
+  },
+  "reason": {
+    "label": "Reason (required)",
+    "required": "Enter a reason of at least {{min}} characters.",
+    "title": "Confirm with a reason",
+    "hint": "Written to the audit log with your name.",
+    "confirm": "Confirm"
+  },
+  "prefs": {
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "env": {
+    "devRibbon": "DEV"
+  },
+  "about": {
+    "title": "About this build",
+    "subtitle": "Version and environment of this admin panel",
+    "version": "Version",
+    "buildId": "Build ID",
+    "environment": "Environment",
+    "variant": "Build variant",
+    "dataSource": "Data source",
+    "language": "Default language",
+    "env": {
+      "dev": "Development",
+      "prod": "Production"
+    },
+    "source": {
+      "mock": "Mock data",
+      "remote": "Live API"
+    },
+    "link": "About",
+    "languageName": {
+      "ar": "Arabic",
+      "en": "English"
+    }
+  },
+  "detail": {
+    "backTo": "Back to {{list}}"
+  },
+  "json": {
+    "items": "{{count}} items",
+    "fields": "{{count}} fields"
+  },
+  "forbidden": {
+    "title": "You do not have access",
+    "text": "Your account cannot open this page. Ask a super admin if you need it.",
+    "home": "Back to the dashboard"
+  },
+  "serverError": {
+    "title": "Something went wrong",
+    "text": "The page failed to load. Try again, and contact support with the trace id if it keeps happening.",
+    "retry": "Try again"
+  },
+  "session": {
+    "idleTitle": "Still there?",
+    "idleText": "For your security the session ends in {{seconds}} seconds because there was no activity.",
+    "stay": "Stay signed in"
+  },
+  "realtime": {
+    "live": "Live",
+    "connecting": "Connecting",
+    "reconnecting": "Reconnecting",
+    "denied": "Live updates unavailable",
+    "label": "Live updates"
+  }
+}

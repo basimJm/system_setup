@@ -1,0 +1,52 @@
+{
+  "kind": "sdk",
+  "description": "Fixture: common/ skeleton + kinds/<kind>/ overlay (kinds[].dir = overlay folder, default kinds/<kind>); output <slug>-<kind>",
+  "placeholders": [
+    "__SYSTEM_NAME__",
+    "__NPM_SCOPE__",
+    "__SDK_NAME__",
+    "__SDK_KIND__",
+    "__SDK_KIND_TITLE__",
+    "__SDK_DIR__",
+    "__SDK_PACKAGE__",
+    "__SDK_PREFIX__",
+    "__SDK_DESCRIPTION__",
+    "__SERVER_DIR__"
+  ],
+  "kinds": {
+    "storage": {
+      "dir": "kinds/storage",
+      "prefix": "STO",
+      "title": "Storage",
+      "description": "presigned uploads"
+    },
+    "otp": {
+      "dir": "kinds/otp",
+      "prefix": "OTP",
+      "title": "Otp"
+    },
+    "notifications": {
+      "prefix": "NOT",
+      "title": "Notifications"
+    },
+    "payments": {
+      "dir": "kinds/payments",
+      "prefix": "PAY",
+      "title": "Payments"
+    }
+  },
+  "sentinels": {
+    "wab-sdk": "__SDK_DIR__",
+    "@wab/sdk": "__SDK_PACKAGE__"
+  },
+  "rename_paths": {
+    "sdk_name": "__SDK_NAME__"
+  },
+  "skip": [
+    "node_modules/**"
+  ],
+  "post_generate": [
+    "npm install"
+  ],
+  "binary_globs": []
+}

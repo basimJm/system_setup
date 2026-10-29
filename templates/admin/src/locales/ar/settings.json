@@ -1,0 +1,65 @@
+{
+  "settings": {
+    "subtitle": "قواعد المنصة التي تنطبق على كل التطبيقات فورًا. كل تعديل يتطلب سببًا ويُسجَّل في سجل التدقيق.",
+    "default": "الافتراضي: {{value}}",
+    "isDefault": "افتراضي",
+    "overridden": "معدّل",
+    "useDefault": "استخدام الافتراضي",
+    "saved": "تم حفظ الإعدادات",
+    "confirmTitle": "حفظ {{count}} إعدادات معدّلة",
+    "confirmText": "تُطبَّق التغييرات على كل التطبيقات فورًا. اكتب سبب التعديل.",
+    "group": {
+      "otp": "رمز التحقق (OTP)",
+      "adminAuth": "تسجيل دخول المشرفين",
+      "tokens": "الجلسات",
+      "pagination": "حجم الصفحة",
+      "alerts": "حدود التنبيهات",
+      "platform": "المنصة"
+    },
+    "unit": {
+      "minutes": "دقيقة",
+      "seconds": "ثانية",
+      "days": "يوم",
+      "digits": "خانات",
+      "hours": "ساعة",
+      "percent": "٪"
+    },
+    "error": {
+      "required": "أدخل قيمة",
+      "integer": "أعداد صحيحة فقط",
+      "min": "يجب ألا تقل عن {{min}}",
+      "max": "يجب ألا تزيد عن {{max}}",
+      "list": "لا تكرر القيمة"
+    },
+    "key": {
+      "otp_length": "طول الرمز",
+      "otp_resendAfterSec": "مدة الانتظار قبل إعادة الإرسال",
+      "otp_maxRequests": "عدد طلبات الرمز المسموحة",
+      "otp_requestWindowSec": "نافذة احتساب الطلبات",
+      "otp_maxWrong": "عدد المحاولات الخاطئة المسموحة",
+      "otp_blockSec": "مدة الحظر بعد تجاوز المحاولات",
+      "admin_maxFailedLogins": "محاولات الدخول الفاشلة قبل القفل",
+      "admin_lockSec": "مدة القفل",
+      "admin_sessionIdleSec": "تسجيل الخروج عند الخمول",
+      "auth_accessTokenTtlSec": "مدة رمز الوصول",
+      "auth_refreshTokenTtlDays": "مدة رمز التحديث",
+      "pagination_appPageSize": "حجم الصفحة في التطبيقات",
+      "pagination_adminPageSize": "حجم الصفحة في هذه اللوحة",
+      "alerts_api5xxRatePct": "نسبة أخطاء الخادم التي تطلق تنبيهًا",
+      "alerts_crashesPerHour": "انهيارات التطبيق في الساعة التي تطلق تنبيهًا",
+      "timezone": "المنطقة الزمنية",
+      "currency": "العملة",
+      "alerts_jobFailures_count": "المهام الخلفية الفاشلة التي تطلق تنبيهًا",
+      "alerts_jobFailures_windowMin": "نافذة احتساب ذلك العدد",
+      "alerts_escalationMinutes": "تذكيرات التصعيد لتنبيه لم يُطَّلع عليه (مفصولة بفواصل)"
+    },
+    "notSet": "غير محدد",
+    "tabsLabel": "أقسام الإعدادات",
+    "tab": {
+      "rules": "التحقق",
+      "security": "الحسابات والأمان",
+      "limits": "الحدود والتنبيهات"
+    },
+    "readOnlyNote": "للقراءة فقط: تُضبط على الخادم"
+  }
+}

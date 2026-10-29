@@ -1,0 +1,140 @@
+{
+  "designKits": {
+    "templates": {
+      "title": "Page templates",
+      "listTitle": "Items",
+      "listSubtitle": "Every item of the platform",
+      "create": "New item",
+      "colRef": "Reference",
+      "colStatus": "Status",
+      "pagination": "Items pagination",
+      "detailSubtitle": "Item details",
+      "reject": "Reject",
+      "tabs": "Item sections",
+      "tabOverview": "Overview",
+      "tabHistory": "Status history",
+      "tabPayload": "Raw data",
+      "overviewBody": "Item summary",
+      "noHistory": "No changes yet",
+      "empty": "Not set",
+      "amount": "Amount",
+      "note": "Note",
+      "history": {
+        "h3": {
+          "title": "Archived",
+          "actor": "Admin: Sami",
+          "reason": "Record archived after 30 days without activity"
+        },
+        "h2": {
+          "title": "Approved",
+          "actor": "Admin: Sami"
+        },
+        "h1": {
+          "title": "Item created",
+          "actor": "System"
+        }
+      },
+      "region": "Region",
+      "regionName": "North",
+      "owner": {
+        "a": "Owner A",
+        "b": "Owner B",
+        "c": "Owner C"
+      },
+      "colOwner": "Owner"
+    },
+    "charts": {
+      "title": "Charts kit",
+      "trend": "Items trend",
+      "trendLabel": "Items, last 7 days",
+      "day": "Day",
+      "created": "Created",
+      "cancelled": "Cancelled",
+      "lineTitle": "Items per day",
+      "barTitle": "Created vs cancelled",
+      "stackedTitle": "Items per day (stacked)",
+      "donutTitle": "Items by status",
+      "status": "Status",
+      "count": "Count",
+      "share": "Share",
+      "funnelTitle": "Onboarding funnel",
+      "step": "Step",
+      "ofFirst": "Of first step",
+      "ofPrevious": "Of previous step",
+      "heatTitle": "Weekly retention",
+      "cohort": "Cohort",
+      "week": "Week",
+      "days": {
+        "d1": "Sat",
+        "d2": "Sun",
+        "d3": "Mon",
+        "d4": "Tue",
+        "d5": "Wed",
+        "d6": "Thu",
+        "d7": "Fri"
+      },
+      "statuses": {
+        "approved": "Approved",
+        "pending": "Pending",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "steps": {
+        "installs": "Visited",
+        "registered": "Signed up",
+        "searched": "Created an item",
+        "booked": "Published",
+        "paid": "Invited a teammate"
+      },
+      "cohorts": {
+        "w1": "Week of 5 Oct",
+        "w2": "Week of 12 Oct",
+        "w3": "Week of 19 Oct"
+      },
+      "items": "items"
+    },
+    "richText": {
+      "title": "Rich text and schedule",
+      "page": "Privacy page",
+      "start": "Starts",
+      "end": "Ends",
+      "saved": "Schedule: {{start}} to {{end}}"
+    },
+    "shell": {
+      "title": "Shell: breadcrumbs",
+      "crumbModule": "Operations",
+      "crumbPage": "Exports"
+    },
+    "basics": {
+      "title": "Basics",
+      "icons": "Icons",
+      "bell": "Alerts",
+      "gear": "Settings (disabled)",
+      "state": "Async state",
+      "loading": "Loading",
+      "error": "Error",
+      "ready": "Ready",
+      "content": "Loaded content",
+      "notes": "Notes",
+      "forbiddenTitle": "Status page",
+      "forbiddenText": "Used for 403, 404 and 500.",
+      "crash": "Break the section below",
+      "boundaryOk": "Error boundary: no error",
+      "idle": "Show the idle warning"
+    },
+    "scenario": "Mock scenario",
+    "scenarios": {
+      "success": "Success",
+      "empty": "Empty",
+      "validation": "Validation error",
+      "unauthorized": "401 Session expired",
+      "forbidden": "403 Forbidden",
+      "notFound": "404 Not found",
+      "conflict": "409 Conflict",
+      "unprocessable": "422 Business rule",
+      "serverError": "500 Server error",
+      "timeout": "Timeout",
+      "slow": "Slow"
+    }
+  }
+}

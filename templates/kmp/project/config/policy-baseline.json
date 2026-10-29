@@ -1,0 +1,61 @@
+{
+  "androidApp/src/main/kotlin/com/acme/shop/main/MainActivity.kt": {
+    "H006": 1
+  },
+  "core/common/src/androidMain/kotlin/com/acme/shop/core/common/Analytics.android.kt": {
+    "H003": 1
+  },
+  "core/common/src/commonMain/kotlin/com/acme/shop/core/common/NumberFormatter.kt": {
+    "H006": 3
+  },
+  "core/common/src/commonMain/kotlin/com/acme/shop/core/common/Utils.kt": {
+    "H006": 11
+  },
+  "core/common/src/iosMain/kotlin/com/acme/shop/core/common/Analytics.ios.kt": {
+    "H003": 1
+  },
+  "core/data/src/commonMain/kotlin/com/acme/shop/core/data/AppPagingDataSource.kt": {
+    "H003": 1
+  },
+  "core/data/src/commonMain/kotlin/com/acme/shop/core/data/places/PlacesApiService.kt": {
+    "H004": 1
+  },
+  "core/network/src/commonMain/kotlin/com/acme/shop/core/network/client/BaseHttpClient.kt": {
+    "H004": 3,
+    "H006": 1
+  },
+  "core/network/src/iosMain/kotlin/com/acme/shop/core/network/client/NetworkLog.ios.kt": {
+    "Q002": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/composable/NotificationDisplay.kt": {
+    "H002": 8,
+    "H003": 1,
+    "H006": 2,
+    "P002": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/composable/NotificationHost.kt": {
+    "P002": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/manager/NotificationManager.kt": {
+    "H006": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/model/NotificationData.kt": {
+    "H006": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/model/NotificationStyle.kt": {
+    "H001": 4,
+    "H002": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/state/NotificationEvent.kt": {
+    "H006": 1
+  },
+  "core/notification/src/commonMain/kotlin/com/acme/shop/core/notification/state/NotificationUiState.kt": {
+    "H006": 1
+  },
+  "core/storage/src/commonMain/kotlin/com/acme/shop/core/storage/db/AppDatabase.kt": {
+    "Q006": 1
+  },
+  "core/ui/src/iosMain/kotlin/com/acme/shop/core/ui/utils/getDefaultLocale.ios.kt": {
+    "H003": 1
+  }
+}

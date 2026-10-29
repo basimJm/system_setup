@@ -1,0 +1,66 @@
+{
+  "name": "__SYSTEM_SLUG__-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "__SYSTEM_NAME__ backend API (customer, merchant and admin namespaces)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "jest",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build",
+    "start": "node dist/server.js",
+    "seed": "node dist/seeds/run.js",
+    "seed:admin": "node dist/seeds/runAdmin.js",
+    "seed:dev": "node dist/seeds/runDev.js",
+    "docs": "npm run build && node dist/docs/generate.js",
+    "contract:bump": "npm run build && node dist/docs/contractBump.js",
+    "loadtest": "node dist/utils/loadtest/cli.js",
+    "env:check": "node dist/config/checkEnvCli.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.20.5",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.5.2",
+    "prettier": "^3.9.10",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.1",
+    "ts-jest": "^29.4.14",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "yaml": "^2.9.1"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "bcryptjs": "^3.0.3",
+    "bullmq": "^6.3.14",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "ioredis": "^5.11.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.1",
+    "pino": "^9.14.0",
+    "socket.io": "^4.8.4",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.6.6"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "filters": {
+    "title": "عوامل التصفية",
+    "active": "عوامل التصفية المطبّقة",
+    "remove": "إزالة عامل التصفية {{label}}",
+    "clearAll": "مسح الكل"
+  },
+  "dateRange": {
+    "label": "الفترة",
+    "from": "من",
+    "to": "إلى",
+    "compare": "مقارنة مع الفترة السابقة",
+    "versus": "مقابل",
+    "preset": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "last7": "آخر 7 أيام",
+      "last30": "آخر 30 يومًا",
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي",
+      "thisYear": "هذه السنة",
+      "custom": "نطاق مخصص"
+    }
+  },
+  "export": {
+    "label": "تصدير",
+    "started": "جارٍ تجهيز التصدير ({{format}})…",
+    "done": "الملف جاهز",
+    "failed": "فشل التصدير. حاول مرة أخرى.",
+    "format": {
+      "XLSX": "ملف إكسل (.xlsx)",
+      "CSV": "ملف CSV",
+      "PDF": "ملف PDF"
+    },
+    "chip": {
+      "XLSX": "XLS",
+      "CSV": "CSV",
+      "PDF": "PDF"
+    }
+  },
+  "chart": {
+    "viewData": "عرض البيانات",
+    "hideData": "إخفاء البيانات",
+    "exportCsv": "تصدير CSV"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "_comment": "Registry of every project in the __SYSTEM_NAME__ monorepo (fixture).",
+  "board_file": "INTEGRATION.md",
+  "statuses": ["TODO", "IN PROGRESS", "IN REVIEW", "DONE", "PENDING", "BLOCKED", "CANCELLED"],
+  "owner_input_markers": ["user input", "owner input", "owner decision"],
+  "projects": __PROJECTS_JSON__
+}

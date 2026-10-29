@@ -1,0 +1,12 @@
+{
+  "status": {
+    "item": {
+      "ACTIVE": "نشط",
+      "ARCHIVED": "مؤرشف"
+    },
+    "itemOwner": {
+      "CUSTOMER": "عميل",
+      "MERCHANT": "تاجر"
+    }
+  }
+}

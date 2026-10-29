@@ -1,0 +1,46 @@
+{
+  "filters": {
+    "title": "Filters",
+    "active": "Applied filters",
+    "remove": "Remove filter {{label}}",
+    "clearAll": "Clear all"
+  },
+  "dateRange": {
+    "label": "Period",
+    "from": "From",
+    "to": "To",
+    "compare": "Compare with the previous period",
+    "versus": "vs",
+    "preset": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisYear": "This year",
+      "custom": "Custom range"
+    }
+  },
+  "export": {
+    "label": "Export",
+    "started": "Preparing the {{format}} export…",
+    "done": "Export ready",
+    "failed": "The export failed. Please try again.",
+    "format": {
+      "XLSX": "Excel (.xlsx)",
+      "CSV": "CSV",
+      "PDF": "PDF"
+    },
+    "chip": {
+      "XLSX": "XLS",
+      "CSV": "CSV",
+      "PDF": "PDF"
+    }
+  },
+  "chart": {
+    "viewData": "View data",
+    "hideData": "Hide data",
+    "exportCsv": "Export CSV"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "kind": "admin",
+  "description": "Generic admin web panel (React 19 + TypeScript strict + Vite): app shell with sidebar/rail/drawer, top bar, alerts bell, light/dark, RTL default + LTR, Arabic + English locale areas (lazy per screen), e-mail + password + e-mail OTP sign-in with an idle-timed sessionStorage session, registry-driven settings, audit log, exports, alerts, profile, the contract-typed data layer (api:sync from the server OpenAPI, envelope + error codes, pagination), design tokens, dev-only component gallery, local gate (verify + four variant builds + size budgets), qa/ scripts for a local real stack, docs templates (PRD, BRD, Design Script, Tasks, E2E results) and the agent rules in CLAUDE.md + .claude/. One sample module `items` (list + detail + create/edit drawer, reason-required writes) matching the server template's /admin/v1/items.",
+  "placeholders": [
+    "__SYSTEM_NAME__",
+    "__SYSTEM_NAME_AR__",
+    "__SYSTEM_SLUG__",
+    "__SYSTEM_PREFIX__",
+    "__ADMIN_DIR__",
+    "__SERVER_DIR__",
+    "__DEV_API_URL__",
+    "__PROD_API_URL__",
+    "__OWNER_GITHUB__",
+    "__REPO_NAME__",
+    "__YEAR__"
+  ],
+  "sentinels": {
+    "__SYSTEM_PREFIX__-Admin-Dashboard": "__ADMIN_DIR__"
+  },
+  "rename_paths": {},
+  "skip": [
+    "node_modules/**",
+    "dist/**",
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    "reports/**",
+    "TEMPLATE.json",
+    ".DS_Store"
+  ],
+  "post_generate": ["npm ci", "sh scripts/gate.sh"],
+  "binary_globs": ["**/*.png", "**/*.jpg", "**/*.ico", "**/*.woff", "**/*.woff2"],
+  "notes": {
+    "target_dir": "__SYSTEM_PREFIX__-Admin-Dashboard (the value of __ADMIN_DIR__)",
+    "server_contract": "../__SERVER_DIR__/docs/api/openapi.admin.json; `contract/openapi.admin.json` is the committed snapshot the panel was generated from (items, alerts, exports, settings, audit-logs, profile, auth) — run `npm run api:sync` once the server template is in place",
+    "urls": "__DEV_API_URL__ and __PROD_API_URL__ must be https origins (tests/envFiles.test.ts and the prod builds enforce it)",
+    "after_generation": "replace src/assets/app-icon.png, `common.currency` in src/locales/*/core.json and BUSINESS_TIME_ZONE in src/constants/kernel.ts for the product"
+  }
+}

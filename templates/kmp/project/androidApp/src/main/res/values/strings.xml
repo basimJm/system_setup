@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Acme Shop</string>
+    <string name="push_channel_name">Notifications</string>
+</resources>

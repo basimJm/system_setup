@@ -1,0 +1,10 @@
+{
+  "kind": "server",
+  "description": "Fixture: backend with a backlog, a binary asset and a skipped folder",
+  "placeholders": ["__SYSTEM_PREFIX__", "__NPM_SCOPE__", "__DEV_API_URL__", "__PROD_API_URL__", "__SERVER_DIR__"],
+  "sentinels": {"@wab": "__NPM_SCOPE__", "WAB": "__SYSTEM_PREFIX__", "https://api-dev.wab.jo": "__DEV_API_URL__"},
+  "rename_paths": {"WAB": "__SYSTEM_PREFIX__"},
+  "skip": ["node_modules/**", "*.log"],
+  "post_generate": ["npm install", "echo __SERVER_DIR__ ready"],
+  "binary_globs": ["*.png"]
+}

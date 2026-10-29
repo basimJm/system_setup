@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Unit tests for scripts/tasks.py (run: python3 -m unittest scripts/test_tasks.py)."""
+from __future__ import annotations
+
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tasks  # noqa: E402
+
+REGISTRY = {
+    "board_file": "INTEGRATION.md",
+    "statuses": ["TODO", "IN PROGRESS", "IN REVIEW", "DONE", "PENDING", "BLOCKED"],
+    "owner_input_markers": ["user input"],
+    "projects": {
+        "server": {"title": "Server", "prefix": "SRV", "dir": "srv", "master": "server", "backlog": "srv/TASKS.md",
+                   "session": "srv/.claude/session.md", "memory": "srv/.claude/memory.md", "integration": "srv/.claude/Integration.md"},
+        "admin": {"title": "Admin", "prefix": "ADM", "dir": "adm", "master": "admin", "backlog": "adm/TASKS.md",
+                  "session": "adm/.claude/session.md", "memory": "adm/.claude/memory.md", "integration": "adm/.claude/Integration.md"},
+    },
+}
+SERVER = """# Server
+| ID | Task | Branch | Needs (besides previous merged) | Status | Pending on / notes |
+|---|---|---|---|---|---|
+| SRV-001 | Scaffold | `feat/srv-001` | — | DONE | `*_PROVIDER=fake|real` kept. |
+| SRV-002 | Auth | `feat/srv-002` | SRV-001 | TODO | — |
+| SRV-003 | Deploy | `feat/srv-003` | — | PENDING | DigitalOcean — **user input**. |
+| SRV-004a | Sub task | `feat/srv-004a` | SRV-002 | TODO | — |
+"""
+ADMIN = """# Admin
+| ID | Task | Branch | Needs | Server (SRV) | Status | Notes |
+|---|---|---|---|---|---|---|
+| ADM-001 | Setup | `feat/adm-001` | — | — | DONE | — |
+| ADM-002 | Login | `feat/adm-002` | ADM-001 | SRV-002 | BLOCKED | Server gap. |
+| ADM-003 | Profile | `feat/adm-003` | ADM-002 | SRV-002, SRV-004a | BLOCKED | — |
+"""
+BOARD = "# Integration\n\nintro\n\n<!-- BOARD:START -->\nold\n<!-- BOARD:END -->\n\ntail\n"
+
+
+class TasksTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / ".claude").mkdir()
+        (self.root / ".claude" / "projects.json").write_text(json.dumps(REGISTRY), encoding="utf-8")
+        for rel, text in (("srv/TASKS.md", SERVER), ("adm/TASKS.md", ADMIN), ("INTEGRATION.md", BOARD)):
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text, encoding="utf-8")
+        self.b = tasks.Backlogs(self.root)
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_parses_rows_deps_and_suffixed_ids(self) -> None:
+        self.assertEqual(self.b.tasks["SRV-001"].notes, "`*_PROVIDER=fake|real` kept.")
+        self.assertEqual(sorted(self.b.tasks), ["ADM-001", "ADM-002", "ADM-003", "SRV-001", "SRV-002", "SRV-003", "SRV-004a"])
+        self.assertEqual(self.b.tasks["ADM-003"].deps, ["ADM-002", "SRV-002", "SRV-004a"])
+        self.assertEqual(self.b.tasks["SRV-002"].branch, "feat/srv-002")
+        self.assertEqual(self.b.tasks["SRV-003"].status, "PENDING")
+
+    def test_next_returns_first_ready_todo_only(self) -> None:
+        self.assertEqual([t.id for t in self.b.ready("server")], ["SRV-002"])
+        self.assertEqual(self.b.ready("admin"), [])
+
+    def test_done_unblocks_dependents_only_when_all_deps_done(self) -> None:
+        changes = self.b.set_status("SRV-002", "DONE")
+        self.assertIn("SRV-002: TODO -> DONE (srv/TASKS.md)", changes[0])
+        self.assertEqual(self.b.tasks["ADM-002"].status, "TODO")
+        self.assertEqual(self.b.tasks["ADM-003"].status, "BLOCKED")  # SRV-004a still TODO
+        text = (self.root / "adm/TASKS.md").read_text(encoding="utf-8")
+        self.assertIn("| ADM-002 | Login | `feat/adm-002` | ADM-001 | SRV-002 | TODO | Server gap. unblocked by SRV-002 on", text)
+        self.assertIn("| ADM-003 | Profile | `feat/adm-003` | ADM-002 | SRV-002, SRV-004a | BLOCKED | — |", text)
+
+    def test_set_rejects_unknown_status_and_task(self) -> None:
+        with self.assertRaises(SystemExit):
+            self.b.set_status("SRV-002", "FINISHED")
+        with self.assertRaises(SystemExit):
+            self.b.set_status("SRV-999", "DONE")
+
+    def test_board_written_between_markers_only(self) -> None:
+        path = self.b.write_board()
+        text = path.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("# Integration\n\nintro\n\n<!-- BOARD:START -->\n"))
+        self.assertTrue(text.endswith("<!-- BOARD:END -->\n\ntail\n"))
+        self.assertNotIn("old", text)
+        self.assertIn("| ADM-002 | admin | BLOCKED | SRV-002 (server) | TODO |", text)
+        self.assertIn("**SRV-003** (server) Deploy", text)
+        self.assertIn("| Server | `server` | 2 | 0 | 0 | 1 | 1 | 0 | SRV-002 Auth |", text)
+
+    def test_check_reports_inconsistencies(self) -> None:
+        self.assertEqual(self.b.check(), [])
+        (self.root / "adm/TASKS.md").write_text(ADMIN.replace("| ADM-002 | Login | `feat/adm-002` | ADM-001 | SRV-002 | BLOCKED |", "| ADM-002 | Login | `feat/adm-002` | ADM-001 | SRV-002 | TODO |")
+                                               .replace("SRV-002, SRV-004a", "SRV-002, SRV-777"), encoding="utf-8")
+        problems = tasks.Backlogs(self.root).check()
+        self.assertTrue(any("ADM-003: depends on unknown task SRV-777" in p for p in problems))
+        self.assertTrue(any("ADM-002: TODO but waits on another project: SRV-002" in p for p in problems))
+
+    def test_duplicate_ids_are_reported(self) -> None:
+        (self.root / "srv/TASKS.md").write_text(SERVER + "| SRV-001 | Again | `x` | — | TODO | — |\n", encoding="utf-8")
+        problems = tasks.Backlogs(self.root).check()
+        self.assertTrue(any(p.startswith("SRV-001 appears twice") for p in problems))
+
+    def test_cli_next_and_show(self) -> None:
+        import contextlib
+        import io
+        import os
+        cwd = os.getcwd()
+        os.chdir(self.root)
+        try:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(tasks.main(["tasks.py", "next", "server"]), 0)
+                self.assertEqual(tasks.main(["tasks.py", "show", "ADM-003"]), 0)
+                self.assertEqual(tasks.main(["tasks.py", "check"]), 0)
+            text = out.getvalue()
+            self.assertIn("SRV-002  [TODO]  Auth", text)
+            self.assertIn("needs: ADM-002[BLOCKED], SRV-002[TODO], SRV-004a[TODO]", text)
+            self.assertIn("OK: 7 tasks across 2 projects", text)
+        finally:
+            os.chdir(cwd)
+
+
+if __name__ == "__main__":
+    unittest.main()

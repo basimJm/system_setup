@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- core/ui CameraFiles.DIRECTORY: temporary camera photos, deleted after encoding. -->
+<paths>
+    <cache-path
+        name="camera"
+        path="camera/" />
+</paths>

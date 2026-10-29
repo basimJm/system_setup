@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">متجر أكمي</string>
+    <string name="push_channel_name">الإشعارات</string>
+</resources>

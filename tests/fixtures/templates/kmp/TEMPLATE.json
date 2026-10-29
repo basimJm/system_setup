@@ -1,0 +1,64 @@
+{
+  "kind": "kmp",
+  "description": "Fixture: KMP_TEMPLATE snapshot under project/ with the Acme Shop / com.acme.shop / AcmeShop identity",
+  "placeholders": [
+    "__APP_NAME__",
+    "__APP_NAME_AR__",
+    "__APP_PACKAGE__",
+    "__APP_PROJECT__",
+    "__APP_DIR__",
+    "__DEV_API_URL__",
+    "__PROD_API_URL__",
+    "__DEV_WEB_URL__",
+    "__PROD_WEB_URL__",
+    "__APPLE_TEAM_ID__",
+    "__API_PREFIX__",
+    "__REALTIME_NAMESPACE__",
+    "__SERVER_DIR__"
+  ],
+  "sentinels": {
+    "Acme Shop": "__APP_NAME__",
+    "متجر أكمي": "__APP_NAME_AR__",
+    "com.acme.shop": "__APP_PACKAGE__",
+    "com-acme-shop": "__APP_PACKAGE_DASHED__",
+    "com/acme/shop": "__APP_PACKAGE_PATH__",
+    "AcmeShop": "__APP_PROJECT__",
+    "https://api-dev.example.com": "__DEV_API_URL__",
+    "https://api.example.com": "__PROD_API_URL__",
+    "https://app-dev.example.com": "__DEV_WEB_URL__",
+    "https://app.example.com": "__PROD_WEB_URL__",
+    "api-dev.example.com": "__DEV_API_HOST__",
+    "api.example.com": "__PROD_API_HOST__",
+    "app-dev.example.com": "__DEV_WEB_HOST__",
+    "app.example.com": "__PROD_WEB_HOST__",
+    "TEAMID0000": "__APPLE_TEAM_ID__",
+    "/app/v1": "__API_PREFIX__",
+    "WAB-Server": "__SERVER_DIR__"
+  },
+  "rename_paths": {
+    "com/acme/shop": "__APP_PACKAGE_PATH__",
+    "AcmeShop": "__APP_PROJECT__"
+  },
+  "targeted": [
+    {
+      "file": "core/realtime/src/commonMain/kotlin/com/acme/shop/core/realtime/RealtimeConfig.kt",
+      "placeholder": "__REALTIME_NAMESPACE__",
+      "find": "const val APP_NAMESPACE = \"/app\"",
+      "replace_with": "const val APP_NAMESPACE = \"__REALTIME_NAMESPACE__\"",
+      "why": "'/app' is too short to replace globally"
+    }
+  ],
+  "skip": [
+    "**/build/**",
+    "**/.gradle/**",
+    "**/local.properties",
+    "**/*.log"
+  ],
+  "post_generate": [
+    "./gradlew tasks"
+  ],
+  "binary_globs": [
+    "**/*.png",
+    "**/*.jar"
+  ]
+}

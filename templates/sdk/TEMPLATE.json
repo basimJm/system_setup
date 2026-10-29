@@ -1,0 +1,52 @@
+{
+  "kind": "sdk",
+  "description": "One generic SDK package (ports + adapters, npm, TypeScript strict, tsup ESM+CJS, jest coverage gate, loop test, package smoke, `npm run verify`) = `common/` skeleton + one `kinds/<kind>/` overlay. The overlay is copied over the skeleton (overlay wins); every token below is substituted in file contents and in paths; `skip` globs are never copied; `post_generate` runs inside the generated package. Output directory: `__SYSTEM_SLUG__-<kind>` (= `__SDK_DIR_<kind>__`).",
+  "placeholders": [
+    "__SYSTEM_NAME__",
+    "__SYSTEM_SLUG__",
+    "__SYSTEM_PREFIX__",
+    "__NPM_SCOPE__",
+    "__SDK_DIR_storage__",
+    "__SDK_DIR_otp__",
+    "__SDK_DIR_notifications__",
+    "__SDK_DIR_payments__",
+    "__SDK_DIR_analytics__",
+    "__SERVER_DIR__",
+    "__OWNER_GITHUB__",
+    "__REPO_NAME__",
+    "__YEAR__",
+    "__SDK_KIND__",
+    "__SDK_PREFIX__",
+    "__SDK_TITLE__"
+  ],
+  "placeholder_docs": {
+    "__SYSTEM_NAME__": "Human name of the system (e.g. `Acme Shop`); used in prose only.",
+    "__SYSTEM_SLUG__": "Lower-case slug (e.g. `acme`); package directories are `__SYSTEM_SLUG__-<kind>`.",
+    "__SYSTEM_PREFIX__": "Upper-case system prefix (e.g. `ACM`); reserved for cross-package codes, not used by the SDK files themselves.",
+    "__NPM_SCOPE__": "npm scope with the `@` (e.g. `@acme`); the package is `__NPM_SCOPE__/<kind>`.",
+    "__SDK_DIR_<kind>__": "Directory of that kind's package = `__SYSTEM_SLUG__-<kind>`; one token per kind so a package can name itself or a sibling.",
+    "__SERVER_DIR__": "Directory of the backend that consumes the SDKs (e.g. `acme-server`).",
+    "__OWNER_GITHUB__": "GitHub owner of the repository (`repository.url` in package.json).",
+    "__REPO_NAME__": "Repository name (`repository.url` in package.json, prose).",
+    "__YEAR__": "Generation year (CHANGELOG, memory).",
+    "__SDK_KIND__": "Per kind, filled by the engine from `kinds.<kind>` (the key): `storage` | `otp` | `notifications` | `payments` | `analytics`. Package name suffix and `provider` namespace.",
+    "__SDK_PREFIX__": "Per kind, from `kinds.<kind>.prefix`: error-code and task-ID prefix (`STO_CONFIG_INVALID`, `STO-001`); env keys in `.env.example`.",
+    "__SDK_TITLE__": "Per kind, from `kinds.<kind>.title`: one PascalCase word used in identifiers (`createStorage`) and doc file names (`docs/Storage_BRD.md`)."
+  },
+  "sentinels": {},
+  "rename_paths": {},
+  "skip": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/.DS_Store"
+  ],
+  "post_generate": ["npm ci", "npm run verify"],
+  "kinds": {
+    "storage": { "dir": "kinds/storage", "prefix": "STO", "title": "Storage", "description": "Object storage: presigned uploads + confirmation, CDN URLs, signed private URLs; S3-compatible (SigV4, no vendor SDK), memory and fake adapters." },
+    "otp": { "dir": "kinds/otp", "prefix": "OTP", "title": "Otp", "description": "One-time codes: code store + delivery channel ports, request/verify/consume with limits and single-use tokens; memory store, fake channel." },
+    "notifications": { "dir": "kinds/notifications", "prefix": "NOT", "title": "Notifications", "description": "Push + email ports behind one notifier with idempotency; fake adapters for both." },
+    "payments": { "dir": "kinds/payments", "prefix": "PAY", "title": "Payments", "description": "Checkout session / verify / refund / webhook ports, no vendor: fake gateway + localhost mock gateway (HTTP) with its generic adapter." },
+    "analytics": { "dir": "kinds/analytics", "prefix": "ANA", "title": "Analytics", "description": "track / linkIdentity / flush ports with batching; fake, memory and generic HTTP collector adapters." }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "login": {
+    "title": "Sign in",
+    "codeTitle": "Two-step verification",
+    "email": "Email",
+    "password": "Password",
+    "code": "Verification code",
+    "codeHint": "We sent a one-time code to your email.",
+    "continue": "Continue",
+    "verify": "Verify and sign in",
+    "errors": {
+      "email": "Enter a valid email address.",
+      "password": "Password is too short.",
+      "code": "Enter the {{length}}-digit code."
+    },
+    "subtitle": "Enter your administrator account details to continue.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "codeSubtitle": "We sent a {{length}}-digit code to your email. It is valid for {{minutes}} minutes.",
+    "noCode": "Didn't receive the code?",
+    "resend": "Resend code",
+    "resendIn": "Resend in {{time}}",
+    "brand": {
+      "headline": "Full visibility of the platform, full control of every detail.",
+      "text": "Every record, every change and every sign-in — in one place, with a full log of every action.",
+      "security": "Secure connection · Two-step verification · Session ends after {{days}} days of inactivity",
+      "chip": "Admin panel"
+    },
+    "ended": {
+      "expired": "Your session expired. Please sign in again.",
+      "idle": "You were signed out after {{days}} days of inactivity."
+    }
+  }
+}

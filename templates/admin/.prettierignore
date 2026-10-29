@@ -1,0 +1,13 @@
+dist
+coverage
+node_modules
+playwright-report
+test-results
+package-lock.json
+design
+docs
+
+contract
+src/data/contract/generated
+reports
+.claude

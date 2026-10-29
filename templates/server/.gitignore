@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+# Environment files hold real values: only the *.example templates are committed.
+.env
+.env.*
+!.env.example

@@ -1,0 +1,6 @@
+# ADR-0004 — Forms: react-hook-form with zod
+
+- **Status:** accepted (template)
+- **Context:** every edit screen needs typed values, per-field errors, dirty tracking, a busy state and the server's `details[]` mapped onto fields, with the same rules as the mobile apps (Admin PRD §2, §3). Hand-rolled `useState` forms repeat this and drift; the project already validates all external data with zod (ADR-0001).
+- **Decision:** react-hook-form holds the form state (uncontrolled inputs, so typing does not re-render the form) and `@hookform/resolvers/zod` runs the zod schema as the only validator. `useZodForm(schema, defaults)` is the only way to create a form. Schema messages are i18n keys (`validation.*`, building blocks in `domain/shared/validation.ts`) translated by `errorText`; a server message that is not a key is shown as it is. Server errors are applied with `applyServerFieldErrors`. Money fields edit a money string (`MoneyField`), numbers use `NumberField`, calendar days use `DateField` (`YYYY-MM-DD`), as in ADR-0003. Fields are small controlled components wired with `Controller` and know nothing about react-hook-form.
+- **Consequences:** two maintained runtime dependencies compatible with React 19 and zod 4; the rules shared with the mobile apps live and are tested in one file. Formik (slower, less maintained) and TanStack Form (younger) were rejected.

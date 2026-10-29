@@ -1,0 +1,36 @@
+{
+  "form": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "noOptions": "No matching options",
+    "removeOption": "Remove {{label}}",
+    "lastUpdated": "Last updated by {{name}} · {{time}}"
+  },
+  "validation": {
+    "required": "This field is required",
+    "tooLong": "Too long",
+    "tooShort": "Too short",
+    "notPositive": "The amount must be greater than zero",
+    "invalidDate": "Enter a valid date",
+    "endBeforeStart": "The end must be after the start",
+    "invalidAmount": "Enter a valid amount (up to 3 decimals)"
+  },
+  "richText": {
+    "toolbar": "Formatting",
+    "preview": "Preview",
+    "language": {
+      "ar": "Arabic",
+      "en": "English"
+    },
+    "tool": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "h2": "Heading",
+      "h3": "Sub-heading",
+      "ul": "Bulleted list",
+      "ol": "Numbered list",
+      "link": "Link"
+    }
+  }
+}

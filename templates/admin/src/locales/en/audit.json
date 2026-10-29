@@ -1,0 +1,18 @@
+{
+  "audit": {
+    "subtitle": "Everything an admin changed. Records cannot be edited or deleted.",
+    "action": "Action",
+    "entity": "Entity",
+    "entityType": "Entity type",
+    "entityId": "Entity id",
+    "admin": "Admin id",
+    "ip": "IP address",
+    "device": "Device",
+    "before": "Before",
+    "after": "After",
+    "noDiff": "This action stored no before / after values.",
+    "searchAction": "Search by action",
+    "empty": "No records match",
+    "readOnly": "Read-only"
+  }
+}

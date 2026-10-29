@@ -1,0 +1,44 @@
+/* Design card block: every chart sits in its own card with a bold 14px title row. */
+.app-chart { display: grid; gap: var(--space-3); margin: 0; min-width: 0; padding: var(--space-4); border: var(--size-hairline) solid var(--c-line); border-radius: var(--radius-lg); background: var(--c-card); box-shadow: var(--shadow-card); }
+.app-card .app-chart { padding: 0; border: 0; box-shadow: none; }
+.app-chart__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--fs-md); font-weight: var(--fw-bold); }
+.app-chart__svg, .app-sparkline { direction: ltr; }
+.app-chart__svg { width: 100%; height: auto; max-height: var(--size-chart-max); }
+.app-chart__svg--donut { max-width: var(--size-donut-max); margin-inline: auto; }
+.app-chart__grid { stroke: var(--c-line); stroke-width: 1; }
+.app-chart__tick { fill: var(--c-muted); font-size: var(--fs-xs); }
+.app-chart__total { fill: var(--c-ink); font-size: var(--fs-xl); font-weight: var(--fw-semibold); }
+.app-chart__empty { fill: none; stroke: var(--c-line2); stroke-width: 12; }
+.app-chart__line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.app-chart__dot { fill: currentColor; }
+
+.app-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.app-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--c-muted); }
+.app-legend__swatch { width: var(--size-icon-sm); height: var(--size-icon-sm); border-radius: var(--radius-sm); }
+
+.app-sparkline { width: var(--size-sparkline-width); height: var(--size-sparkline-height); }
+
+.app-funnel { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.app-funnel__step { display: grid; grid-template-columns: minmax(0, var(--size-funnel-label)) minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); }
+.app-funnel__track { height: var(--size-icon); border-radius: var(--radius-sm); background: var(--c-soft); overflow: hidden; }
+.app-funnel__bar { display: block; height: 100%; border-radius: var(--radius-sm); }
+.app-funnel__rate { color: var(--c-muted); }
+
+.app-heatmap { width: 100%; border-collapse: collapse; }
+.app-heatmap th, .app-heat { padding: var(--space-2) var(--space-3); text-align: center; border: var(--size-hairline) solid var(--c-card); }
+.app-heatmap tbody th { text-align: start; color: var(--c-muted); font-weight: var(--fw-medium); }
+.app-heat--none { background: var(--c-surface); }
+.app-heatmap .app-heat { color: var(--c-ink); }
+.app-heat--0 { background: color-mix(in srgb, var(--chart-1) 10%, var(--c-card)); }
+.app-heat--1 { background: color-mix(in srgb, var(--chart-1) 22%, var(--c-card)); }
+.app-heat--2 { background: color-mix(in srgb, var(--chart-1) 34%, var(--c-card)); }
+.app-heat--3 { background: color-mix(in srgb, var(--chart-1) 46%, var(--c-card)); }
+.app-heat--4 { background: color-mix(in srgb, var(--chart-1) 58%, var(--c-card)); }
+
+/* Design analytics boards (03 Analytics): KPI row (tiles >= 150 px) and a 12-column card grid; each cell sets its
+   design span (--span) and its tablet span (--span-md). */
+.app-kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--size-kpi-tile)), 1fr)); gap: var(--space-3); }
+.app-board { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-4); }
+.app-board__cell { display: grid; grid-column: span 12; min-width: 0; }
+[data-bp='medium'] .app-board__cell { grid-column: span var(--span-md); }
+[data-bp='expanded'] .app-board__cell { grid-column: span var(--span); }

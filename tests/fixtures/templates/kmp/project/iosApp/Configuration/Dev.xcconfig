@@ -1,0 +1,4 @@
+APP_DISPLAY_NAME = Acme Shop Dev
+PRODUCT_BUNDLE_IDENTIFIER = com.acme.shop$(BUNDLE_ID_SUFFIX)
+API_BASE_URL = https:/$()/api-dev.example.com
+WEB_BASE_URL = https:/$()/app-dev.example.com

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+# Public placeholder URLs only (no secrets): replace them with the deployed API before shipping.
+!.env.dev
+!.env.prod
+*.local
+.DS_Store
+/reports/

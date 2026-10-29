@@ -1,0 +1,85 @@
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--size-button);
+  padding-inline: var(--space-4);
+  border: var(--size-hairline) solid transparent;
+  border-radius: var(--radius-control);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  transition: opacity var(--motion-fast) var(--motion-easing);
+}
+.app-btn--sm { min-height: var(--size-button-sm); padding-inline: var(--space-3); font-size: var(--fs-sm); }
+.app-btn--block { width: 100%; }
+.app-btn:disabled { opacity: var(--opacity-disabled); }
+.app-btn:active:not(:disabled) { opacity: var(--opacity-pressed); }
+.app-btn--primary {
+  background: linear-gradient(135deg, var(--c-primary), var(--c-primary-end));
+  color: var(--c-on-primary);
+  box-shadow: var(--shadow-primary);
+}
+.app-btn--secondary { background: var(--c-soft); color: var(--c-accent); }
+/* Design "default" button: card background, ink text, line2 border. */
+.app-btn--ghost { background: var(--c-card); color: var(--c-ink); border-color: var(--c-line2); }
+.app-btn--ghost:hover:not(:disabled) { background: var(--c-hover); }
+.app-btn--secondary:hover:not(:disabled) { filter: brightness(0.98); }
+.app-btn--danger { background: var(--c-danger); color: var(--c-card); }
+
+.app-iconbtn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--size-touch-target);
+  min-height: var(--size-touch-target);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--c-muted);
+}
+.app-iconbtn:hover:not(:disabled) { background: var(--c-hover); color: var(--c-ink); }
+.app-iconbtn:disabled { opacity: var(--opacity-disabled); }
+.app-iconbtn__badge {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-1);
+  min-width: var(--size-icon-sm);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--c-danger);
+  color: var(--c-card);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+.app-badge--green { color: var(--tone-green-fg); background: var(--tone-green-bg); }
+.app-badge--amber { color: var(--tone-amber-fg); background: var(--tone-amber-bg); }
+.app-badge--rose { color: var(--tone-rose-fg); background: var(--tone-rose-bg); }
+.app-badge--grey { color: var(--tone-grey-fg); background: var(--tone-grey-bg); }
+.app-badge--purple { color: var(--tone-purple-fg); background: var(--tone-purple-bg); }
+.app-badge--violet { color: var(--tone-violet-fg); background: var(--tone-violet-bg); }
+
+.app-spinner {
+  display: inline-block;
+  width: var(--size-spinner);
+  height: var(--size-spinner);
+  border: var(--size-focus-ring) solid var(--c-line2);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: app-spin var(--motion-normal) linear infinite;
+}
+.app-spinner--sm { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+@keyframes app-spin { to { transform: rotate(1turn); } }

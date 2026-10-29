@@ -1,0 +1,67 @@
+{
+  "name": "__NPM_SCOPE__/__SDK_KIND__",
+  "version": "0.1.0",
+  "description": "__SDK_TITLE__ SDK for __SYSTEM_NAME__: ports + adapters, provider independent, no business rules.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "jest --coverage",
+    "test:loop": "jest --config jest.loop.config.js --runInBand",
+    "test:smoke-package": "node scripts/package-smoke.cjs",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build && npm run test:smoke-package && npm run test:loop",
+    "prepublishOnly": "npm run verify",
+    "pack:check": "npm pack --dry-run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.5.2",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.4.14",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/__OWNER_GITHUB__/__REPO_NAME__.git",
+    "directory": "__SYSTEM_SLUG__-__SDK_KIND__"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  }
+}

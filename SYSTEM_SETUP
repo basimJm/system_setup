@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SYSTEM_SETUP: create a new multi-project system (server + admin + KMP apps + SDKs + AI-agent workspace).
+# Usage: .claude/tools/SYSTEM_SETUP/SYSTEM_SETUP            (interactive)
+#        .claude/tools/SYSTEM_SETUP/SYSTEM_SETUP --help     (flags for non-interactive use)
+# The package lives in src/system_setup/ because macOS file systems are case-insensitive (SYSTEM_SETUP == system_setup).
+set -euo pipefail
+exec python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/src/system_setup/cli.py" "$@"

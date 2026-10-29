@@ -1,0 +1,65 @@
+{
+  "settings": {
+    "subtitle": "Platform rules that apply everywhere at once. Each change needs a reason and is recorded in the audit log.",
+    "default": "Default: {{value}}",
+    "isDefault": "Default",
+    "overridden": "Changed",
+    "useDefault": "Use default",
+    "saved": "Settings saved",
+    "confirmTitle": "Save {{count}} changed settings",
+    "confirmText": "Changes apply to all apps immediately. Write why you are changing them.",
+    "group": {
+      "otp": "Verification code (OTP)",
+      "adminAuth": "Admin sign-in",
+      "tokens": "Sessions",
+      "pagination": "Page sizes",
+      "alerts": "Alert thresholds",
+      "platform": "Platform"
+    },
+    "unit": {
+      "minutes": "minutes",
+      "seconds": "seconds",
+      "days": "days",
+      "digits": "digits",
+      "hours": "hours",
+      "percent": "%"
+    },
+    "error": {
+      "required": "Enter a value",
+      "integer": "Whole numbers only",
+      "min": "Must be at least {{min}}",
+      "max": "Must be at most {{max}}",
+      "list": "Do not repeat a value"
+    },
+    "key": {
+      "otp_length": "Code length",
+      "otp_resendAfterSec": "Wait before resending",
+      "otp_maxRequests": "Code requests allowed",
+      "otp_requestWindowSec": "Request counting window",
+      "otp_maxWrong": "Wrong attempts allowed",
+      "otp_blockSec": "Block duration after too many attempts",
+      "admin_maxFailedLogins": "Failed sign-ins before lock",
+      "admin_lockSec": "Lock duration",
+      "admin_sessionIdleSec": "Idle sign-out",
+      "auth_accessTokenTtlSec": "Access token lifetime",
+      "auth_refreshTokenTtlDays": "Refresh token lifetime",
+      "pagination_appPageSize": "List page size in the apps",
+      "pagination_adminPageSize": "List page size in this panel",
+      "alerts_api5xxRatePct": "Server error rate that raises an alert",
+      "alerts_crashesPerHour": "App crashes per hour that raise an alert",
+      "timezone": "Time zone",
+      "currency": "Currency",
+      "alerts_jobFailures_count": "Failed background jobs that raise an alert",
+      "alerts_jobFailures_windowMin": "Window for that count",
+      "alerts_escalationMinutes": "Escalation reminders for an unacknowledged alert (comma separated)"
+    },
+    "notSet": "Not set",
+    "tabsLabel": "Settings sections",
+    "tab": {
+      "rules": "Verification",
+      "security": "Accounts and security",
+      "limits": "Limits and alerts"
+    },
+    "readOnlyNote": "Read only: set on the server"
+  }
+}

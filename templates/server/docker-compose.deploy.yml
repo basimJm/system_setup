@@ -1,0 +1,50 @@
+# Run the API for ONE environment on any Docker host. MongoDB and Redis are managed services:
+# nothing here owns data except the optional Redis profile (dev servers).
+#
+#   ENV_FILE=.env.hosted-dev docker compose -f docker-compose.deploy.yml up -d --build
+#   ENV_FILE=.env.production docker compose -f docker-compose.deploy.yml up -d --build
+#
+# Check the file first: npm run env:check -- <env file>. Values never live in this file.
+
+name: __SYSTEM_SLUG__-server-${ENV_NAME:-local}
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: __SYSTEM_SLUG__-server:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:?set ENV_FILE to the environment file}
+    ports:
+      - '${API_BIND:-127.0.0.1}:${API_PORT:-3000}:3000'
+    environment:
+      # The container always listens on 3000; the host port is API_PORT.
+      PORT: '3000'
+    stop_grace_period: 30s
+
+  redis:
+    profiles: ['redis']
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--requirepass',
+        '${REDIS_PASSWORD:?set REDIS_PASSWORD}',
+      ]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+
+volumes:
+  redis-data:

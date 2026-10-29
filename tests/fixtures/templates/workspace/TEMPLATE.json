@@ -1,0 +1,27 @@
+{
+  "kind": "workspace",
+  "description": "Fixture: repo root with CLAUDE.md, INTEGRATION.md, .claude/projects.json and a tiny tasks.py",
+  "placeholders": [
+    "__SYSTEM_NAME__",
+    "__SYSTEM_NAME_AR__",
+    "__SYSTEM_SLUG__",
+    "__SYSTEM_PREFIX__",
+    "__SERVER_DIR__",
+    "__ADMIN_DIR__",
+    "__APPS_TABLE__",
+    "__SDKS_TABLE__",
+    "__PROJECTS_JSON__",
+    "__MASTERS_LIST__",
+    "__OWNER_GITHUB__",
+    "__REPO_NAME__",
+    "__YEAR__",
+    "__DATE__"
+  ],
+  "sentinels": {},
+  "rename_paths": {},
+  "skip": [],
+  "post_generate": [
+    "python3 scripts/tasks.py check"
+  ],
+  "binary_globs": []
+}

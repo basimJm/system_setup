@@ -1,0 +1,20 @@
+# Netlify: set "Base directory" to __ADMIN_DIR__ in the site settings.
+# Production needs the public values VITE_API_BASE_URL and VITE_SOCKET_URL (https) in the site's environment variables;
+# add CSP_CONNECT_EXTRA (comma list) for any other https origin the browser must call.
+# Previews and branch deploys build dev-release, which calls the dev API (VITE_API_BASE_URL / VITE_SOCKET_URL, or the
+# placeholders in .env.dev). Only the dev-debug build (`npm run dev`) uses the built-in mock data.
+
+[build]
+  command = "npm ci && npm run build:prod-release && node scripts/write-hosting.ts prod-release"
+  publish = "dist/prod-release"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[context.deploy-preview]
+  command = "npm ci && npm run build:dev-release && node scripts/write-hosting.ts dev-release"
+  publish = "dist/dev-release"
+
+[context.branch-deploy]
+  command = "npm ci && npm run build:dev-release && node scripts/write-hosting.ts dev-release"
+  publish = "dist/dev-release"

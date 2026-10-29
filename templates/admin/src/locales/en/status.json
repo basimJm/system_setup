@@ -1,0 +1,12 @@
+{
+  "status": {
+    "item": {
+      "ACTIVE": "Active",
+      "ARCHIVED": "Archived"
+    },
+    "itemOwner": {
+      "CUSTOMER": "Customer",
+      "MERCHANT": "Merchant"
+    }
+  }
+}

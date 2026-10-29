@@ -1,0 +1,43 @@
+{
+  "errors": {
+    "title": "Something went wrong",
+    "traceId": "Reference",
+    "network": "No internet connection. Check your network and try again.",
+    "timeout": "The request took too long. Please try again.",
+    "unauthorized": "Your session has expired or the credentials are wrong.",
+    "forbidden": "You do not have permission to do this.",
+    "notFound": "The requested item was not found.",
+    "validation": "Some of the data is invalid. Please review it.",
+    "conflict": "This action conflicts with the current state.",
+    "rateLimited": "Too many attempts. Please wait and try again.",
+    "server": "The server had a problem. Please try again shortly.",
+    "parse": "The server sent an unexpected response.",
+    "config": "The application is not configured correctly.",
+    "unknown": "An unexpected error occurred.",
+    "codes": {
+      "VALIDATION_ERROR": "Some of the data is invalid. Please review it.",
+      "UNAUTHORIZED": "Your session has expired or the credentials are wrong.",
+      "FORBIDDEN": "You do not have permission to do this.",
+      "PERMISSION_DENIED": "Your account does not have the permission required for this action.",
+      "NOT_FOUND": "The requested item was not found.",
+      "CONFLICT": "This action conflicts with the current state.",
+      "RATE_LIMITED": "Too many attempts. Please wait and try again.",
+      "INTERNAL": "The server had a problem. Please try again shortly.",
+      "OTP_BLOCKED": "Too many code attempts. Verification is blocked for a while.",
+      "OTP_INVALID": "The verification code is incorrect.",
+      "OTP_EXPIRED": "The verification code has expired. Request a new one.",
+      "OTP_DELIVERY_FAILED": "The verification code could not be delivered. Try again.",
+      "PHONE_NOT_REGISTERED": "This phone number is not registered.",
+      "PHONE_ALREADY_REGISTERED": "This phone number is already registered.",
+      "ACCOUNT_BLOCKED": "This account is blocked.",
+      "MEMBER_INACTIVE": "This member account is inactive.",
+      "OWNER_REQUIRED": "Only the owner can do this.",
+      "PAYMENT_FAILED": "The payment failed. Nothing was created.",
+      "UPLOAD_INVALID": "This file cannot be uploaded.",
+      "UPLOAD_TOO_LARGE": "This file is too large.",
+      "ITEM_NOT_FOUND": "This item was not found.",
+      "ITEM_ARCHIVED": "This item is archived; the action needs an active item.",
+      "ITEM_LIMIT_REACHED": "The owner has reached the maximum number of items."
+    }
+  }
+}

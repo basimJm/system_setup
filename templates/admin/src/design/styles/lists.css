@@ -1,0 +1,127 @@
+/* Design list blocks (`Admin Blocks` filters + card table): compact filter pills and the table card. */
+.app-listcard {
+  min-width: 0;
+  border: var(--size-hairline) solid var(--c-line);
+  border-radius: var(--radius-lg);
+  background: var(--c-card);
+  box-shadow: var(--shadow-card);
+}
+.app-listcard__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: var(--size-hairline) solid var(--c-line);
+}
+.app-listcard__titles { display: flex; flex: 1 1 var(--size-listcard-title); flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; }
+.app-listcard__title { font-size: var(--fs-md); font-weight: var(--fw-bold); }
+/* Design table card header: 220 px search box (34 px, surface fill) and 32 px tool buttons. */
+.app-listcard__search { flex: 0 1 var(--size-listcard-search); min-width: 0; }
+.app-listcard__search .app-search .app-field__control { min-height: var(--size-listcard-tool-lg); border-color: var(--c-line2); border-radius: var(--radius-control); background: var(--c-surface); font-size: var(--fs-sm); }
+[data-bp='compact'] .app-listcard__search { flex: 1 1 100%; }
+.app-listcard__tools { display: flex; align-items: center; gap: var(--space-2); }
+.app-cardbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--size-button-sm);
+  min-height: var(--size-button-sm);
+  padding-inline: var(--space-2);
+  border: var(--size-hairline) solid var(--c-line2);
+  border-radius: var(--radius-control);
+  background: var(--c-card);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.app-cardbtn:hover:not(:disabled) { color: var(--c-ink); background: var(--c-hover); }
+.app-cardbtn:disabled { opacity: var(--opacity-disabled); cursor: default; }
+.app-export__item { display: flex; align-items: center; gap: var(--space-3); }
+.app-export__chip { padding: var(--space-0) var(--space-1); border-radius: var(--radius-xs); color: var(--c-on-primary); font-family: var(--font-numeric); font-size: var(--fs-xxs); font-weight: var(--fw-bold); }
+.app-export__chip--xlsx { background: var(--c-file-xlsx); }
+.app-export__chip--csv { background: var(--c-file-csv); }
+.app-export__chip--pdf { background: var(--c-file-pdf); }
+.app-listcard__count {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--c-surface);
+  color: var(--c-muted);
+  font-family: var(--font-numeric);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+.app-listcard__head .app-table-toolbar { flex: 0 1 auto; }
+.app-listcard .app-table-wrap { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.app-listcard > .app-state { border-radius: 0; }
+.app-listcard .app-pagination {
+  padding: var(--space-2) var(--space-4);
+  border-block-start: var(--size-hairline) solid var(--c-line);
+  color: var(--c-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Filters: each control is a 38px pill whose label sits inside, before the value (design dropdown buttons). */
+.app-filterbar__controls { align-items: center; gap: var(--space-2); }
+.app-filterbar__controls .app-daterange { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.app-filterbar__controls > .app-field,
+.app-filterbar__controls .app-daterange > .app-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-button);
+  padding-inline: var(--space-3) var(--space-1);
+  border: var(--size-hairline) solid var(--c-line2);
+  border-radius: var(--radius-control);
+  background: var(--c-card);
+}
+.app-filterbar__controls .app-field > .app-field__label { color: var(--c-ink); font-size: var(--fs-nav); font-weight: var(--fw-semibold); white-space: nowrap; }
+.app-filterbar__controls > .app-field .app-field__control,
+.app-filterbar__controls .app-daterange > .app-field .app-field__control {
+  min-height: calc(var(--size-button) - var(--space-1));
+  padding-block: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-muted);
+  font-size: var(--fs-nav);
+}
+.app-filterbar__controls > .app-field:focus-within { border-color: var(--c-focus); }
+.app-filterbar__controls .app-search .app-field__control { min-height: var(--size-button); border-radius: var(--radius-control); }
+.app-filterbar__controls > .app-search { flex: 1 1 var(--size-field-min); max-width: var(--size-search-max); }
+[data-bp='compact'] .app-filterbar__controls > * { flex: 1 1 100%; }
+
+/* Design table cells: entity (initial + name + second line) and rating (star). */
+.app-entity { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.app-entity__initial { display: grid; flex: none; place-items: center; width: var(--size-control-sm); height: var(--size-control-sm); border-radius: var(--radius-sm); background: var(--c-soft); color: var(--c-accent); font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.app-entity__text { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-0); min-width: 0; }
+.app-entity__name { font-weight: var(--fw-semibold); }
+.app-entity__sub { color: var(--c-muted); font-size: var(--fs-xs); white-space: nowrap; }
+.app-rating { display: inline-flex; align-items: center; gap: var(--space-1); font-family: var(--font-numeric); font-weight: var(--fw-semibold); }
+.app-rating .app-icon { color: var(--c-star); fill: currentColor; }
+.app-rating__count { color: var(--c-muted); font-weight: var(--fw-regular); }
+.app-table__row--alert { background: var(--c-danger-soft); }
+.app-table__row--alert > td:first-child { border-inline-start: var(--size-focus-ring) solid var(--c-danger); }
+/* Links inside tables (references, subjects): accent, semibold, no underline (design "link" cells). */
+.app-table td a:not(.app-btn) { color: var(--c-accent); font-weight: var(--fw-semibold); text-decoration: none; }
+.app-table td a:not(.app-btn):hover { text-decoration: underline; }
+/* Two-line cell: label + technical code under it (design audit "action" cell). */
+.app-cell2 { display: flex; flex-direction: column; gap: var(--space-0); }
+.app-cell2__main { font-weight: var(--fw-semibold); }
+.app-cell2__code { color: var(--c-muted); font-family: var(--font-numeric); font-size: var(--fs-xs); direction: ltr; }
+.app-cell-clip { display: inline-block; max-width: var(--size-card-min); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+
+/* Design `Blocks` "cards" body (card grids): auto-fill grid of 260 px cards with a 130 px artwork area. */
+.app-cardgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--size-grid-card)), 1fr)); gap: var(--space-3); margin: 0; padding: var(--space-4); list-style: none; }
+.app-cardgrid__cell { display: flex; min-width: 0; }
+.app-gridcard { display: flex; flex: 1; flex-direction: column; min-width: 0; overflow: hidden; border: var(--size-hairline) solid var(--c-line); border-radius: var(--radius-popup); background: var(--c-card); }
+.app-gridcard--skeleton { gap: var(--space-3); padding: var(--space-3); }
+.app-gridcard__media { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1); height: var(--size-grid-card-media); padding: var(--space-3); border-block-end: var(--size-hairline) solid var(--c-line); background: var(--c-surface); color: var(--c-faint); font-size: var(--fs-xs); text-align: center; }
+.app-gridcard__key { max-width: 100%; overflow: hidden; font-family: var(--font-numeric); text-overflow: ellipsis; white-space: nowrap; }
+.app-gridcard__body { display: flex; flex: 1; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
+.app-gridcard__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+.app-gridcard__title { font-size: var(--fs-base); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
+.app-gridcard__sub { color: var(--c-muted); font-size: var(--fs-sm); line-height: var(--lh); overflow-wrap: anywhere; }
+.app-gridcard__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: auto; padding-block-start: var(--space-1); }

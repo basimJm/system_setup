@@ -1,0 +1,22 @@
+/** Built-in defaults of the core settings, used by the mock server. */
+export const MOCK_SETTING_DEFAULTS: Readonly<Record<string, unknown>> = {
+  'otp.length': 6,
+  'otp.resendAfterSec': 60,
+  'otp.maxRequests': 5,
+  'otp.requestWindowSec': 300,
+  'otp.maxWrong': 5,
+  'otp.blockSec': 900,
+  'admin.maxFailedLogins': 5,
+  'admin.lockSec': 900,
+  'admin.sessionIdleSec': 172_800,
+  'auth.accessTokenTtlSec': 900,
+  'auth.refreshTokenTtlDays': 90,
+  'pagination.appPageSize': 10,
+  'pagination.adminPageSize': 25,
+  'alerts.api5xxRatePct': 2,
+  'alerts.crashesPerHour': 10,
+  'alerts.jobFailures': { count: 5, windowMin: 60 },
+  'alerts.escalationMinutes': [60, 15],
+  timezone: 'Asia/Amman',
+  currency: 'JOD',
+};

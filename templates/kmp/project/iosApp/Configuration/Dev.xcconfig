@@ -1,0 +1,19 @@
+// Development environment: used by the Debug-Dev and Release-Dev configurations (scheme iosApp-Dev).
+#include "Config.xcconfig"
+
+APP_ENV = dev
+APP_DISPLAY_NAME = Acme Shop Dev
+// PLACEHOLDER host until the platform domain is decided. In xcconfig '//' starts a comment, so the
+// scheme separator is written as ':/$()/'.
+API_BASE_URL = https:/$()/api-dev.example.com
+WEB_BASE_URL = https:/$()/app-dev.example.com
+// Universal Links domain = the WEB_BASE_URL host; used by iosApp.entitlements.
+DEEP_LINK_HOST = app-dev.example.com
+// Set a suffix (for example .dev) only when the Firebase project has a matching iOS app.
+// Dev builds run on fixtures until the dev API exists.
+DATA_SOURCE = mock
+BUNDLE_ID_SUFFIX = .dev
+PRODUCT_BUNDLE_IDENTIFIER = com.acme.shop$(BUNDLE_ID_SUFFIX)
+
+// Per-developer overrides (team, free-account entitlements); optional and git-ignored.
+#include? "Local.xcconfig"

@@ -1,0 +1,17 @@
+// Production environment: used by the Debug-Prod and Release-Prod configurations (scheme iosApp-Prod).
+#include "Config.xcconfig"
+
+APP_ENV = prod
+APP_DISPLAY_NAME = Acme Shop
+// PLACEHOLDER host until the platform domain is decided. In xcconfig '//' starts a comment, so the
+// scheme separator is written as ':/$()/'.
+API_BASE_URL = https:/$()/api.example.com
+WEB_BASE_URL = https:/$()/app.example.com
+// Universal Links domain = the WEB_BASE_URL host; used by iosApp.entitlements.
+DEEP_LINK_HOST = app.example.com
+DATA_SOURCE = remote
+BUNDLE_ID_SUFFIX =
+PRODUCT_BUNDLE_IDENTIFIER = com.acme.shop$(BUNDLE_ID_SUFFIX)
+
+// Per-developer overrides (team, free-account entitlements); optional and git-ignored.
+#include? "Local.xcconfig"

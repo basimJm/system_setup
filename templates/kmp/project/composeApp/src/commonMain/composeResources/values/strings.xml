@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- Splash Screen -->
+    <!-- Update Dialogs -->
+    <!-- Maintenance Dialog -->
+    <!-- Session -->
+    <string name="unauthorized_logout_message">You are unauthorized and will be logged out.</string>
+</resources>

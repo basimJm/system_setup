@@ -1,0 +1,153 @@
+{
+  "scanRoots": [
+    "androidApp",
+    "composeApp",
+    "core",
+    "feature",
+    "iosApp",
+    "build-logic",
+    "scripts",
+    "config"
+  ],
+  "excludeDirs": [
+    "build",
+    ".gradle",
+    ".kotlin",
+    ".idea",
+    "Pods",
+    "node_modules",
+    "__pycache__",
+    "xcuserdata"
+  ],
+  "baseline": "config/policy-baseline.json",
+  "fileLength": {
+    "max": 300,
+    "extensions": [
+      ".kt",
+      ".kts",
+      ".swift",
+      ".py",
+      ".sh",
+      ".xml",
+      ".json"
+    ],
+    "excludeGlobs": [
+      "**/res/drawable*/**",
+      "**/res/mipmap*/**",
+      "**/composeResources/drawable*/**",
+      "**/GoogleService-Info.plist",
+      "**/google-services.json",
+      "config/policy-baseline.json",
+      "config/detekt/baseline.xml",
+      "**/contract/generated/**",
+      "core/data/fixtures/remote/**"
+    ]
+  },
+  "kotlin": {
+    "sourceGlobs": [
+      "**/src/*Main/**/*.kt",
+      "**/src/main/**/*.kt"
+    ],
+    "excludeGlobs": [
+      "build-logic/**",
+      "**/contract/generated/**"
+    ],
+    "testGlobs": [
+      "**/src/*Test/**",
+      "**/src/test/**"
+    ],
+    "themeGlobs": [
+      "**/designsystem/theme/**"
+    ],
+    "constantsGlobs": [
+      "**/constants/**",
+      "**/*Constants.kt"
+    ],
+    "previewGlobs": [
+      "**/*Previews.kt"
+    ],
+    "allowedNumbers": [
+      "0",
+      "1"
+    ],
+    "textArguments": [
+      "text",
+      "title",
+      "label",
+      "hint",
+      "placeholder",
+      "message",
+      "contentDescription",
+      "description",
+      "subtitle",
+      "caption",
+      "stateDescription",
+      "supportingText",
+      "errorMessage",
+      "headline",
+      "prefix",
+      "suffix"
+    ],
+    "identifierLabelArguments": [
+      "label"
+    ]
+  },
+  "swift": {
+    "sourceGlobs": [
+      "iosApp/iosApp/**/*.swift"
+    ]
+  },
+  "localization": {
+    "defaultDir": "values",
+    "translations": {
+      "ar": "values-ar"
+    },
+    "stringFile": "strings.xml",
+    "resourceRoots": [
+      "androidApp/src",
+      "composeApp/src",
+      "core",
+      "feature"
+    ]
+  },
+  "variants": {
+    "flavors": [
+      "dev",
+      "prod"
+    ],
+    "buildTypes": [
+      "debug",
+      "release"
+    ],
+    "iosConfigurations": [
+      "Debug-Dev",
+      "Release-Dev",
+      "Debug-Prod",
+      "Release-Prod"
+    ],
+    "iosSchemes": {
+      "iosApp-Dev": [
+        "Debug-Dev",
+        "Release-Dev"
+      ],
+      "iosApp-Prod": [
+        "Debug-Prod",
+        "Release-Prod"
+      ]
+    },
+    "iosXcconfigKeys": [
+      "APP_ENV",
+      "API_BASE_URL",
+      "APP_DISPLAY_NAME",
+      "PRODUCT_BUNDLE_IDENTIFIER",
+      "DATA_SOURCE"
+    ],
+    "gradlePropertyKeys": [
+      "DEV_API_BASE_URL",
+      "PROD_API_BASE_URL",
+      "DEV_DATA_SOURCE",
+      "PROD_DATA_SOURCE"
+    ],
+    "workflow": ".github/workflows/ci.yml"
+  }
+}

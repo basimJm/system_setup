@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComposableParamOrder:AppDivider.kt$AppDivider</ID>
+    <ID>ComposableParamOrder:AppError.kt$AppErrorState</ID>
+    <ID>ComposableParamOrder:AppImage.kt$AppImage</ID>
+    <ID>ComposableParamOrder:AppScreen.kt$AppScreen</ID>
+    <ID>ComposableParamOrder:AppSearchTextField.kt$AppSearchTextField</ID>
+    <ID>ComposableParamOrder:AppSwitch.kt$AppSwitchWithLabel</ID>
+    <ID>ComposableParamOrder:AppTopBar.kt$AppTopBarWithBack</ID>
+    <ID>ComposableParamOrder:AppTopBar.kt$AppTopBarWithMenu</ID>
+    <ID>ComposableParamOrder:MapLocation.kt$MapLocation</ID>
+    <ID>ComposableParamOrder:NotificationDisplay.kt$NotificationCard</ID>
+    <ID>ComposableParamOrder:NotificationDisplay.kt$NotificationContentDisplay</ID>
+    <ID>CompositionLocalAllowlist:NotificationManager.kt$LocalNotificationManager$LocalNotificationManager</ID>
+    <ID>CompositionLocalAllowlist:WindowSizeClass.kt$LocalWindowWidthClass</ID>
+    <ID>ContentSlotReused:AppScreen.kt$content</ID>
+    <ID>CyclomaticComplexMethod:AppPagingDataSource.kt$AppPagingDataSource$override suspend fun load(params: LoadParams&lt;Int&gt;): LoadResult&lt;Int, T&gt;</ID>
+    <ID>EmptyFunctionBlock:Analytics.android.kt${}</ID>
+    <ID>EmptyFunctionBlock:Analytics.ios.kt${}</ID>
+    <ID>EmptyFunctionBlock:FeatureFlags.kt$InMemoryFeatureFlags${}</ID>
+    <ID>EmptyFunctionBlock:MVIDelegate.kt$MVIDelegate${}</ID>
+    <ID>EmptyFunctionBlock:NavigatorDelegation.kt$NavigatorDelegation${ }</ID>
+    <ID>ForbiddenComment:Encryptor.ios.kt$Encryptor$// TODO: Implement using CommonCrypto</ID>
+    <ID>ForbiddenComment:Platform.android.kt$// TODO: replace it with real link</ID>
+    <ID>ForbiddenComment:Platform.ios.kt$// TODO: replace it with real link</ID>
+    <ID>FunctionNaming:MainViewController.kt$fun MainViewController()</ID>
+    <ID>FunctionOnlyReturningConstant:FeatureFlags.kt$FeatureFlagKeys$fun defaultValueForMissingKey(key: String): Boolean</ID>
+    <ID>LambdaParameterEventTrailing:AppChip.kt$onClick</ID>
+    <ID>LambdaParameterEventTrailing:AppMainHeader.kt$onNotificationClick</ID>
+    <ID>LambdaParameterEventTrailing:NotificationDisplay.kt$onDismiss</ID>
+    <ID>LambdaParameterInRestartableEffect:MVIDelegate.kt$onSideEffect</ID>
+    <ID>LambdaParameterInRestartableEffect:MapLocation.android.kt$onLocationSelected</ID>
+    <ID>LambdaParameterInRestartableEffect:NotificationDisplay.kt$onEvent</ID>
+    <ID>LargeClass:AppIcons.kt$AppIcons</ID>
+    <ID>LongMethod:AndroidAppPlugin.kt$AndroidAppPlugin$override fun apply(target: Project)</ID>
+    <ID>LongMethod:BaseHttpClient.kt$BaseHttpClient$fun buildHttpClient()</ID>
+    <ID>MaxLineLength:BaseHttpClient.kt$BaseHttpClient$"API base URL is blank. Set DEV_API_BASE_URL / PROD_API_BASE_URL (Android) or API_BASE_URL in the environment xcconfig (iOS)."</ID>
+    <ID>MaxLineLength:Constants.kt$Constants</ID>
+    <ID>MaxLineLength:StrValidator.kt$StrValidator$str.any { it.isLetter() } &amp;&amp; str.any { it.isDigit() } &amp;&amp; str.any { it.isLowerCase() } &amp;&amp; str.any { it.isUpperCase() } &amp;&amp; str.any { !it.isLetterOrDigit() &amp;&amp; !it.isWhitespace() }</ID>
+    <ID>MemberNameEqualsClassName:LocalAppLocale.ios.kt$LocalAppLocale$private val LocalAppLocale = staticCompositionLocalOf { defaultLocale }</ID>
+    <ID>MemberNameEqualsClassName:NotificationManager.kt$LocalNotificationManager$private val LocalNotificationManager = staticCompositionLocalOf&lt;NotificationManager&gt; { error("NotificationManager not provided. Wrap your content with NotificationHost.") }</ID>
+    <ID>ModifierMissing:App.kt$App</ID>
+    <ID>ModifierMissing:AppBottomBar.kt$AppBottomBar</ID>
+    <ID>ModifierMissing:AppTheme.kt$AppTheme</ID>
+    <ID>ModifierMissing:NotificationData.kt$NotificationContent.CustomComposable$Display</ID>
+    <ID>ModifierMissing:NotificationHost.kt$NotificationHost</ID>
+    <ID>ModifierMissing:SplashScreen.kt$SplashScreen</ID>
+    <ID>ModifierNotUsedAtRoot:AppBottomBar.kt$modifier = modifier .clickable(onClick = onClick) .padding(horizontal = 24.dp, vertical = 12.dp)</ID>
+    <ID>NewLineAtEndOfFile:build.gradle.kts$.build.gradle.kts</ID>
+    <ID>ParameterNaming:AppSearchTextField.kt$onPlaceSelected</ID>
+    <ID>ParameterNaming:MapLocation.android.kt$onLocationSelected</ID>
+    <ID>ParameterNaming:MapLocation.ios.kt$onLocationSelected</ID>
+    <ID>ParameterNaming:MapLocation.kt$onLocationSelected</ID>
+    <ID>PreviewPublic:AppFeedbackDialog.kt$AppErrorDialogPreview</ID>
+    <ID>PreviewPublic:AppFeedbackDialog.kt$AppSuccessDialogPreview</ID>
+    <ID>SwallowedException:MapLocation.android.kt$e: Exception</ID>
+    <ID>SwallowedException:PlacesApiConfig.android.kt$PlacesApiConfig$e: Exception</ID>
+    <ID>SwallowedException:PlacesRepositoryImpl.kt$PlacesRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AppPagingDataSource.kt$AppPagingDataSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LocalCacheRepositoryImpl.kt$LocalCacheRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MapLocation.android.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PlacesApiConfig.android.kt$PlacesApiConfig$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PlacesRepositoryImpl.kt$PlacesRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:safeApiCall.kt$e: Exception</ID>
+    <ID>TooManyFunctions:AppSettings.kt$AppSettings</ID>
+    <ID>TooManyFunctions:AppText.kt$AppTextStyles</ID>
+    <ID>UnstableCollections:AppBottomBar.kt$List&lt;AppNavDestination&gt;</ID>
+    <ID>UnstableCollections:AppDropdown.kt$List&lt;DropdownOption&gt;</ID>
+    <ID>UnstableCollections:AppNavigationRail.kt$List&lt;AppNavDestination&gt;</ID>
+    <ID>UnstableCollections:AppSearchTextField.kt$List&lt;PlacePrediction&gt;</ID>
+    <ID>UnstableCollections:AppSegmentedSelector.kt$List&lt;SelectorOption&gt;</ID>
+    <ID>UnstableCollections:AppToggle.kt$List&lt;ToggleOption&gt;</ID>
+    <ID>UnusedParameter:App.kt$androidContext: Any?</ID>
+    <ID>UnusedParameter:AppSearchTextField.kt$isLoading: Boolean = false</ID>
+    <ID>UnusedParameter:AppTheme.kt$dynamicColor: Boolean = false</ID>
+    <ID>UnusedParameter:FeatureFlags.kt$FeatureFlagKeys$key: String</ID>
+    <ID>UnusedPrivateProperty:AppToggle.kt$val onWidth = if (isOn) ToggleHeight - 8.dp else 40.dp</ID>
+    <ID>UnusedPrivateProperty:Encryptor.ios.kt$Encryptor$private val algorithm: Algorithm</ID>
+    <ID>UnusedPrivateProperty:Encryptor.ios.kt$Encryptor$private val passPhrase: String</ID>
+    <ID>UnusedPrivateProperty:Encryptor.ios.kt$Encryptor$private val salt: String</ID>
+    <ID>UnusedPrivateProperty:Encryptor.ios.kt$Encryptor$private val transformation: String</ID>
+    <ID>UseCheckOrError:DataStoreFactory.android.kt$throw IllegalStateException("Context must be provided for Android platform")</ID>
+    <ID>UseCheckOrError:PlacesApiConfig.android.kt$PlacesApiConfig$throw IllegalStateException("Android context not available")</ID>
+    <ID>UseCheckOrError:PushNotificationHandler.kt$PushNotificationHandler.Companion$throw IllegalStateException( "PushNotificationHandler must be initialized before use." )</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,113 @@
+/* Design `Admin 01 Login`: brand panel (start side) + borderless form on the page background. */
+.app-login {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100dvh;
+}
+[data-bp='expanded'] .app-login { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+
+.app-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-4);
+  overflow: hidden;
+  background: linear-gradient(150deg, var(--c-brand-deep) 0%, var(--c-primary) 45%, var(--c-primary-end) 100%);
+  color: var(--c-on-primary);
+}
+[data-bp='expanded'] .app-brand { justify-content: space-between; padding: var(--space-7) calc(var(--space-7) + var(--space-2)); }
+.app-brand__ring {
+  position: absolute;
+  border: var(--size-hairline) solid var(--c-on-brand-line);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.app-brand__ring--top { width: var(--size-brand-ring); height: var(--size-brand-ring); top: calc(var(--size-brand-ring) * -0.3); inset-inline-end: calc(var(--size-brand-ring) * -0.35); }
+.app-brand__ring--bottom { width: var(--size-brand-ring-sm); height: var(--size-brand-ring-sm); bottom: calc(var(--size-brand-ring-sm) * -0.3); inset-inline-start: calc(var(--size-brand-ring-sm) * -0.24); }
+.app-brand__top, .app-brand__copy, .app-brand__security { position: relative; }
+.app-brand__top { display: flex; align-items: center; gap: var(--space-3); }
+.app-brand__icon {
+  flex: none;
+  width: var(--size-brand-icon-lg);
+  height: var(--size-brand-icon-lg);
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  box-shadow: var(--shadow-brand);
+}
+.app-brand__names { display: flex; flex-direction: column; gap: var(--space-1); }
+.app-brand__wordmark { display: flex; align-items: baseline; gap: var(--space-2); }
+.app-brand__mark { font-family: var(--font-display); font-size: var(--fs-xxl); font-weight: var(--fw-bold); letter-spacing: var(--tracking-mark); line-height: 1; }
+.app-brand__tagline { color: var(--c-on-brand-soft); font-family: var(--font-numeric); font-size: var(--fs-xs); font-weight: var(--fw-semibold); letter-spacing: var(--tracking-brand); white-space: nowrap; }
+.app-brand__admin { align-self: flex-start; padding: 0 var(--space-2); border-radius: var(--radius-chip); background: var(--c-on-brand-chip); font-size: var(--fs-xs); font-weight: var(--fw-bold); }
+.app-brand__copy { display: grid; gap: var(--space-3); max-width: var(--size-auth-card); }
+.app-brand__headline { font-family: var(--font-display); font-size: var(--fs-hero); font-weight: var(--fw-bold); line-height: var(--lh); text-wrap: pretty; }
+.app-brand__text { color: var(--c-on-brand-text); font-size: var(--fs-md); line-height: var(--lh); text-wrap: pretty; }
+.app-brand__security { display: flex; align-items: center; gap: var(--space-2); color: var(--c-on-brand-soft); font-size: var(--fs-sm); }
+/* Phones and tablets keep only the brand header; the story is for wide screens. */
+[data-bp='compact'] .app-brand__copy, [data-bp='compact'] .app-brand__security,
+[data-bp='medium'] .app-brand__copy, [data-bp='medium'] .app-brand__security { display: none; }
+[data-bp='compact'] .app-brand, [data-bp='medium'] .app-brand { gap: 0; }
+[data-bp='compact'] .app-brand__ring, [data-bp='medium'] .app-brand__ring { display: none; }
+
+.app-login__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4);
+  min-width: 0;
+}
+.app-login__prefs { align-self: stretch; display: flex; justify-content: flex-end; }
+.app-prefs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.app-login__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--size-auth-card);
+  margin-block: auto;
+  padding-block: var(--space-6);
+}
+.app-login__heading { display: flex; flex-direction: column; gap: var(--space-1); }
+.app-login__title { font-size: var(--fs-title); font-weight: var(--fw-bold); }
+.app-login__lead { color: var(--c-muted); font-size: var(--fs-md); line-height: var(--lh); }
+.app-login__email { color: var(--c-ink); font-weight: var(--fw-bold); }
+.app-login__form { display: flex; flex-direction: column; gap: var(--space-4); }
+.app-login__form .app-field__control { min-height: var(--size-field); border-radius: var(--radius-md); font-size: var(--fs-md); }
+.app-login__form .app-btn--primary { min-height: var(--size-field); border-radius: var(--radius-md); font-size: var(--fs-md); }
+.app-login__back { display: inline-flex; align-self: flex-start; align-items: center; gap: var(--space-1); padding: 0; border: 0; background: none; color: var(--c-muted); font-size: var(--fs-nav); }
+.app-login__resend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2); color: var(--c-muted); font-size: var(--fs-nav); }
+
+.app-login__notice { margin: 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--c-soft); color: var(--c-ink); }
+
+/* One real input (autofill, screen readers) drawn as the design's six code boxes. */
+.app-otp { position: relative; display: flex; justify-content: center; gap: var(--space-2); direction: ltr; }
+.app-otp__box {
+  display: grid;
+  place-items: center;
+  width: var(--size-otp-box);
+  height: var(--size-otp-box-h);
+  border: var(--size-hairline) solid var(--c-line2);
+  border-radius: var(--radius-md);
+  background: var(--c-card);
+  font-family: var(--font-numeric);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+}
+.app-otp__box--filled { border-color: var(--c-accent); box-shadow: 0 0 0 var(--size-focus-ring) var(--c-soft); }
+.app-otp:focus-within .app-otp__box--current { border-color: var(--c-focus); box-shadow: 0 0 0 var(--size-focus-ring) var(--c-soft); }
+.app-field--error .app-otp__box { border-color: var(--c-danger); }
+.app-otp__input.app-field__control {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  letter-spacing: var(--size-otp-box);
+}
+.app-otp__input.app-field__control:focus-visible { outline: none; }
+.app-otp__error { text-align: center; }
