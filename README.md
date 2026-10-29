@@ -7,12 +7,12 @@ per-project backlogs/session/memory files, knowledge playbooks). Everything come
 itself is the CLI + template engine.
 
 ```bash
-/Users/basimabusnaimeh/WAB/.claude/tools/SYSTEM_SETUP/SYSTEM_SETUP            # interactive
-/Users/basimabusnaimeh/WAB/.claude/tools/SYSTEM_SETUP/SYSTEM_SETUP --help     # flags for non-interactive use
-/Users/basimabusnaimeh/WAB/.claude/tools/SYSTEM_SETUP/SYSTEM_SETUP --list-templates
+./SYSTEM_SETUP            # interactive
+./SYSTEM_SETUP --help     # flags for non-interactive use
+./SYSTEM_SETUP --list-templates
 ```
 
-Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s .claude/tools/SYSTEM_SETUP/tests`
+Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s tests`
 (they run on `tests/fixtures/templates`, never on the real templates, so the core stays green while templates evolve).
 
 ## 1. What it creates
