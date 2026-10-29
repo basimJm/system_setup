@@ -16,8 +16,12 @@
 4. Branch from the project's master (`INTEGRATION.md` §1), `tasks.py set <ID> "IN PROGRESS"`, task block in the **project's** `.claude/session.md`, implement + tests, one verification loop, 4-role review, gate, PR into the master, merge, `tasks.py set <ID> DONE` (this unblocks dependents in other projects and rewrites the board), next task.
 
 ## 1. The business in one paragraph
-<!-- Replace this paragraph with the system's business in ~10 lines: who the actors are, what each app lets them do, how money moves (phase 1 vs later phases), default language/RTL, currency and rounding unit, stored vs computed time zone. Everything an agent must know before reading a single PRD section. Name: __SYSTEM_NAME__ (__SYSTEM_NAME_AR__). -->
-**__SYSTEM_NAME__** (__SYSTEM_NAME_AR__) is … _(actors, apps, money flow, languages, currency/rounding, time zone — one paragraph)_.
+<!-- From the owner's answers to SYSTEM_SETUP (raw copy: `docs/BUSINESS_INPUT.md`). Replace every TBD with the owner before the first PRD. Name: __SYSTEM_NAME__ (__SYSTEM_NAME_AR__). -->
+**__SYSTEM_NAME__** (__SYSTEM_NAME_AR__):
+__BUSINESS_SUMMARY__
+
+Facts every agent needs before reading a PRD: default language `__DEFAULT_LANGUAGE__` (RTL __RTL__) + the second language; currency `__CURRENCY__`, amounts as integer minor units (`__CURRENCY_MINOR_UNIT__`); timestamps stored in `__STORED_TIME_ZONE__`, business dates/hours computed in `__BUSINESS_TIME_ZONE__`. Actors (details `BUSINESS_DOMAIN.md` §1):
+__BUSINESS_ACTORS__
 
 ## 2. Repository map (details, branches and backlogs: `INTEGRATION.md` §1)
 | Path | Project | Status (__DATE__) |
@@ -35,12 +39,13 @@ Each project: `docs/` (PRD = behaviour source of truth, BRD, Design Script, `*_T
 - Auth: server-generated one-time codes delivered through a provider port (fake provider on dev/QA with a fixed code), single-use proof token, JWT access + rotating refresh; staff/admin = email + password + second factor. Limits on requests and wrong codes live in settings, not code. Permissions: a fixed list of grantable keys enforced on every endpoint, socket event and notification; hidden-not-disabled in UI.
 - Real-time: socket rooms per user / per tenant (permission-filtered) / admin; every real-time event also has a push data message and a refresh-on-foreground fallback, de-duplicated by entity id.
 - Push: one Firebase (or equivalent) project per environment, one registration per app × platform. Jobs: reminders, pending alerts, auto-cancel/expiry, subscription checks, grace-period deletion, reports — deterministic job ids so they can be removed.
+- Integrations chosen by the owner (each behind a port/SDK; `decide later` = fake adapter until decided):
+__BUSINESS_INTEGRATIONS__
 - Files: presigned upload → device compression → direct object-storage upload → confirm → CDN URL; private files via short-lived signed URLs. Analytics: apps track screens/actions client-side; server events in the database; apps never send analytics to the backend.
 
 ## 4. Core business rules (enforced on the server)
-<!-- Numbered list of the 10–15 rules every project must respect; keep the exact numbering stable because tasks and reviews cite "CLAUDE.md §4 rule N". Examples of the kind of rule: visibility conditions, slot/duration arithmetic, no double booking (locks + atomic re-validation), the state machine, refund policy per cancel actor, snapshotting of prices/policies, idempotency for payments, approval before publishing, audit log + reason on every admin action. -->
-1. …
-2. …
+<!-- The owner's rules, numbered; keep the numbering stable because tasks and reviews cite "CLAUDE.md §4 rule N". Refine each into a testable `BUSINESS_DOMAIN.md` §5 rule (visibility conditions, time arithmetic, no double booking = locks + atomic re-validation, state machine, refund per cancel actor, snapshots, idempotent payments, approval before publishing, audit log + reason on admin actions). -->
+__BUSINESS_RULES__
 
 ## 5. Engineering conventions
 - Never commit secrets (`.env*` except `.env.example`, keystores, service-account JSON, xcconfig secrets); never edit `.env*` without permission.
@@ -51,5 +56,5 @@ Each project: `docs/` (PRD = behaviour source of truth, BRD, Design Script, `*_T
 - Environments dev and prod; gates are local unless the owner enables CI for a project.
 
 ## 6. Open decisions (owner; do not invent answers)
-<!-- One line per decision only the owner can take: hosting product, payment gateway, managed database tier, error-tracking tool, package registry, store accounts/signing, push project registrations. Each is a `PENDING` backlog row; `python3 scripts/tasks.py blocked` lists them. -->
-Hosting · payment gateway · managed database/cache tiers · error-tracking tool · package registry · app-store accounts/signing · push registrations per environment.
+<!-- One line per decision only the owner can take; each becomes a `PENDING` backlog row (`python3 scripts/tasks.py blocked` lists them). TBD answers from the setup questions are listed here until the owner fills them in `BUSINESS_DOMAIN.md`. -->
+__OPEN_DECISIONS__

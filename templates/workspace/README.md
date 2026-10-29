@@ -14,6 +14,7 @@
 | `scripts/tasks.py` | The backlog tool (`next`, `show`, `set`, `board`, `blocked`, `check`). Tests: `python3 -m unittest scripts/test_tasks.py`. |
 | `INTEGRATION.md` | How the parts talk: masters, contracts, edges, auth, real-time/push/jobs/storage, environments, the generated board (§7). |
 | `BUSINESS_DOMAIN.md` | Single source for schemas, enums, rules, state machines, permissions, jobs, settings keys, error codes. |
+| `docs/AGENT_PROMPT.md` | **Give this to your AI agent.** The filled prompt: business, projects, how to write PRDs/backlogs from `BUSINESS_DOMAIN.md`, then the per-task loop. `docs/BUSINESS_INPUT.md` holds the raw setup answers. |
 | `docs/` | How to write a project's PRD/BRD/backlog and its `.claude/` files; the templates. |
 | `__SERVER_DIR__/`, `__ADMIN_DIR__/`, apps, SDK packages (`__SYSTEM_SLUG__-<name>/`) | One folder per project (see `CLAUDE.md` §2 and `INTEGRATION.md` §1). |
 

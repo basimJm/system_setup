@@ -1,6 +1,6 @@
 {
   "kind": "workspace",
-  "_comment": "Monorepo root for a new multi-project system (agent workspace layer). Text tokens are replaced verbatim; __APPS_TABLE__, __SDKS_TABLE__ and __PROJECTS_JSON__ are filled by the engine from the chosen projects. Binary files under .claude/skills are copied as-is.",
+  "_comment": "Monorepo root for a new multi-project system (agent workspace layer). Text tokens are replaced verbatim; __APPS_TABLE__, __SDKS_TABLE__ and __PROJECTS_JSON__ are filled by the engine from the chosen projects; the __BUSINESS_*__ / language / currency / time-zone tokens come from the business-domain answers (TBD when skipped). Binary files under .claude/skills are copied as-is.",
   "placeholders": [
     "__SYSTEM_NAME__",
     "__SYSTEM_NAME_AR__",
@@ -14,7 +14,20 @@
     "__MASTERS_LIST__",
     "__OWNER_GITHUB__",
     "__REPO_NAME__",
-    "__DATE__"
+    "__DATE__",
+    "__BUSINESS_SUMMARY__",
+    "__DEFAULT_LANGUAGE__",
+    "__RTL__",
+    "__CURRENCY__",
+    "__CURRENCY_MINOR_UNIT__",
+    "__STORED_TIME_ZONE__",
+    "__BUSINESS_TIME_ZONE__",
+    "__BUSINESS_ACTORS__",
+    "__BUSINESS_RULES__",
+    "__BUSINESS_ENTITIES__",
+    "__BUSINESS_JOBS__",
+    "__BUSINESS_INTEGRATIONS__",
+    "__OPEN_DECISIONS__"
   ],
   "placeholder_notes": {
     "__SYSTEM_NAME__": "Human name of the system (English).",
@@ -29,7 +42,20 @@
     "__MASTERS_LIST__": "Comma-separated list of master branch names in backticks (e.g. `server`, `admin`, `app`).",
     "__OWNER_GITHUB__": "GitHub user/org that owns the repository.",
     "__REPO_NAME__": "Repository name on GitHub.",
-    "__DATE__": "Generation date, ISO (YYYY-MM-DD)."
+    "__DATE__": "Generation date, ISO (YYYY-MM-DD).",
+    "__BUSINESS_SUMMARY__": "Owner's business summary (~10 lines, multi-line, on its own line).",
+    "__DEFAULT_LANGUAGE__": "Default language code (e.g. `ar`).",
+    "__RTL__": "`on` when the default layout is right-to-left, else `off`.",
+    "__CURRENCY__": "Currency ISO code (or TBD).",
+    "__CURRENCY_MINOR_UNIT__": "Minor unit and decimals of the currency (or TBD).",
+    "__STORED_TIME_ZONE__": "Time zone timestamps are stored in (default UTC).",
+    "__BUSINESS_TIME_ZONE__": "IANA time zone business dates/hours are computed in (or TBD).",
+    "__BUSINESS_ACTORS__": "Markdown bullets: actors/roles and their permissions (multi-line, own line).",
+    "__BUSINESS_RULES__": "Numbered markdown lines: the core business rules (multi-line, own line).",
+    "__BUSINESS_ENTITIES__": "Markdown bullets: entities and their states/transitions (multi-line, own line).",
+    "__BUSINESS_JOBS__": "Markdown bullets: scheduled jobs and reminders (multi-line, own line).",
+    "__BUSINESS_INTEGRATIONS__": "Markdown bullets: integrations (OTP, payments, push, storage, maps, analytics) or `decide later`.",
+    "__OPEN_DECISIONS__": "Markdown bullets: owner decisions still open, including every answer left TBD (multi-line, own line)."
   },
   "sentinels": {},
   "rename_paths": {},

@@ -36,6 +36,11 @@ class CollectTest(TempDirTest):
             "otp",                # sdks
             "", "", "", "",       # urls default
             "", "acme-inc", "",   # team id skip, owner, repo default
+            "Customers order.", "Shops fulfil.", "",   # business summary: two lines, empty line ends
+            "en", "off", "USD", "cent, 2 decimals", "", "Europe/Paris",
+            "Customer: orders; Shop owner: fulfils", "",  # actors: one line, `;`-separated
+            "One order per slot", "Refund on shop cancel", "",  # rules: two lines
+            "", "", "decide later", "", "",            # entities default, jobs default, integrations, open decisions default
         ])
         with redirect_stdout(io.StringIO()):
             spec = collect(parse_args([]), reader)
@@ -49,13 +54,24 @@ class CollectTest(TempDirTest):
                          (spec.dev_api_url, spec.apple_team_id, spec.owner_github, spec.repo_name))
         self.assertTrue(seen[0].startswith("System name (English)"))
         self.assertIn("Short prefix for folders and task ids [ACME]", seen[2])
+        business = spec.business
+        self.assertEqual("Customers order.\nShops fulfil.", business.summary)
+        self.assertEqual(("en", "off", "USD", "cent, 2 decimals", "UTC", "Europe/Paris"),
+                         (business.default_language, business.rtl, business.currency, business.currency_minor_unit,
+                          business.stored_time_zone, business.business_time_zone))
+        self.assertEqual(["Customer: orders", "Shop owner: fulfils"], business.actors)
+        self.assertEqual(["One order per slot", "Refund on shop cancel"], business.rules)
+        self.assertEqual(([], [], ["decide later"], []), (business.entities, business.jobs, business.integrations, business.open_decisions))
 
     def test_invalid_interactive_answers_are_asked_again(self):
         reader, seen = scripted(["Acme", "", "acme", "ACME", "", "", str(self.root / "s"), "y", "y", "Bad:Slug", "", "billing", "",
-                                 "", "", "", "", "", "", ""])
+                                 "", "", "", "", "", "", "",
+                                 "", "", "maybe", "on", "", "", "", "", "", "", "", "", "", ""])  # business: rtl asked again
         with redirect_stdout(io.StringIO()) as out:
             spec = collect(parse_args([]), reader)
         self.assertEqual("ACME", spec.prefix)
+        self.assertEqual(("on", "TBD", "ar"), (spec.business.rtl, spec.business.summary, spec.business.default_language))
+        self.assertIn("answer on or off", out.getvalue())
         self.assertEqual(([], []), (spec.apps, spec.sdks))
         self.assertIn("uppercase", out.getvalue())
         self.assertIn("slug", out.getvalue())

@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from urllib.parse import urlsplit
 
+from business import Business, token_values as business_token_values
+
 SDK_CATALOG = ("storage", "otp", "notifications", "payments", "analytics")
 SDK_DESCRIPTIONS = {
     "storage": "presigned uploads, CDN / signed URLs (S3 + local adapters)",
@@ -236,6 +238,8 @@ class Spec:
     # Per-SDK metadata from templates/sdk/TEMPLATE.json `kinds` (name -> {prefix, title, dir = overlay folder,
     # description}); derived names when absent.
     sdk_overrides: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    # The business domain the tool asked about (business.py); TBD placeholders when the owner skipped a question.
+    business: Business = field(default_factory=Business)
 
     # --- derived names (one place, used by every template kind) ---
     @property
@@ -344,6 +348,7 @@ class Spec:
         }
         for token in URL_TOKENS:
             values[token.replace("_URL__", "_HOST__")] = host_of(values[token])
+        values.update(business_token_values(self.business))
         prefixes = self.app_prefixes()
         for index, app in enumerate(self.apps, start=1):
             values.update({

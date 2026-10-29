@@ -9,6 +9,7 @@ from contextlib import redirect_stdout
 from _support import FIXTURE_KNOWLEDGE, FIXTURE_TEMPLATES, TOOL_ROOT, TempDirTest, make_spec
 
 from cli import generate, main, print_report
+from business import Business, business_from
 from prompts import AppSpec
 
 
@@ -18,7 +19,10 @@ class EndToEndTest(TempDirTest):
         return spec, generate(spec, FIXTURE_TEMPLATES, run_post=False, git=True, tool=self.root / "tool", knowledge=FIXTURE_KNOWLEDGE)
 
     def test_full_system_is_generated_filled_checked_and_committed(self):
-        spec, report = self.generate()
+        business = business_from({"summary": "Customers order.\nShops fulfil.", "currency": "USD", "currency_minor_unit": "cent, 2 decimals",
+                                  "business_time_zone": "Europe/Paris", "actors": "Customer: orders; Shop: fulfils", "rules": ["One order per slot"],
+                                  "jobs": "Reminder 1 h before", "integrations": "payments: decide later", "open_decisions": "Gateway"})
+        spec, report = self.generate(business=business)
         repo = spec.target
         # every part landed in its folder
         self.assertEqual(["server", "admin", "sdk", "sdk", "kmp", "kmp", "workspace"], [r.kind for r in report.results])
@@ -65,6 +69,19 @@ class EndToEndTest(TempDirTest):
         self.assertIn("Masters: `server`, `admin`, `customer`, `merchant`.", guide)
         self.assertIn("| `ACME-Mobile-Customer/` | Customer app (KMP + Compose Multiplatform, `com.acme.customer`, tasks `CUS`, master `customer`) |", guide)
         self.assertIn("| `acme-shop-otp/` | SDK `@acme/otp` (ports + adapters, tasks `OTP`, master `server`) |", guide)
+        # business answers rendered into the guide; raw answers + filled agent prompt written and linked
+        self.assertIn("## Business\nCustomers order.\nShops fulfil.\nLanguage `ar` (RTL on); currency `USD` (`cent, 2 decimals`); stored `UTC`, computed `Europe/Paris`.", guide)
+        self.assertIn("Actors:\n- Customer: orders\n- Shop: fulfils\nRules:\n1. One order per slot\nEntities:\n- TBD (open — ask the owner)\nJobs:\n- Reminder 1 h before", guide)
+        self.assertIn("Open:\n- Gateway\n- Entities and states: TBD (open — ask the owner)\n", guide)
+        self.assertIn("docs/BUSINESS_INPUT.md", report.created)
+        self.assertIn("docs/AGENT_PROMPT.md", report.created)
+        self.assertEqual(business, __import__("business").load_business_file(repo / "docs/BUSINESS_INPUT.md"))
+        prompt = (repo / "docs/AGENT_PROMPT.md").read_text(encoding="utf-8")
+        self.assertIn("# Acme Shop — Prompt for the AI agent", prompt)
+        self.assertIn("| `customer` | `ACME-Mobile-Customer/` | `CUS` | `customer` | `ACME-Mobile-Customer/docs/ACME_Customer_Tasks.md` |", prompt)
+        self.assertIn("masters: `server`, `admin`, `customer`, `merchant`)", prompt)
+        self.assertIn("1. One order per slot", prompt)
+        self.assertTrue(any("docs/AGENT_PROMPT.md" in step for step in report.steps))
         registry = json.loads((repo / ".claude/projects.json").read_text(encoding="utf-8"))
         self.assertIn("(fixture)", registry["_comment"])
         self.assertEqual(["server", "admin", "customer", "merchant", "storage", "otp"], list(registry["projects"]))
@@ -88,6 +105,7 @@ class EndToEndTest(TempDirTest):
         self.assertIn("# Lessons (fixture)", (repo / "docs/knowledge/LESSONS.md").read_text(encoding="utf-8"))
         readme = (repo / "README.md").read_text(encoding="utf-8")
         self.assertIn("# Acme Shop — Workspace", readme)
+        self.assertIn("[`docs/AGENT_PROMPT.md`](docs/AGENT_PROMPT.md)", readme)
         self.assertIn("[`PLAYBOOKS.md`](docs/knowledge/PLAYBOOKS.md)", readme)
         self.assertIn("__SYSTEM_NAME__ stays a literal", (repo / ".claude/skills/demo/SKILL.md").read_text(encoding="utf-8"))
         self.assertEqual((True, "OK"), (report.check_ok, report.check_output))
@@ -150,10 +168,17 @@ class CliMainTest(TempDirTest):
                 "--npm-scope", "@beta", "--target", str(target), "--app", "Customer:customer", "--sdk", "otp,storage",
                 "--dev-api-url", "https://api-dev.beta.io", "--prod-api-url", "https://api.beta.io", "--dev-web-url",
                 "https://app-dev.beta.io", "--prod-web-url", "https://app.beta.io", "--team-id", "ABCDE12345",
-                "--github-owner", "beta-inc", "--templates", str(FIXTURE_TEMPLATES), "--knowledge", str(FIXTURE_KNOWLEDGE), "--no-git"]
+                "--github-owner", "beta-inc", "--templates", str(FIXTURE_TEMPLATES), "--knowledge", str(FIXTURE_KNOWLEDGE), "--no-git",
+                "--business", str(self.write("biz.md", "## Business summary\nShops sell.\n## Currency\nEUR\n## Core business rules\nr1; r2\n")),
+                "--rtl", "off"]
         with redirect_stdout(io.StringIO()) as out:
             code = main(argv)
         self.assertEqual(0, code, out.getvalue())
+        guide = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertIn("Shops sell.\nLanguage `ar` (RTL off); currency `EUR` (`TBD`)", guide)  # file + flag on top
+        self.assertIn("Rules:\n1. r1\n2. r2\n", guide)
+        self.assertIn("## Currency\nEUR\n", (target / "docs/BUSINESS_INPUT.md").read_text(encoding="utf-8"))
+        self.assertIn("# Beta Store — Prompt for the AI agent", (target / "docs/AGENT_PROMPT.md").read_text(encoding="utf-8"))
         self.assertIn("TEAM_ID = ABCDE12345", (target / "BETA-Mobile-Customer/iosApp/Configuration/Config.xcconfig").read_text(encoding="utf-8"))
         self.assertIn("API_BASE_URL = https:/$()/api-dev.beta.io", (target / "BETA-Mobile-Customer/iosApp/Configuration/Dev.xcconfig").read_text(encoding="utf-8"))
         self.assertTrue((target / "beta-store-otp/src/otp.ts").is_file())
@@ -169,6 +194,11 @@ class CliMainTest(TempDirTest):
                          "--templates", str(FIXTURE_TEMPLATES)])
         self.assertEqual(2, code)
         self.assertIn("Package root", out.getvalue())
+        with redirect_stdout(io.StringIO()) as out:
+            code = main(["--yes", "--name", "Beta", "--target", str(self.root / "y"), "--templates", str(FIXTURE_TEMPLATES),
+                         "--business", str(self.write("bad.md", "no headings"))])
+        self.assertEqual(2, code)
+        self.assertIn("Business domain", out.getvalue())
         with redirect_stdout(io.StringIO()) as out:
             code = main(["--yes", "--name", "Beta", "--target", str(TOOL_ROOT / "templates" / "generated"),
                          "--templates", str(FIXTURE_TEMPLATES), "--no-git"])

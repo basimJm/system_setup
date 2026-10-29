@@ -3,8 +3,11 @@
 Creates a brand-new multi-project system with the same shape as WAB — backend server, admin web panel, one or more
 Kotlin Multiplatform apps, SDK packages — plus the AI-agent workspace that ties them together (root `CLAUDE.md`,
 `.claude/{rules,roles,hooks,session,memory}.md`, hooks, `scripts/tasks.py`, `.claude/projects.json`, `INTEGRATION.md`,
-per-project backlogs/session/memory files, knowledge playbooks). Everything comes from `templates/<kind>/`; the tool
-itself is the CLI + template engine.
+per-project backlogs/session/memory files, knowledge playbooks). It also asks about the **business domain** (summary,
+language/RTL, currency, time zones, actors, rules, entities/states, jobs, integrations, open decisions) and renders the
+answers into the generated `CLAUDE.md`, `BUSINESS_DOMAIN.md`, `docs/BUSINESS_INPUT.md` and `docs/AGENT_PROMPT.md`, so an
+agent can write the PRDs and backlogs and work from them. Everything comes from `templates/<kind>/`; the tool itself is the
+CLI + template engine. `PROMPT.md` is the prompt to give an AI agent that has to run the tool (§5).
 
 ```bash
 ./SYSTEM_SETUP            # interactive
@@ -51,6 +54,37 @@ printed (push/protect the branches, install + gate + first task per project).
 | Dev / prod API base URL, dev / prod web URL | `--dev-api-url` … `--prod-web-url` | `https://api-dev.example.com` … ; **`https://<host>` only, no path** (the apps derive the bare host for xcconfig) |
 | Apple Team ID | `--team-id` | skip (empty); 10 `[A-Z0-9]` |
 | GitHub owner, repository name | `--github-owner`, `--repo-name` | `owner`, the slug |
+| **Business domain** (asked after the values above; multi-line answers end with an empty line, list answers take one item per line or `;`-separated) | `--business FILE` and/or the flags below | `TBD` placeholders (the generated docs list every TBD as an open decision) |
+| Business summary (~10 lines: actors, what each app lets them do, how money moves phase 1 vs later) | `--summary` | `TBD` |
+| Default language (BCP-47) / right-to-left by default | `--default-language` / `--rtl on\|off` | `ar` / `on` |
+| Currency (ISO code) / minor unit and decimals | `--currency` / `--currency-minor-unit` | `TBD` / `TBD` |
+| Time zone stored / business time zone computed in (IANA) | `--stored-time-zone` / `--business-time-zone` | `UTC` / `TBD` |
+| Actors + permissions · core business rules · entities + states · scheduled jobs · integrations (OTP, payments, push, storage, maps, analytics or `decide later`) · open decisions | `--actors`, `--rules`, `--entities`, `--jobs`, `--integrations`, `--open-decisions` (`;`-separated) | empty = TBD |
+
+Precedence for the business answers: flags > `--business` file > interactive answers/defaults. When a file or a flag is given,
+the interactive questions are skipped. The answers are written back as `docs/BUSINESS_INPUT.md` (same headings; pass it to
+`--business` to regenerate) and rendered into `CLAUDE.md` §1/§3/§4/§6, `BUSINESS_DOMAIN.md` (§1, §2, §5.0, §9, §10, §12, §13)
+and `docs/AGENT_PROMPT.md`.
+
+### Business file format
+`.md`: one `## <heading>` section per field (any order, missing sections keep the default; a leading `- ` / `1. ` and
+`;` split list items). `.json`: an object with the keys in the second column (strings or arrays).
+
+| Heading | JSON key | Kind |
+|---|---|---|
+| `## Business summary` | `summary` | multi-line text |
+| `## Default language` | `default_language` | text (`ar`) |
+| `## RTL` | `rtl` | `on`/`off` (`yes`/`no`, `true`/`false` accepted) |
+| `## Currency` | `currency` | text |
+| `## Currency minor unit` | `currency_minor_unit` | text (`<unit>, N decimals`) |
+| `## Stored time zone` | `stored_time_zone` | text (`UTC`) |
+| `## Business time zone` | `business_time_zone` | text (IANA name) |
+| `## Actors` | `actors` | list |
+| `## Core business rules` | `rules` | list (numbered in the docs) |
+| `## Entities and states` | `entities` | list (`Entity: STATE -> STATE`) |
+| `## Scheduled jobs` | `jobs` | list |
+| `## Integrations` | `integrations` | list |
+| `## Open decisions` | `open_decisions` | list |
 
 Other flags: `--templates DIR` (another templates folder, used by the tests), `--knowledge DIR`, `--run-post` (run each
 template's `post_generate` commands instead of printing them), `--no-git`, `--list-templates`.
@@ -61,7 +95,7 @@ SYSTEM_SETUP --yes --name "Beta Store" --name-ar "متجر بيتا" --prefix BE
   --target ~/Projects/beta-store --app Customer:customer --app "Merchant:merchant:التاجر" --sdk storage,otp \
   --dev-api-url https://api-dev.beta.io --prod-api-url https://api.beta.io \
   --dev-web-url https://app-dev.beta.io --prod-web-url https://app.beta.io --team-id ABCDE12345 \
-  --github-owner beta-inc --repo-name beta-store
+  --github-owner beta-inc --repo-name beta-store --business business.md --rtl off
 ```
 
 ## 3. Token contract (what a template may write)
@@ -78,6 +112,13 @@ catalog name, chosen or not, so a package can name a sibling), `__DEV_API_URL__`
 Workspace only (engine-computed, each on its own line, multi-line values): `__APPS_TABLE__`, `__SDKS_TABLE__`
 (rows `| \`dir/\` | description | status |`), `__PROJECTS_JSON__` (the `projects` object of `projects.json`, indented
 for `"projects": __PROJECTS_JSON__`).
+
+Business domain (from the answers, available to every kind; the workspace template uses them): `__BUSINESS_SUMMARY__`
+(multi-line, own line), `__DEFAULT_LANGUAGE__`, `__RTL__` (`on`/`off`), `__CURRENCY__`, `__CURRENCY_MINOR_UNIT__`,
+`__STORED_TIME_ZONE__`, `__BUSINESS_TIME_ZONE__`, and the lists rendered as markdown on their own line:
+`__BUSINESS_ACTORS__`, `__BUSINESS_ENTITIES__`, `__BUSINESS_JOBS__`, `__BUSINESS_INTEGRATIONS__` (bullets),
+`__BUSINESS_RULES__` (numbered), `__OPEN_DECISIONS__` (the owner's open decisions + every answer left `TBD`, flagged
+`open — ask the owner`). An empty list renders as one `TBD (open — ask the owner)` item.
 
 Per app, while the `kmp` template is instantiated for that app: `__APP_NAME__`, `__APP_NAME_AR__`, `__APP_SLUG__`,
 `__APP_DIR__`, `__APP_PACKAGE__` (`<package root>.<slug>`), `__APP_PACKAGE_PATH__` (`com/acme/customer`),
@@ -130,7 +171,24 @@ app/SDK with the per-app/per-SDK tokens filled in; the block disappears when the
   (`sentinel_left`). For the `kmp` kind a sentinel left anywhere aborts the run (same rule as the snapshot's
   `instantiate.py`); literals that equal one of the answers (the user kept `example.com`) are not leftovers.
 
-## 5. Adding a template kind
+## 5. `PROMPT.md` — the prompt for an AI agent
+
+`PROMPT.md` at the tool root has two parts. **Part A** is the generic prompt to give an agent that must create a new
+system with this tool: how to find and test the tool, which answers to collect from the owner (with the `<…>`
+placeholders to fill), the `--yes` command line, the checks to run in the result, then "configure the domain" and
+"work by the rules". **Part B** (between `<!-- AGENT_PROMPT:START -->` / `<!-- AGENT_PROMPT:END -->`) is written by the
+engine into every generated repository as `docs/AGENT_PROMPT.md` with the business answers, the project table and the
+masters filled in (`business.prompt_placeholders`); the generated `README.md` links it as "give this to your AI agent".
+It tells the agent working in the new repository to read root `CLAUDE.md` + rules once, fill the TBDs of
+`BUSINESS_DOMAIN.md` with the owner, write the PRD/BRD per project from `docs/templates/`, write every backlog
+`<Dir>/docs/<Prefix>_Tasks.md` (`| ID | Title | Branch | Needs | Status | Notes |`, server tasks first, clients `BLOCKED`
+on server ids), run `tasks.py check`/`board`, then follow the per-task loop (`tasks.py next`, branch from the master,
+tests, no hardcoding, AR+EN, `Loops: 1/1`, four-role review, `tasks.py set`, PR into the master). Placeholders in Part B
+that name an answer use the field headings in lower case (`<business summary>`, `<currency>`, …) plus `<system name>`,
+`<repository>`, `<date>`, `<masters>`, `<projects table>`; `tests/test_business.py` fails when Part B uses one the filler
+does not know.
+
+## 6. Adding a template kind
 
 1. Add the kind to `KINDS` and `DEFAULT_DEST` in `src/system_setup/manifest.py` (and `DEFAULT_LAYERS` / `DEFAULT_VERBATIM`
    when it needs an overlay or verbatim folders); extend `needed_kinds()` and the instantiation order in
@@ -140,12 +198,14 @@ app/SDK with the per-app/per-SDK tokens filled in; the block disappears when the
    and extend `tests/test_e2e.py`; keep `python3 -m unittest discover -s tests` green.
 3. Document the new tokens here and in the template's `TEMPLATE.json` `placeholders`.
 
-## 6. Layout
+## 7. Layout
 
 ```
 SYSTEM_SETUP                 entry (bash → python3 src/system_setup/cli.py)
 src/system_setup/cli.py      questions, flags, generate(), report
 src/system_setup/prompts.py  validators, derived names, Spec (every token value)
+src/system_setup/business.py business-domain questions, --business file parsing, business tokens, BUSINESS_INPUT.md, AGENT_PROMPT.md
+PROMPT.md                    Part A: prompt for an agent that sets up a system; Part B: filled into every repo as docs/AGENT_PROMPT.md
 src/system_setup/manifest.py TEMPLATE.json contract
 src/system_setup/engine.py   copy, substitute, rename, layers, targeted edits, verification, post_generate
 src/system_setup/kmp.py      kmp snapshot identity check + fail-loud verification per app

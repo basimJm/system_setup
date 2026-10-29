@@ -2,15 +2,20 @@
 
 > Mandatory reading **by section** for server, contract and cross-project tasks (grep the heading, read the range). PRDs describe screens; this file describes the data and the rules every project must agree on. Precedence: PRD > BRD > this file for behaviour; this file wins for schemas, enums, error codes and settings keys. Created __DATE__.
 >
-> Conventions: money = integer minor units (never floats); timestamps stored in UTC, business dates/hours computed in the system time zone from settings; ids are opaque strings; every enum lives here once and is mirrored (never re-typed) in the generated contract and the clients' tests.
+> Conventions: money = integer minor units of `__CURRENCY__` (`__CURRENCY_MINOR_UNIT__`; never floats); timestamps stored in `__STORED_TIME_ZONE__`, business dates/hours computed in `__BUSINESS_TIME_ZONE__` (from settings, §10); default language `__DEFAULT_LANGUAGE__` (RTL __RTL__); ids are opaque strings; every enum lives here once and is mirrored (never re-typed) in the generated contract and the clients' tests.
 
 ## 1. Actors & Identities
+From the owner's answers (`docs/BUSINESS_INPUT.md`); turn each into a row of the table below:
+__BUSINESS_ACTORS__
+
 <!-- one row per actor: who they are, how they authenticate (namespace/scope), what identifies them (phone/email), what they own -->
 | Actor | Namespace / scope | Identity | Owns |
 |---|---|---|---|
 
 ## 2. Enums (shared by server, contracts and clients)
 <!-- `EnumName`: VALUE_A, VALUE_B — meaning. Clients' tests compare their status/label tables against the contract's query enums. -->
+Entities and states given by the owner (each becomes an enum here, a collection in §3 and a state machine in §5.6):
+__BUSINESS_ENTITIES__
 
 ## 3. Collections
 <!-- one sub-section per aggregate: fields (type, required, default), indexes, soft-delete/`status` semantics, snapshot fields. Append-only collections marked as such. -->
@@ -24,6 +29,8 @@
 
 ## 5. Computed Rules
 <!-- numbered, each testable; tasks cite "§5.N". Typical: time arithmetic, completeness → state, availability, pricing/rounding (half-up ties away from zero in minor units), atomic creation with locks, cancellation/refund policies, ratings, conflicts on schedule changes, subscriptions, deletion grace period. -->
+### 5.0 Rules given by the owner (same numbering as root `CLAUDE.md` §4; refine each into the sub-sections below)
+__BUSINESS_RULES__
 ### 5.1 Time
 ### 5.2 Completeness → visibility state
 ### 5.3 Availability
@@ -47,9 +54,19 @@
 
 ## 9. Scheduled Jobs
 <!-- job → trigger/schedule → deterministic id → effect → idempotency note -->
+Jobs and reminders given by the owner:
+__BUSINESS_JOBS__
 
 ## 10. Settings (keys & defaults; admin-editable)
 <!-- `group.key` → type → default → who reads it. Limits, windows, percentages, time zone, lengths all live here, never in code. -->
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `locale.defaultLanguage` | string | `__DEFAULT_LANGUAGE__` | server locales, every client |
+| `locale.rtl` | boolean | `__RTL__` | every client (layout direction of the default language) |
+| `money.currency` | string | `__CURRENCY__` | server pricing, every client formatter |
+| `money.minorUnit` | string | `__CURRENCY_MINOR_UNIT__` | server rounding, every client formatter |
+| `time.storedZone` | string | `__STORED_TIME_ZONE__` | server (persistence) |
+| `time.businessZone` | string | `__BUSINESS_TIME_ZONE__` | server (schedules, jobs), clients (display) |
 
 ## 11. Error Codes (API `code` field)
 <!-- CODE → HTTP status → when → client behaviour. Every code has an AR+EN message in the server locales and in each client; tests enforce parity. -->
@@ -85,3 +102,8 @@ ITEM_LIMIT_REACHED        422     the owner reached the maximum number of items 
 
 ## 12. Open Points (assumptions in use — confirm or change)
 <!-- numbered owner questions with the assumption currently implemented; when the owner answers, move the answer into the section it belongs to and record the date -->
+Open decisions from the setup answers (TBD = the owner skipped the question; ask before building on it):
+__OPEN_DECISIONS__
+
+## 13. Integrations (providers behind SDK ports; `decide later` = fake adapter on dev until decided)
+__BUSINESS_INTEGRATIONS__

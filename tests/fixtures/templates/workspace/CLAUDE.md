@@ -9,3 +9,19 @@ Masters: __MASTERS_LIST__.
 | `__ADMIN_DIR__/` | Admin web panel | scaffold |
 __APPS_TABLE__
 __SDKS_TABLE__
+
+## Business
+__BUSINESS_SUMMARY__
+Language `__DEFAULT_LANGUAGE__` (RTL __RTL__); currency `__CURRENCY__` (`__CURRENCY_MINOR_UNIT__`); stored `__STORED_TIME_ZONE__`, computed `__BUSINESS_TIME_ZONE__`.
+Actors:
+__BUSINESS_ACTORS__
+Rules:
+__BUSINESS_RULES__
+Entities:
+__BUSINESS_ENTITIES__
+Jobs:
+__BUSINESS_JOBS__
+Integrations:
+__BUSINESS_INTEGRATIONS__
+Open:
+__OPEN_DECISIONS__

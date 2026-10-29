@@ -7,6 +7,7 @@ Non-interactive: pass the values as flags and --yes. See README.md next to this 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,13 +15,15 @@ from typing import Callable, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from business import (FIELDS, PROMPT_FILE, Business, ask_business, business_from, load_business_file,  # noqa: E402
+                      prompt_placeholders, write_agent_prompt, write_business_input)
 from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
 from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, slug_from, split_list, system_prefix_from,  # noqa: E402
                      validate_app_specs, validate_github_name, validate_npm_scope, validate_package, validate_prefix,
                      validate_required, validate_sdk_names, validate_team_id, validate_url)
-from workspace import (copy_knowledge, ensure_project_files, git_init, next_steps, projects_registry,  # noqa: E402
+from workspace import (copy_knowledge, ensure_project_files, git_init, next_steps, projects_registry, projects_table,  # noqa: E402
                        registry_shipped, run_tasks_check, workspace_values, write_registry)
 
 YES = ("y", "yes")
@@ -83,6 +86,12 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--team-id", help="Apple Team ID (10 characters; default: none)")
     parser.add_argument("--github-owner", help="GitHub owner used in the docs")
     parser.add_argument("--repo-name", help="GitHub repository name used in the docs (default: the system slug)")
+    business = parser.add_argument_group("business domain (interactive questions; or --business FILE; or these flags; "
+                                         "--yes keeps TBD placeholders the generated docs flag as open)")
+    business.add_argument("--business", type=Path, metavar="FILE", help="answers file: .md with `## <field>` headings or .json with the field keys")
+    for spec in FIELDS:
+        business.add_argument(f"--{spec.key.replace('_', '-')}", dest=f"biz_{spec.key}", metavar="TEXT",
+                              help=spec.question + ("; items `;`-separated" if spec.kind == "list" else "") + f" (default: {spec.default})")
     parser.add_argument("--templates", type=Path, default=None, help="templates folder (default: the tool's templates/)")
     parser.add_argument("--knowledge", type=Path, default=None, help="folder of LESSONS.md/PLAYBOOKS.md to copy to docs/knowledge/ (default: the tool's knowledge/)")
     parser.add_argument("--run-post", action="store_true", help="run each template's post_generate commands")
@@ -137,7 +146,23 @@ def collect(args: argparse.Namespace, reader: Callable[[str], str] = input) -> S
     spec.apple_team_id = value(args.team_id, "Apple Team ID (Enter = skip)", "", check=validate_team_id)
     spec.owner_github = value(args.github_owner, "GitHub owner (for the docs)", spec.owner_github, check=validate_github_name)
     spec.repo_name = value(args.repo_name, "GitHub repository name (for the docs)", slug, check=validate_github_name)
+    spec.business = collect_business(args, interactive, reader)
     return spec
+
+
+def collect_business(args: argparse.Namespace, interactive: bool, reader: Callable[[str], str]) -> Business:
+    """File (`--business`) first, flags on top of it, then the interactive questions (skipped under --yes or when a file
+    or a flag already answered)."""
+    flagged = {spec.key: getattr(args, f"biz_{spec.key}") for spec in FIELDS if getattr(args, f"biz_{spec.key}") is not None}
+    try:
+        business = load_business_file(args.business.expanduser()) if args.business else Business()
+        business = business_from(flagged, business)
+    except (ValueError, OSError, json.JSONDecodeError) as error:
+        sys.exit(f"Business domain: {error}")
+    if interactive and not args.business and not flagged:
+        print("\nBusiness domain (Enter keeps the default; TBD answers are listed as open decisions in the generated docs)")
+        business = ask_business(reader, ask, business)
+    return business
 
 
 def needed_kinds(spec: Spec) -> List[str]:
@@ -186,7 +211,7 @@ def apply_sdk_kinds(spec: Spec, manifest: Optional[Manifest]) -> None:
 
 
 def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = True,
-             tool: Optional[Path] = None, knowledge: Optional[Path] = None) -> Report:
+             tool: Optional[Path] = None, knowledge: Optional[Path] = None, prompt: Optional[Path] = None) -> Report:
     tool = tool or tool_root()
     check_target(spec.target, tool)
     manifests = load_templates(templates, needed_kinds(spec))
@@ -213,6 +238,12 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
     if not registry_shipped(spec.target, registry):
         write_registry(spec.target, registry)
     report.created = ensure_project_files(spec.target, registry)
+    report.created.append(write_business_input(spec.target, spec.business, spec.system_name, spec.today.isoformat()))
+    prompt_rel = write_agent_prompt(spec.target, prompt or tool_root() / PROMPT_FILE, prompt_placeholders(
+        spec.system_name, spec.business, projects_table(registry), ", ".join(f"`{m}`" for m in spec.masters()),
+        f"github.com/{spec.owner_github}/{spec.repo_name or spec.slug}", spec.today.isoformat()))
+    if prompt_rel:
+        report.created.append(prompt_rel)
     report.knowledge = copy_knowledge(spec.target, knowledge if knowledge is not None else tool / "knowledge")
     if run_post:
         for result in report.results:

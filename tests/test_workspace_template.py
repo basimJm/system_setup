@@ -55,6 +55,19 @@ FAKE_VALUES = {
     "__OWNER_GITHUB__": "acme-org",
     "__REPO_NAME__": "acme-system",
     "__DATE__": "2026-01-01",
+    "__BUSINESS_SUMMARY__": "Customers order from shops.\nShops fulfil and get paid monthly.",
+    "__DEFAULT_LANGUAGE__": "ar",
+    "__RTL__": "on",
+    "__CURRENCY__": "USD",
+    "__CURRENCY_MINOR_UNIT__": "cent, 2 decimals",
+    "__STORED_TIME_ZONE__": "UTC",
+    "__BUSINESS_TIME_ZONE__": "Europe/Paris",
+    "__BUSINESS_ACTORS__": "- Customer: orders\n- Shop owner: fulfils",
+    "__BUSINESS_RULES__": "1. One order per slot\n2. Refund on shop cancel",
+    "__BUSINESS_ENTITIES__": "- Order: PENDING -> PAID -> DONE",
+    "__BUSINESS_JOBS__": "- Reminder 1 h before",
+    "__BUSINESS_INTEGRATIONS__": "- payments: decide later",
+    "__OPEN_DECISIONS__": "- Payment gateway",
 }
 BACKLOG = """# {title} — Task Backlog
 

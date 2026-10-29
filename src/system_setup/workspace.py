@@ -91,6 +91,14 @@ def workspace_values(spec: Spec, registry: Dict[str, object]) -> Dict[str, str]:
     return {"__APPS_TABLE__": "\n".join(app_rows), "__SDKS_TABLE__": "\n".join(sdk_rows), "__PROJECTS_JSON__": projects_json}
 
 
+def projects_table(registry: Dict[str, object]) -> str:
+    """Markdown rows `| key | folder | prefix | master | backlog |` of every project (for the agent prompt)."""
+    projects: Dict[str, Dict[str, str]] = registry["projects"]  # type: ignore[assignment]
+    rows = ["| Project key | Folder | Task prefix | Master | Backlog |", "|---|---|---|---|---|"]
+    rows.extend(f"| `{name}` | `{p['dir']}/` | `{p['prefix']}` | `{p['master']}` | `{p['backlog']}` |" for name, p in projects.items())
+    return "\n".join(rows)
+
+
 def registry_shipped(repo_root: Path, registry: Dict[str, object]) -> bool:
     """True when the workspace template already rendered a projects.json with the same projects (via __PROJECTS_JSON__)."""
     path = repo_root / REGISTRY_REL
@@ -250,6 +258,8 @@ def next_steps(spec: Spec, registry: Dict[str, object], git_done: bool = True) -
         kind = "server" if name == "server" else "admin" if name == "admin" else "sdk" if name in spec.sdks else "app"
         lines.append(f"{project['dir']}: install `{INSTALL_COMMANDS[kind]}` · gate `{GATE_COMMANDS[kind]}` · "
                      f"first task `python3 scripts/tasks.py next {name}` then `tasks.py set {project['prefix']}-001 \"IN PROGRESS\"`")
+    lines.append("Give docs/AGENT_PROMPT.md to your AI agent: it fills the TBD answers of BUSINESS_DOMAIN.md with the owner, "
+                 "writes the PRDs/BRDs and every backlog from the business domain, then works task by task.")
     lines.append("Read CLAUDE.md and .claude/rules.md at the root before the first task; the hooks in .claude/settings.json "
                  "enforce branching, tests and the review.")
     return lines
