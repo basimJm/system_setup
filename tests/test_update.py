@@ -9,13 +9,13 @@ import subprocess
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from documents import ANALYZED_DOC_REL, sha
 from _support import FIXTURE_KNOWLEDGE, FIXTURE_PLANS, FIXTURE_TEMPLATES, SAMPLE_DOCS, TempDirTest, valid_plan_data
 
 from analyzer import FakeAnalyzer
 from catalog import load_catalog
 from cli import generate, main
 from commands import run_documents_command
+from documents import ANALYZED_DOC_REL, sha
 from plan import PLAN_FILE, Plan, load_plan
 from test_documents import Canned
 from update import add_integration_rows, new_rows, plan_diff, run_update
