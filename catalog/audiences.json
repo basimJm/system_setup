@@ -8,7 +8,7 @@
   "staff_words": [
     "staff", "merchant", "vendor", "seller", "provider", "partner", "business", "owner", "manager", "employee", "operator",
     "driver", "courier", "rider", "agent", "facility", "clinic", "shop", "store", "branch", "team", "teacher", "pharmacist",
-    "cashier", "kitchen", "restaurant", "salon", "studio", "organization", "organisation", "company", "back-office"
+    "cashier", "kitchen", "restaurant", "studio", "organization", "organisation", "company", "back-office"
   ],
   "client_words": ["app", "web", "site", "portal", "mobile", "client", "panel"]
 }

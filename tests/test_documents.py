@@ -445,7 +445,7 @@ class ContractTest(GeneratedSystem):
             self.assertIn("STARTING DRAFT", document["info"]["description"])
         after = {p.name: p.read_bytes() for p in (self.repo / "HFP-Server" / "docs" / "api").glob("openapi.*.json")}
         self.assertEqual(before, after, "the contract the server tests compare is untouched")
-        self.assertEqual({"openapi.admin.json", "openapi.common.json", "openapi.customer.json", "openapi.merchant.json"}, set(after))
+        self.assertEqual({"openapi.admin.json", "openapi.common.json", "openapi.parentWeb.json"}, set(after))
 
     def test_validation_finds_what_is_wrong(self):
         self.assertIn("`paths` must be a non-empty object", dr.validate_openapi({"openapi": "3.1.0", "info": {"title": "t", "version": "1"}, "paths": {}}))
