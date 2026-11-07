@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlsplit
 
+from audiences import Audience, AudiencePlan, infer_role, load_audience_catalog, plan_audiences
 from business import Business, token_values as business_token_values
 
 SDK_CATALOG = ("storage", "otp", "notifications", "payments", "analytics")
@@ -192,6 +193,7 @@ class AppSpec:
     slug: str   # kebab, e.g. "customer" (also the master branch name)
     name_ar: str = ""
     platforms: List[str] = field(default_factory=lambda: list(MOBILE_PLATFORMS))  # android, ios, or both
+    role: str = ""   # server audience shape: end_user or staff; empty = inferred from the slug and name (audiences.py)
 
     @property
     def project(self) -> str:
@@ -200,10 +202,12 @@ class AppSpec:
 
 @dataclass
 class WebSpec:
-    """A web app (customer portal, merchant site ...): the web template in its own folder, with its own prefix and master."""
+    """A web app (parent portal, staff site ...): the web template in its own folder, with its own prefix and master."""
     name: str
     slug: str
     name_ar: str = ""
+    role: str = ""
+    api_slug: str = ""   # the audience this web app calls when it shares the server audience of a mobile app of the same module
 
     @property
     def project(self) -> str:
@@ -313,6 +317,15 @@ class Spec:
 
     def app_package(self, app: AppSpec) -> str:
         return f"{self.package_root}.{package_segment(app.slug)}"
+
+    def audience_plan(self) -> AudiencePlan:
+        """The server audiences of this system: one per role, from the apps then the web apps (audiences.py)."""
+        catalog = load_audience_catalog()
+        found = [Audience(c.slug, c.role or infer_role(c.slug, c.name, catalog)) for c in [*self.apps, *self.webs] if not getattr(c, "api_slug", "")]
+        return plan_audiences(found, catalog.roles)
+
+    def web_api_prefix(self, web: WebSpec) -> str:
+        return f"/{web.api_slug or web.slug}/{API_VERSION_SEGMENT}"
 
     def app_api_prefix(self, app: AppSpec) -> str:
         """`/customer/v1`: the REST namespace of the app (one per client, own token scope)."""
@@ -464,6 +477,8 @@ class Spec:
             "__WEB_NAME__": web.name,
             "__WEB_NAME_AR__": web.name_ar or web.name,
             "__WEB_SLUG__": web.slug,
+            "__API_PREFIX__": self.web_api_prefix(web),
+            "__API_SLUG__": web.api_slug or web.slug,
             "__WEB_DIR__": self.web_dir(web),
             "__WEB_PREFIX__": self.web_prefixes()[web.slug],
             "__WEB_MASTER__": web.slug,

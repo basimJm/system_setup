@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from business import IANA_ZONE_RE
+from audiences import ROLES
 from catalog import Catalog
 from prompts import validate_npm_scope, validate_package, validate_prefix, validate_slug
 
@@ -101,6 +102,7 @@ class Module:
     audience: str = ""
     why: str = ""
     platforms: List[str] = field(default_factory=list)
+    role: str = ""   # app and web modules: "end_user" or "staff" (the server audience shape); empty = inferred (audiences.py)
 
 
 @dataclass
@@ -359,7 +361,7 @@ class _Reader:
         out, seen = [], set()
         for index, raw in enumerate(self.items(data, "modules", "", minimum=1)):
             where = f"modules[{index}]"
-            item = self.obj(raw, where, ["id", "kind", "name", "audience", "why", "platforms"])
+            item = self.obj(raw, where, ["id", "kind", "name", "audience", "why", "platforms"], ["role"])
             module = Module(id=self.checked(self.text(item, "id", where, limit=40), f"{where}.id", validate_slug),
                             kind=self.text(item, "kind", where, limit=40), name=self.text(item, "name", where, limit=80),
                             audience=self.text(item, "audience", where, limit=LONG), why=self.text(item, "why", where, limit=LONG))
@@ -372,6 +374,9 @@ class _Reader:
             if module.kind in ("app", "web") and module.id in RESERVED_APP_IDS:
                 self.fail(f"{where}.id", f"{module.id!r} is reserved for a master branch; name the app differently")
             module.platforms = self.strings(item, "platforms", where, minimum=1, limit=20)
+            module.role = self.text(item, "role", where, empty=True, limit=20)
+            if module.role and module.role not in ROLES:
+                self.fail(f"{where}.role", f"{module.role!r} is not one of {', '.join(ROLES)}")
             allowed = kind.allowed_platforms if kind else list(self.catalog.platforms)
             for p_index, platform in enumerate(module.platforms):
                 if platform not in allowed:
@@ -483,7 +488,8 @@ def model_schema(catalog: Catalog) -> Dict[str, Any]:
         "business": _obj({"summary": _s(), "actors": _list(_obj({"name": _s(), "does": _s()}), minItems=1), "rules": _list(_s()),
                           "entities": _list(_obj({"name": _s(), "states": _list(_s())})), "jobs": _list(_s()), "existing": _list(_s())}),
         "modules": _list(_obj({"id": _s(), "kind": _s(enum=list(catalog.kinds)), "name": _s(), "audience": _s(), "why": _s(),
-                               "platforms": _list(_s(enum=list(catalog.platforms)), minItems=1)}), minItems=1),
+                               "platforms": _list(_s(enum=list(catalog.platforms)), minItems=1),
+                               "role": _s(enum=[*ROLES, ""])}), minItems=1),
         "sdks": _list(_obj({"id": _s(), "title": _s(), "why": _s(), "source": _s(enum=list(SOURCES)), "package": _s(), "version": _s(),
                             "provider": _s()})),
         "deployment": _list(_obj({"part": _s(), "host": _s(), "database": _s(), "cache": _s()})),

@@ -1,6 +1,6 @@
 {
   "kind": "server",
-  "description": "Backend API template (Node 22 + Express 5 + Mongoose + Redis + Socket.IO + BullMQ, TypeScript strict): three namespaces (/customer/v1, /merchant/v1, /admin/v1) with phone-OTP and admin email+password+email-OTP auth, JWT access + rotating refresh tokens, settings registry, append-only audit, notifications, uploads, provider ports with fakes, OpenAPI + Postman generation with a contract guard, Docker, seeds and one sample `items` feature per namespace.",
+  "description": "Backend API template (Node 22 + Express 5 + Mongoose + Redis + Socket.IO + BullMQ, TypeScript strict): one namespace per audience of the plan (an end-user one and a staff one, named after the plan's modules; the template ships them as `customer` and `merchant`) next to /admin/v1 with phone-OTP and admin email+password+email-OTP auth, JWT access + rotating refresh tokens, settings registry, append-only audit, notifications, uploads, provider ports with fakes, OpenAPI + Postman generation with a contract guard, Docker, seeds and one sample `items` feature per audience.",
   "placeholders": [
     "__SYSTEM_NAME__",
     "__SYSTEM_NAME_AR__",
@@ -20,7 +20,256 @@
   "rename_paths": {
     "__SYSTEM_PREFIX__": "__SYSTEM_PREFIX__"
   },
-  "skip": ["node_modules/**", "dist/**", "coverage/**", "TEMPLATE.json"],
-  "post_generate": ["npm ci", "npm run verify"],
-  "binary_globs": []
+  "skip": [
+    "node_modules/**",
+    "dist/**",
+    "coverage/**",
+    "TEMPLATE.json"
+  ],
+  "post_generate": [
+    "npm ci",
+    "npm run contract:init",
+    "npm run docs",
+    "npm run format",
+    "npm run verify"
+  ],
+  "binary_globs": [],
+  "audiences": {
+    "end_user": {
+      "word": "customer",
+      "plural": "customers"
+    },
+    "staff": {
+      "word": "merchant",
+      "plural": "merchants"
+    }
+  },
+  "prune": {
+    "staff": {
+      "skip": [
+        "src/modules/merchant/**",
+        "tests/merchantAuth.test.ts",
+        "docs/api/openapi.merchant.json",
+        "docs/api/postman/__SYSTEM_PREFIX__-Merchant.postman_collection.json"
+      ],
+      "edits": [
+        {
+          "file": "src/constants/docs.ts",
+          "find": "['common', 'customer', 'merchant', 'admin']",
+          "replace_with": "['common', 'customer', 'admin']"
+        },
+        {
+          "file": "src/modules/shared/otp/index.ts",
+          "find": "CUSTOMER_OTP_SCHEMAS, MERCHANT_OTP_SCHEMAS,",
+          "replace_with": "CUSTOMER_OTP_SCHEMAS,"
+        },
+        {
+          "file": "src/modules/shared/otp/otp.openapi.ts",
+          "find": "CUSTOMER_OTP_SCHEMAS, MERCHANT_OTP_SCHEMAS,",
+          "replace_with": "CUSTOMER_OTP_SCHEMAS,"
+        },
+        {
+          "file": "tests/docs.test.ts",
+          "find": "['customer', 'merchant', 'admin'] as const",
+          "replace_with": "['customer', 'admin'] as const"
+        },
+        {
+          "file": "src/routes/index.ts",
+          "find": "Readonly<Record<ApiNamespace, Router>>",
+          "replace_with": "Readonly<Record<Exclude<ApiNamespace, 'merchant'>, Router>>"
+        },
+        {
+          "file": "tests/devSeed.test.ts",
+          "find": "DEV_SEED.items.length * 2",
+          "replace_with": "DEV_SEED.items.length"
+        }
+      ],
+      "drop_blocks": [
+        {
+          "file": "src/server.ts",
+          "start": "merchantAuth: {",
+          "end": "    },"
+        },
+        {
+          "file": "src/docs/contractVersions.ts",
+          "start": "merchant: {",
+          "end": "  },"
+        },
+        {
+          "file": "src/constants/devSeed.ts",
+          "start": "merchant: {",
+          "end": "  },"
+        },
+        {
+          "file": "src/docs/index.ts",
+          "start": "merchant: [",
+          "end": "  ],"
+        },
+        {
+          "file": "src/modules/services.ts",
+          "start": "readonly merchantAuth?: {",
+          "end": "  };"
+        },
+        {
+          "file": "src/modules/shared/uploads/index.ts",
+          "start": "export const createMerchantUploadsRouter",
+          "end": "  });"
+        },
+        {
+          "file": "src/modules/shared/items/index.ts",
+          "start": "/** Merchant items belong",
+          "end": "  });"
+        },
+        {
+          "file": "src/modules/shared/notifications/index.ts",
+          "start": "export const createMerchantNotificationsRouter",
+          "end": "  });"
+        },
+        {
+          "file": "src/modules/shared/otp/index.ts",
+          "start": "export const createMerchantOtpRouter",
+          "end": "  build(services, 'merchant', MERCHANT_OTP_SCHEMAS);"
+        },
+        {
+          "file": "src/modules/shared/otp/otp.openapi.ts",
+          "start": "export const registerMerchantOtpDocs",
+          "end": "};"
+        },
+        {
+          "file": "src/modules/shared/items/items.openapi.ts",
+          "start": "export const registerMerchantItemDocs",
+          "end": "};"
+        },
+        {
+          "file": "src/modules/shared/uploads/uploads.openapi.ts",
+          "start": "export const registerMerchantUploadDocs",
+          "end": "};"
+        },
+        {
+          "file": "tests/items.test.ts",
+          "start": "it('merchant:",
+          "end": "  });"
+        },
+        {
+          "file": "tests/items.test.ts",
+          "start": "merchantAuth: {",
+          "end": "    },"
+        },
+        {
+          "file": "tests/uploads.test.ts",
+          "start": "it('merchant:",
+          "end": "  });"
+        },
+        {
+          "file": "tests/uploads.test.ts",
+          "start": "merchantAuth: {",
+          "end": "    },"
+        },
+        {
+          "file": "tests/items.test.ts",
+          "start": "const addMember",
+          "end": "};"
+        },
+        {
+          "file": "tests/uploads.test.ts",
+          "start": "const addMember",
+          "end": "};"
+        }
+      ],
+      "drop_lines": [
+        {
+          "file": "src/app.ts",
+          "contains": [
+            "createMerchantRouter"
+          ]
+        },
+        {
+          "file": "src/routes/index.ts",
+          "contains": [
+            "createMerchantRouter",
+            "API_PREFIXES.merchant"
+          ]
+        },
+        {
+          "file": "src/server.ts",
+          "contains": [
+            "createMerchantAuthService",
+            "loadMember"
+          ]
+        },
+        {
+          "file": "src/modules/services.ts",
+          "contains": [
+            "MerchantAuthService"
+          ]
+        },
+        {
+          "file": "src/docs/index.ts",
+          "contains": [
+            "registerMerchant"
+          ]
+        },
+        {
+          "file": "src/constants/docs.ts",
+          "contains": [
+            "Merchant API",
+            "merchantToken"
+          ]
+        },
+        {
+          "file": "src/modules/shared/items/index.ts",
+          "contains": [
+            "requirePermission"
+          ]
+        },
+        {
+          "file": "src/seeds/devSeed.ts",
+          "contains": [
+            "let merchant =",
+            "merchantCreated",
+            "merchant ??=",
+            "merchant.tenantId",
+            "readonly merchant:"
+          ]
+        },
+        {
+          "file": "tests/items.test.ts",
+          "contains": [
+            "loadMember",
+            "new MembersRepository",
+            "MembersRepository }"
+          ]
+        },
+        {
+          "file": "tests/uploads.test.ts",
+          "contains": [
+            "loadMember",
+            "new MembersRepository",
+            "MembersRepository }"
+          ]
+        },
+        {
+          "file": "tests/devSeed.test.ts",
+          "contains": [
+            "merchant: 'created'",
+            "merchant: 'existing'",
+            "DEV_SEED.merchant.phone",
+            "expect(owner)"
+          ]
+        },
+        {
+          "file": "tests/items.test.ts",
+          "contains": [
+            "const tenantId"
+          ]
+        },
+        {
+          "file": "tests/uploads.test.ts",
+          "contains": [
+            "const tenantId"
+          ]
+        }
+      ]
+    }
+  }
 }

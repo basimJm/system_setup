@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from audiences import Renamer
 from manifest import MANIFEST_NAME, Manifest
 
 ALWAYS_SKIP = (".git", "__pycache__", ".DS_Store")
@@ -63,16 +64,29 @@ def substitute_tokens(text: str, values: Mapping[str, str]) -> str:
     return text
 
 
+def audience_renamer(manifest: Manifest, slugs: Optional[Mapping[str, str]]) -> Optional[Renamer]:
+    """The renamer of a template that declares `audiences`, for the audience slugs the plan chose (role -> slug)."""
+    if not manifest.audiences:
+        return None
+    chosen = dict(slugs or {})
+    generic = {role: role.replace("_", "-") for role in manifest.audiences if role not in chosen}   # a pruned role: its leftover words get the role's own name
+    return Renamer({role: (words["word"], words["plural"]) for role, words in manifest.audiences.items()}, {**generic, **chosen})
+
+
 def render_text(text: str, manifest: Manifest, values: Mapping[str, str],
-                parts: Optional[Mapping[str, Iterable[Mapping[str, str]]]] = None) -> str:
+                parts: Optional[Mapping[str, Iterable[Mapping[str, str]]]] = None, renamer: Optional[Renamer] = None) -> str:
     text = expand_blocks(text, parts or {})
     text = substitute_sentinels(text, manifest.sentinels)
+    if renamer is not None:
+        text = renamer.apply(text)
     return substitute_tokens(text, values)
 
 
-def render_path(rel: PurePosixPath, manifest: Manifest, values: Mapping[str, str]) -> PurePosixPath:
+def render_path(rel: PurePosixPath, manifest: Manifest, values: Mapping[str, str], renamer: Optional[Renamer] = None) -> PurePosixPath:
     """Renames on the whole relative path, so a literal like `com/acme/shop` can span folders (package paths)."""
     text = substitute_sentinels(rel.as_posix(), manifest.rename_paths)
+    if renamer is not None:
+        text = renamer.apply(text)
     text = substitute_tokens(text, values)
     rendered = PurePosixPath(text)
     if rendered.is_absolute() or ".." in rendered.parts or not rendered.parts:
@@ -188,9 +202,12 @@ def resolve_dest(manifest: Manifest, repo_root: Path, values: Mapping[str, str])
 # ---------- generation ----------
 
 def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
-                parts: Optional[Mapping[str, Iterable[Mapping[str, str]]]] = None, drop: Sequence[str] = ()) -> Result:
+                parts: Optional[Mapping[str, Iterable[Mapping[str, str]]]] = None, drop: Sequence[str] = (),
+                audiences: Optional[Mapping[str, str]] = None) -> Result:
     """Writes one template into `repo_root` (under the manifest's dest). Returns what it did. `drop` names the template's
-    `prune` groups to remove: their files are not copied, their edits are applied and their commands are not listed."""
+    `prune` groups to remove: their files are not copied, their edits are applied and their commands are not listed.
+    `audiences` (role -> slug) renames the template's audience words (server); a role without a slug must be in `drop`."""
+    renamer = audience_renamer(manifest, audiences)
     unknown = [group for group in drop if group not in manifest.prune]
     if unknown:
         raise EngineError(f"{manifest.kind}: no prune group {', '.join(unknown)} (the template declares: {', '.join(manifest.prune) or 'none'})")
@@ -198,7 +215,7 @@ def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
     result = Result(kind=manifest.kind, dest=dest)
     removed_files = [glob for group in drop for glob in manifest.prune[group]["skip"]]
     for rel, source in template_files(manifest, values, removed_files):
-        out_rel = render_path(rel, manifest, values)
+        out_rel = render_path(rel, manifest, values, renamer)
         out = dest / Path(*out_rel.parts)
         out.parent.mkdir(parents=True, exist_ok=True)
         left_in_path = sentinel_leftovers(out_rel.as_posix(), manifest.sentinels, values)
@@ -223,7 +240,7 @@ def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
                 out.write_bytes(raw)
                 result.binaries.append(out)
             else:
-                rendered = render_text(text, manifest, values, parts)
+                rendered = render_text(text, manifest, values, parts, renamer)
                 out.write_text(rendered, encoding="utf-8")
                 unresolved, foreign = split_leftovers(rendered, manifest, values)
                 if unresolved:
@@ -237,26 +254,76 @@ def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
                 result.files.append(out)
         shutil.copymode(source, out)
     apply_targeted(manifest, dest, values)
-    apply_prune_edits(manifest, dest, values, drop)
+    apply_prune_edits(manifest, dest, values, drop, renamer)
     removed_commands = {cmd for group in drop for cmd in manifest.prune[group]["post_generate"]}
     result.post_generate = [render_text(cmd, manifest, values) for cmd in manifest.post_generate if cmd not in removed_commands]
     return result
 
 
-def apply_prune_edits(manifest: Manifest, dest: Path, values: Mapping[str, str], drop: Sequence[str]) -> None:
-    """The `edits` of every dropped prune group: exact `find` -> `replace_with` in one written file (both written as in the template). A file or a text that
-    is not there is an error, so a template that changed under its prune list is noticed, never skipped silently."""
+def audience_leftovers(manifest: Manifest, dest: Path, dropped: Sequence[str]) -> Dict[str, List[str]]:
+    """Files of a generated template that still carry the word of a role the plan does not have (should be empty; a word
+    left in a path or a file is listed so it is explained or fixed, never silent)."""
+    found: Dict[str, List[str]] = {}
+    for role in dropped:
+        word = manifest.audiences.get(role, {}).get("word", "")
+        if not word:
+            continue
+        for path in sorted(dest.rglob("*")):
+            rel = path.relative_to(dest).as_posix()
+            if not path.is_file() or any(part in ("node_modules", ".git") for part in path.parts):
+                continue
+            if word in rel.lower():
+                found.setdefault(rel, []).append(word)
+                continue
+            try:
+                if word in path.read_text(encoding="utf-8").lower():
+                    found.setdefault(rel, []).append(word)
+            except (UnicodeDecodeError, OSError):
+                continue
+    return found
+
+
+def apply_prune_edits(manifest: Manifest, dest: Path, values: Mapping[str, str], drop: Sequence[str], renamer: Optional[Renamer] = None) -> None:
+    """The removals of every dropped prune group, run on the written files. `edits`: exact `find` -> `replace_with`; `drop_lines`:
+    every line of the file that contains one of the texts is deleted; `drop_blocks`: from the first line containing `start` to the
+    next line that begins with `end` (indentation counts, so `  });` is a line indented by two), both included. Texts are written as in the template (sentinels, audience words and tokens render
+    like the file). A file or a text that is not there is an error, so a template that changed under its prune list is noticed,
+    never skipped silently."""
+    def target(group: str, name: str) -> "tuple[PurePosixPath, Path, str]":
+        rel = render_path(PurePosixPath(name), manifest, values, renamer)
+        path = dest / Path(*rel.parts)
+        if not path.is_file():
+            raise EngineError(f"{manifest.kind}: prune {group}: file {rel} was not generated")
+        return rel, path, path.read_text(encoding="utf-8")
+
+    def rendered(text: str) -> str:
+        return render_text(text, manifest, values, renamer=renamer)
+
     for group in drop:
-        for edit in manifest.prune[group]["edits"]:
-            rel = render_path(PurePosixPath(edit["file"]), manifest, values)
-            path = dest / Path(*rel.parts)
-            if not path.is_file():
-                raise EngineError(f"{manifest.kind}: prune {group}: file {rel} was not generated")
-            text = path.read_text(encoding="utf-8")
-            if render_text(edit["find"], manifest, values) not in text:
+        spec = manifest.prune[group]
+        for edit in spec["edits"]:
+            rel, path, text = target(group, edit["file"])
+            needle = rendered(edit["find"])
+            if needle not in text:
                 raise EngineError(f"{manifest.kind}: prune {group}: text not found in {rel}: {edit['find'][:80]!r}")
-            needle = render_text(edit["find"], manifest, values)   # written as in the template; sentinels and tokens render like the file
-            path.write_text(text.replace(needle, render_text(edit["replace_with"], manifest, values)), encoding="utf-8")
+            path.write_text(text.replace(needle, rendered(edit["replace_with"])), encoding="utf-8")
+        for entry in spec["drop_blocks"]:
+            rel, path, text = target(group, entry["file"])
+            start, end = rendered(entry["start"]), rendered(entry["end"])
+            lines = text.split("\n")
+            first = next((i for i, line in enumerate(lines) if start in line), None)
+            last = next((i for i in range(first + 1, len(lines)) if lines[i].startswith(end)), None) if first is not None else None
+            if first is None or last is None:
+                raise EngineError(f"{manifest.kind}: prune {group}: block {entry['start'][:60]!r} .. {entry['end'][:60]!r} not found in {rel}")
+            path.write_text("\n".join(lines[:first] + lines[last + 1:]), encoding="utf-8")
+        for entry in spec["drop_lines"]:
+            rel, path, text = target(group, entry["file"])
+            needles = [rendered(c) for c in entry["contains"]]
+            lines = text.split("\n")
+            kept = [line for line in lines if not any(n in line for n in needles)]
+            if len(kept) == len(lines):
+                raise EngineError(f"{manifest.kind}: prune {group}: no line with {needles[0][:80]!r} in {rel}")
+            path.write_text("\n".join(kept), encoding="utf-8")
 
 
 def apply_targeted(manifest: Manifest, dest: Path, values: Mapping[str, str]) -> None:
