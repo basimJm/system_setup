@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "sdks": [
+    {"id": "otp", "title": "One-time codes", "description": "Sign-in and confirmation codes sent to a phone or an e-mail address.", "generated": true},
+    {"id": "notifications", "title": "Notifications", "description": "Push notifications and e-mail sent to users.", "generated": true},
+    {"id": "payments", "title": "Payments", "description": "Charging, refunding and reconciling money through a payment gateway or mobile money.", "generated": true},
+    {"id": "storage", "title": "File storage", "description": "Uploads of photos and documents, with signed links and a CDN.", "generated": true},
+    {"id": "analytics", "title": "Analytics", "description": "Usage events and reports about what people do in the system.", "generated": true},
+    {"id": "maps", "title": "Maps and places", "description": "Addresses, distances, delivery zones and live location.", "generated": false}
+  ]
+}

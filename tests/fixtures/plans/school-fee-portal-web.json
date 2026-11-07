@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "system": {
+    "name": "Hillview Fee Portal",
+    "name_ar": "",
+    "slug": "hillview-fee-portal",
+    "prefix": "HFP",
+    "package_root": "com.hillview",
+    "npm_scope": "@hillview"
+  },
+  "languages": {
+    "default": "en",
+    "supported": [
+      "en",
+      "sw"
+    ],
+    "direction": "ltr",
+    "documents": "en"
+  },
+  "countries": [
+    "KE"
+  ],
+  "currency": {
+    "code": "KES",
+    "minor_unit": "cent",
+    "decimals": 2
+  },
+  "time_zones": {
+    "stored": "UTC",
+    "business": "Africa/Nairobi"
+  },
+  "business": {
+    "summary": "Hillview Academy in Nairobi wants a website so parents can see what they owe per child and pay school fees by mobile money instead of cash or bank deposit slips, removing the two weeks the bursar currently spends every term reconciling payments by hand. The portal must work well on cheap phones and slow connections, and no mobile app will be built. The bursar sets fee structures, discounts and bursaries, records payments made outside the website, reconciles accounts and exports data to the existing accounting software. The head teacher gets a read-only collection dashboard, the class teacher sees which of their students have cleared fees (without amounts) to release exam cards, and an IT contractor manages user accounts.",
+    "actors": [
+      {
+        "name": "Parent or guardian",
+        "does": "Logs in, sees each child (up to 5), views the fee statement per term (tuition, transport, lunch, activities), pays all or part of it via mobile money, downloads a receipt as PDF, and views payment history."
+      },
+      {
+        "name": "Bursar",
+        "does": "Sets the fee structure per class and term, applies discounts and bursaries, records cash or bank payments that happen outside the website, reconciles accounts, and exports data to the accounting software as CSV."
+      },
+      {
+        "name": "Head teacher",
+        "does": "Views a read-only dashboard of collection rates per class and a list of the biggest arrears."
+      },
+      {
+        "name": "Class teacher",
+        "does": "Sees only which children in their class have cleared fees, to give out exam cards; sees no amounts."
+      },
+      {
+        "name": "IT contractor",
+        "does": "Manages user accounts."
+      }
+    ],
+    "rules": [
+      "Each payment gets a receipt number.",
+      "Part payments are allowed; the minimum payment is KES 500.",
+      "Fees are due 14 days before the term opens.",
+      "A late fee of 2% is added after 30 days overdue, only if the board has approved it for that term.",
+      "Overpayments carry forward to the next term.",
+      "Siblings get a 10% discount on tuition for the second child onward.",
+      "A parent can be linked to up to 5 children."
+    ],
+    "entities": [
+      {
+        "name": "Invoice",
+        "states": [
+          "draft",
+          "issued",
+          "partly paid",
+          "paid",
+          "overdue",
+          "cancelled"
+        ]
+      },
+      {
+        "name": "Payment",
+        "states": [
+          "initiated",
+          "confirmed",
+          "failed",
+          "reversed"
+        ]
+      }
+    ],
+    "jobs": [
+      "SMS to parents 7 days before the due date",
+      "SMS to parents on the due date",
+      "SMS to parents 7 days after the due date",
+      "Receipt sent by SMS and e-mail after each payment",
+      "Weekly e-mail to the head teacher with the collection summary"
+    ],
+    "existing": [
+      "A student list and class lists kept in a spreadsheet maintained by the secretary",
+      "A desktop accounting package used and kept by the bursar",
+      "A brochure page on a free hosting service (not a functional website)"
+    ]
+  },
+  "modules": [
+    {
+      "id": "server-core",
+      "kind": "server",
+      "name": "Fee Portal API",
+      "audience": "All portal users (parents, bursar, head teacher, class teacher, IT contractor)",
+      "why": "Stores students, invoices and payments, runs the term reminder and weekly summary jobs, and talks to the mobile money, SMS and e-mail providers.",
+      "platforms": [
+        "server"
+      ]
+    },
+    {
+      "id": "parent-web",
+      "kind": "web",
+      "name": "Parent Fee Portal",
+      "audience": "Parents and guardians",
+      "why": "Lets parents view each child's fee statement per term, pay all or part by mobile money, download PDF receipts and see payment history, built to work on a cheap phone and a slow connection.",
+      "platforms": [
+        "web"
+      ]
+    },
+    {
+      "id": "staff-admin",
+      "kind": "admin",
+      "name": "Staff Admin Panel",
+      "audience": "Bursar, head teacher, class teacher and IT contractor",
+      "why": "Lets the bursar set fee structures and discounts, record outside payments, reconcile and export CSV; the head teacher view collection dashboards and arrears; the class teacher see fee-clearance status without amounts; the IT contractor manage user accounts.",
+      "platforms": [
+        "web"
+      ]
+    }
+  ],
+  "sdks": [
+    {
+      "id": "otp",
+      "title": "Parent sign-in",
+      "why": "Parents need to log in to the portal; the document does not state the login method.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "africas-talking",
+      "known": true,
+      "provider_known": true
+    },
+    {
+      "id": "payments",
+      "title": "Mobile money payments",
+      "why": "Parents pay fees by mobile money STK push; part payments down to KES 500 are allowed.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "mpesa",
+      "known": true,
+      "provider_known": true
+    },
+    {
+      "id": "notifications",
+      "title": "Receipt and summary e-mail",
+      "why": "Receipts are sent by e-mail and a weekly collection summary is e-mailed to the head teacher.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "sendgrid",
+      "known": true,
+      "provider_known": true
+    },
+    {
+      "id": "sms",
+      "title": "SMS reminders and receipts",
+      "why": "SMS reminders are sent 7 days before, on, and 7 days after the due date, and receipts are also sent by SMS.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "africas-talking",
+      "known": false,
+      "provider_known": true
+    }
+  ],
+  "deployment": [
+    {
+      "part": "server-core",
+      "host": "render",
+      "known": true,
+      "database": "postgres",
+      "cache": "redis"
+    },
+    {
+      "part": "parent-web",
+      "host": "render",
+      "known": true,
+      "database": "none",
+      "cache": "none"
+    },
+    {
+      "part": "staff-admin",
+      "host": "render",
+      "known": true,
+      "database": "none",
+      "cache": "none"
+    }
+  ],
+  "rules": [],
+  "open_questions": [
+    {
+      "id": "mobile-money-provider",
+      "question": "Which mobile money provider (and which bank holds the school account) will be used for STK push payments?",
+      "why": "The payments SDK and reconciliation flow depend on the provider; the document says the finance committee decides next month.",
+      "proposed_default": "mpesa",
+      "answer": null
+    },
+    {
+      "id": "boarding-fee-structure",
+      "question": "Do parents from the boarding section pay a different fee structure than day students?",
+      "why": "This affects whether invoices need a separate structure or line items for boarding.",
+      "proposed_default": "No separate structure; boarding fees use the same per-class, per-term structure.",
+      "answer": null
+    },
+    {
+      "id": "payment-reversal-authority",
+      "question": "Who may reverse a payment made by mistake: the bursar alone, or the head teacher as well?",
+      "why": "This decides which actor(s) get permission to move a Payment to the 'reversed' state.",
+      "proposed_default": "Bursar only.",
+      "answer": null
+    },
+    {
+      "id": "record-retention-period",
+      "question": "How long should invoice and payment records be kept?",
+      "why": "The accountant mentioned seven years but this was not confirmed as a decision.",
+      "proposed_default": "7 years.",
+      "answer": null
+    },
+    {
+      "id": "default-language",
+      "question": "Which language, English or Kiswahili, should the portal show by default?",
+      "why": "The document lists both languages but does not say which is primary for parents.",
+      "proposed_default": "en",
+      "answer": null
+    },
+    {
+      "id": "login-mechanism",
+      "question": "How should parents log in (phone number with SMS code, e-mail and password, or something else)?",
+      "why": "The document only says parents 'log in' without specifying the authentication method.",
+      "proposed_default": "Phone number with an SMS one-time code.",
+      "answer": null
+    },
+    {
+      "id": "email-provider",
+      "question": "Which e-mail provider should send receipts and the head teacher's weekly summary?",
+      "why": "The document requires e-mail delivery but does not name a provider.",
+      "proposed_default": "sendgrid",
+      "answer": null
+    },
+    {
+      "id": "sms-provider",
+      "question": "Which SMS provider should send reminders and SMS receipts?",
+      "why": "The document requires SMS delivery but does not name a provider.",
+      "proposed_default": "africas-talking",
+      "answer": null
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "claude_bin": "claude",
+  "model": "sonnet",
+  "max_budget_usd": 1.0,
+  "timeout_seconds": 600
+}

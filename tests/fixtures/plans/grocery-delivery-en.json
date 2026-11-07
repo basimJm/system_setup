@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "system": {
+    "name": "Green Basket Market",
+    "name_ar": "",
+    "slug": "green-basket-market",
+    "prefix": "GBM",
+    "package_root": "com.greenbasket",
+    "npm_scope": "@greenbasket"
+  },
+  "languages": {
+    "default": "en",
+    "supported": [
+      "en"
+    ],
+    "direction": "ltr",
+    "documents": "en"
+  },
+  "countries": [
+    "IE"
+  ],
+  "currency": {
+    "code": "EUR",
+    "minor_unit": "cent",
+    "decimals": 2
+  },
+  "time_zones": {
+    "stored": "UTC",
+    "business": "Europe/Dublin"
+  },
+  "business": {
+    "summary": "Green Basket Market is a single grocery shop in Dublin moving into neighbourhood delivery (a second shop may follow later). Customers order from about 1,500 products through a phone app, choosing a two-hour delivery slot and paying by card; shop staff pack orders from a shared tablet website at the packing bench, weighing loose items and applying the customer's substitution choice; a shop manager controls prices, offers and stock; two part-time drivers use an app to see their route and confirm delivery with a photo. Orders move through clear stages from placed to delivered, with rules for cancellation, refunds, delivery fees, a fixed delivery area and VAT-inclusive pricing.",
+    "actors": [
+      {
+        "name": "Customer",
+        "does": "Browses about 1,500 products by aisle, builds a basket, picks a two-hour delivery slot, pays by card, tracks the order, and can repeat a previous order with one tap."
+      },
+      {
+        "name": "Shop staff",
+        "does": "Uses a tablet website at the packing bench to see new orders in pick order, tick off items, weigh loose products, apply the customer's advance substitution choice, and mark the order ready."
+      },
+      {
+        "name": "Shop manager",
+        "does": "Sets prices, offers and stock, and switches products off when they run out."
+      },
+      {
+        "name": "Driver",
+        "does": "Sees their delivery route on an app, opens each address in a maps application, and marks an order delivered with a photo of where the bags were left; calls the customer if they are not at home."
+      },
+      {
+        "name": "Accountant",
+        "does": "Receives the daily sales sheet by e-mail and will provide the VAT rules per product category."
+      }
+    ],
+    "rules": [
+      "Delivery slots are two-hour windows between 8:00 and 20:00; same-day delivery is available if ordered before 15:00.",
+      "Products sold by weight (e.g. fruit, deli) are packed between 960 g and 1.1 kg for a 1 kg order; the card is charged the real weighed amount but never more than 10% above the price the customer saw.",
+      "A customer can cancel an order until packing starts.",
+      "If the shop cannot deliver an order, the customer gets a full refund.",
+      "Delivery fee is 3.50 EUR, free for baskets above 60 EUR.",
+      "Minimum basket value is 20 EUR.",
+      "Delivery is only available to about 12 listed postcodes; nothing outside that area.",
+      "Card is authorised at checkout and charged when the order is packed.",
+      "Prices include VAT; some food is zero-rated and some is 13.5%, with exact rules per product category to be given by the accountant.",
+      "A daily sales sheet is e-mailed to the owner and the accountant.",
+      "Customers log in with a text-message code (OTP).",
+      "A push notification is sent when the order is packed and when the driver is on the way.",
+      "An e-mail receipt is sent to the customer.",
+      "If the customer is not at home, the driver calls them.",
+      "No live map tracking of the driver is needed in the first version.",
+      "Each customer chooses in advance, per product, 'replace with similar' or 'do not replace' for substitutions.",
+      "The packing bench tool must be a website, not an installable app, because tablets are shared."
+    ],
+    "entities": [
+      {
+        "name": "Order",
+        "states": [
+          "placed",
+          "being packed",
+          "ready",
+          "out for delivery",
+          "delivered",
+          "cancelled"
+        ]
+      },
+      {
+        "name": "Product",
+        "states": [
+          "active",
+          "switched off"
+        ]
+      }
+    ],
+    "jobs": [
+      "Daily sales sheet e-mailed to the owner and the accountant."
+    ],
+    "existing": [
+      "A product list in a spreadsheet with barcodes and photos, kept in a shared folder.",
+      "No website yet for the shop."
+    ]
+  },
+  "modules": [
+    {
+      "id": "server",
+      "kind": "server",
+      "name": "Green Basket Market API",
+      "audience": "all other modules",
+      "why": "Stores products, orders, slots, stock, payments and drives notifications and the daily sales job.",
+      "platforms": [
+        "server"
+      ]
+    },
+    {
+      "id": "customer-app",
+      "kind": "app",
+      "name": "Customer App",
+      "audience": "customers",
+      "why": "Lets customers browse products, build a basket, choose a delivery slot, pay by card, track orders and repeat past orders.",
+      "platforms": [
+        "android",
+        "ios"
+      ]
+    },
+    {
+      "id": "driver-app",
+      "kind": "app",
+      "name": "Driver App",
+      "audience": "part-time drivers",
+      "why": "Shows each driver their route, opens addresses in a maps application, and lets them mark delivery with a photo.",
+      "platforms": [
+        "android",
+        "ios"
+      ]
+    },
+    {
+      "id": "staff-web",
+      "kind": "web",
+      "name": "Packing Bench Site",
+      "audience": "shop staff",
+      "why": "A shared-tablet website (not an app) for picking, weighing, handling substitutions and marking orders ready.",
+      "platforms": [
+        "web"
+      ]
+    },
+    {
+      "id": "admin",
+      "kind": "admin",
+      "name": "Shop Manager Panel",
+      "audience": "shop manager/owner",
+      "why": "Lets the manager set prices, offers and stock, and switch products off.",
+      "platforms": [
+        "web"
+      ]
+    }
+  ],
+  "sdks": [
+    {
+      "id": "otp",
+      "title": "SMS login codes",
+      "why": "Customers log in using a text-message code.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "twilio",
+      "known": true,
+      "provider_known": true
+    },
+    {
+      "id": "notifications",
+      "title": "Push and e-mail notifications",
+      "why": "Push when the order is packed and when the driver is on the way; e-mail receipts; and the daily sales sheet e-mail.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "fcm, sendgrid",
+      "known": true,
+      "provider_known": true
+    },
+    {
+      "id": "payments",
+      "title": "Card payments",
+      "why": "Authorises at checkout, charges on packing, and refunds when delivery is not possible.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "stripe",
+      "known": true,
+      "provider_known": true
+    },
+    {
+      "id": "storage",
+      "title": "Delivery photo storage",
+      "why": "Stores the photo the driver takes of where the bags were left as proof of delivery.",
+      "source": "internal",
+      "package": "",
+      "version": "",
+      "provider": "s3",
+      "known": true,
+      "provider_known": true
+    }
+  ],
+  "deployment": [
+    {
+      "part": "server",
+      "host": "docker-server",
+      "known": true,
+      "database": "postgres",
+      "cache": "redis"
+    },
+    {
+      "part": "admin",
+      "host": "vercel",
+      "known": true,
+      "database": "none",
+      "cache": "none"
+    },
+    {
+      "part": "staff-web",
+      "host": "vercel",
+      "known": true,
+      "database": "none",
+      "cache": "none"
+    }
+  ],
+  "rules": [],
+  "open_questions": [
+    {
+      "id": "substitution-charge",
+      "question": "Should customers be charged extra when a substitution item costs more than the original product?",
+      "why": "The document explicitly says this is undecided and it affects pricing and payment rules.",
+      "proposed_default": "Do not charge extra for substitutions; the shop absorbs the cost difference.",
+      "answer": null
+    },
+    {
+      "id": "alcohol-id-check",
+      "question": "If alcohol is sold, how should age verification be handled (ID check at the door, proof-of-age process, etc.)?",
+      "why": "The document says this is undecided and it affects what the driver app and order flow need to support.",
+      "proposed_default": "No alcohol sold until an ID-check process is defined; driver checks ID manually at the door once added.",
+      "answer": null
+    },
+    {
+      "id": "loyalty-points",
+      "question": "Should the system include a loyalty points programme?",
+      "why": "The document says this is undecided and it would affect the customer app and data model.",
+      "proposed_default": "No loyalty programme in the first version.",
+      "answer": null
+    },
+    {
+      "id": "vat-rules",
+      "question": "What are the exact VAT rules (zero-rated vs 13.5%, or other rates) per product category?",
+      "why": "The document says the accountant will supply these later, but they are needed for pricing and the daily sales sheet.",
+      "proposed_default": "Each product gets a VAT category field, to be filled in by the accountant before launch.",
+      "answer": null
+    },
+    {
+      "id": "otp-provider",
+      "question": "Which SMS provider should send the login codes?",
+      "why": "The document asks for text-message login codes but names no provider.",
+      "proposed_default": "twilio",
+      "answer": null
+    },
+    {
+      "id": "notifications-provider",
+      "question": "Which push notification and e-mail providers should be used?",
+      "why": "The document asks for push notifications and e-mail receipts/reports but names no providers.",
+      "proposed_default": "fcm for push notifications, sendgrid for e-mail.",
+      "answer": null
+    },
+    {
+      "id": "payments-provider",
+      "question": "Which card payment gateway should process payments?",
+      "why": "The document requires card payments, authorisation at checkout and refunds, but names no payment gateway.",
+      "proposed_default": "stripe",
+      "answer": null
+    },
+    {
+      "id": "storage-provider",
+      "question": "Which storage provider should host the driver's delivery photos?",
+      "why": "The document requires a delivery photo to be stored but names no storage provider.",
+      "proposed_default": "s3",
+      "answer": null
+    },
+    {
+      "id": "polish-language",
+      "question": "Should Polish be supported from the first version, or added later as the document suggests ('maybe Polish later')?",
+      "why": "The intent is uncertain and affects scope and timeline for the customer app.",
+      "proposed_default": "English only for v1; add Polish in a later release.",
+      "answer": null
+    },
+    {
+      "id": "multi-shop",
+      "question": "Should the system be designed to support multiple shop locations from the start, since a second shop is mentioned as a future possibility?",
+      "why": "A second shop is mentioned as a future plan, which could affect how products, stock and orders are modelled.",
+      "proposed_default": "Design for a single shop in v1; add multi-location support later if needed.",
+      "answer": null
+    },
+    {
+      "id": "hosting",
+      "question": "Which hosting provider, database and cache should be used for the server, admin panel and staff website?",
+      "why": "The document does not mention any hosting, database or cache technology.",
+      "proposed_default": "docker-server host with a postgres database and a redis cache for the server; simple web hosting for the admin panel and staff website.",
+      "answer": null
+    }
+  ]
+}

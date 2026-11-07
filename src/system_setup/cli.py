@@ -3,6 +3,11 @@
 
 Interactive: run it and answer the questions (Enter keeps the default, an empty optional answer skips it).
 Non-interactive: pass the values as flags and --yes. See README.md next to this file.
+
+From a business description instead of answers:
+  SYSTEM_SETUP intake [--out BUSINESS.md]       Claude interviews you and writes the business document
+  SYSTEM_SETUP new [--business-doc FILE | --plan FILE] [--yes] [--target DIR]
+                                                analyze, review the plan with you, generate
 """
 from __future__ import annotations
 
@@ -211,7 +216,8 @@ def apply_sdk_kinds(spec: Spec, manifest: Optional[Manifest]) -> None:
 
 
 def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = True,
-             tool: Optional[Path] = None, knowledge: Optional[Path] = None, prompt: Optional[Path] = None) -> Report:
+             tool: Optional[Path] = None, knowledge: Optional[Path] = None, prompt: Optional[Path] = None,
+             extra_files: Optional[Dict[str, str]] = None) -> Report:
     tool = tool or tool_root()
     check_target(spec.target, tool)
     manifests = load_templates(templates, needed_kinds(spec))
@@ -239,6 +245,11 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         write_registry(spec.target, registry)
     report.created = ensure_project_files(spec.target, registry)
     report.created.append(write_business_input(spec.target, spec.business, spec.system_name, spec.today.isoformat()))
+    for rel, text in (extra_files or {}).items():  # e.g. system.plan.json and the business document, part of the first commit
+        path = spec.target / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        report.created.append(rel)
     prompt_rel = write_agent_prompt(spec.target, prompt or tool_root() / PROMPT_FILE, prompt_placeholders(
         spec.system_name, spec.business, projects_table(registry), ", ".join(f"`{m}`" for m in spec.masters()),
         f"github.com/{spec.owner_github}/{spec.repo_name or spec.slug}", spec.today.isoformat()))
@@ -306,6 +317,9 @@ def print_report(report: Report, run_post: bool) -> None:
 
 
 def main(argv: List[str]) -> int:
+    if argv and argv[0] in ("intake", "new"):  # the plan-driven flow (commands.py); the flat command below is unchanged
+        from commands import run
+        return run(argv, generate, print_report)
     args = parse_args(argv)
     templates = (args.templates or templates_root()).resolve()
     if args.list_templates:

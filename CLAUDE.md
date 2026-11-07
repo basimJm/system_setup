@@ -17,7 +17,7 @@ skeletons, SDKs, deployment files, rules, lessons). Standard-library Python 3.9,
 - Never read, print or commit `.env` files with values. Only key names go in `.env.example`.
 - Defaults for time zone, currency and country come from tokens, never from a real value.
 - Add a font, image or skill only with its license, and list it in `THIRD_PARTY_NOTICES.md`.
-- Lists are data (`catalog/*.json` once Phase 2 lands), generation is deterministic and uses no model. Never invent a business
+- Lists are data (`catalog/*.json`), generation is deterministic and uses no model. Never invent a business
   answer: a gap becomes a question, then an open point, then a `PENDING` backlog row.
 
 ## Reporting

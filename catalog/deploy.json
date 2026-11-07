@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "note": "Proposals only. Any other host name is allowed in a plan; it is then marked known: false.",
+  "hosts": [
+    {"id": "render", "title": "Render", "parts": ["server", "admin", "web"]},
+    {"id": "docker-server", "title": "Docker on a server you rent", "parts": ["server", "admin", "web"]},
+    {"id": "aws", "title": "AWS", "parts": ["server", "admin", "web"]},
+    {"id": "fly", "title": "Fly.io", "parts": ["server", "admin", "web"]},
+    {"id": "railway", "title": "Railway", "parts": ["server", "admin", "web"]},
+    {"id": "cloudflare", "title": "Cloudflare", "parts": ["admin", "web"]},
+    {"id": "vercel", "title": "Vercel", "parts": ["admin", "web"]},
+    {"id": "custom", "title": "Something else (custom)", "parts": ["server", "admin", "web"]}
+  ],
+  "databases": [
+    {"id": "postgres", "title": "PostgreSQL"},
+    {"id": "mysql", "title": "MySQL"},
+    {"id": "mongodb", "title": "MongoDB"},
+    {"id": "sqlite", "title": "SQLite (small systems)"},
+    {"id": "none", "title": "No database"}
+  ],
+  "caches": [
+    {"id": "redis", "title": "Redis"},
+    {"id": "memcached", "title": "Memcached"},
+    {"id": "none", "title": "No cache"}
+  ]
+}

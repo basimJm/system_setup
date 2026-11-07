@@ -38,11 +38,13 @@ Each phase is one branch and one PR into `main`.
 - [x] Tool tests pass, and a generated system passes `tasks.py check` with no leftovers.
 
 ### 2. Intake and plan
-- [ ] `intake`, `INTAKE_PROMPT.md` and `new`: a free-form document in any language becomes a validated `system.plan.json`.
-- [ ] The plan proposes modules, platforms per module, SDKs (only those needed, including new ones), deployment and open questions.
-- [ ] Review asks each choice, with the proposal as default: per module web, Android, iOS; per SDK build internally, already
-      published (package + version) or none, then the provider; per part the host.
-- [ ] Three different sample businesses give different plans: a booking marketplace, a grocery store with delivery, and a
+- [x] `intake`, `INTAKE_PROMPT.md` and `new`: a free-form document in any language becomes a validated `system.plan.json`.
+      Proven with the real analyzer on three documents (one Arabic), $0.16 to $0.24 each. Not proven: a live, interactive `intake`
+      interview (its `claude` arguments and greeting were checked in print mode only).
+- [x] The plan proposes modules, platforms per module, SDKs (only those needed, including new ones), deployment and open questions.
+- [x] Review asks each choice, with the proposal as default: per module web, Android, iOS; per SDK build internally, already
+      published (package + version) or none, then the provider; per part the host. Tested with scripted answers, not with a person.
+- [x] Three different sample businesses give different plans: a booking marketplace, a grocery store with delivery, and a
       web-only school fee portal.
 
 ### 3. Documents and backlogs
@@ -75,6 +77,8 @@ Each phase is one branch and one PR into `main`.
 
 ### 8. Update and full proof
 - [ ] `update` adds a module or SDK and refreshes documents without overwriting work.
+- [ ] The fallback time zone is `UTC` and any zone or currency works without editing template tests (today the fallback is
+      `Etc/GMT-3` and template tests pin it).
 - [ ] End to end on the three samples: generated, checked, built, first task run through the production line.
 
 ### 9. Release
