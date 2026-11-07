@@ -30,7 +30,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from analyzer import Analyzer, AnalyzerError, ClaudeAnalyzer, PlanRejected, propose
 from catalog import AnalyzerSettings, Catalog, CatalogError, load_analyzer_settings, load_catalog, load_document_settings
-from documents import BUSINESS_DOC_REL, DocumentsError, run_documents
+from documents import ANALYZED_DOC_REL, BUSINESS_DOC_REL, DocumentsError, run_documents, sha
 from engine import EngineError
 from manifest import ManifestError, templates_root
 from plan import PLAN_FILE, Plan, PlanError, dumps, load_plan
@@ -470,7 +470,7 @@ def run_update(argv: List[str], generate: Callable, analyzer: Optional[Analyzer]
             except (OSError, UnicodeDecodeError) as error:
                 say(f"Cannot read the business document {args.business_doc}: {error}")
                 return 2
-            changed_document = saved is None or document.strip() != saved.strip()
+            changed_document = document_changed(root, document, saved)
         if args.plan:
             new = load_plan(args.plan.expanduser(), catalog)
             say(f"Plan {args.plan} is valid; no model is used for the plan.")
@@ -489,7 +489,7 @@ def run_update(argv: List[str], generate: Callable, analyzer: Optional[Analyzer]
                 except (OSError, UnicodeDecodeError) as error:
                     say(f"Cannot read the business document {path}: {error}")
                     return 2
-                changed_document = saved is None or document.strip() != saved.strip()
+                changed_document = document_changed(root, document, saved)
             if not changed_document:
                 say("The business document is the same as the saved one (docs/BUSINESS.md): there is nothing to analyze. "
                     "Pass the changed document with --business-doc, or a changed plan with --plan.")
@@ -583,8 +583,19 @@ def run_update(argv: List[str], generate: Callable, analyzer: Optional[Analyzer]
     if changed_document and document is not None:
         saved_path.parent.mkdir(parents=True, exist_ok=True)
         saved_path.write_text(document if document.endswith("\n") else document + "\n", encoding="utf-8")
+        analyzed = root / ANALYZED_DOC_REL
+        analyzed.parent.mkdir(parents=True, exist_ok=True)
+        analyzed.write_text(sha(document.strip()) + "\n", encoding="utf-8")
     print_summary(root, changes, copied, row_ids, outcome, changed_document, dirty is not None, say)
     return 0 if outcome is None or not (outcome.unfinished or outcome.stopped) else 1
+
+
+def document_changed(root: Path, document: str, saved: Optional[str]) -> bool:
+    """Against what the plan was last analyzed from, so editing docs/BUSINESS.md in place and passing it back counts as a change."""
+    recorded = root / ANALYZED_DOC_REL
+    if recorded.is_file():
+        return sha(document.strip()) != recorded.read_text(encoding="utf-8").strip()
+    return saved is None or document.strip() != saved.strip()
 
 
 def print_summary(root: Path, changes: Changes, copied: int, row_ids: List[str], outcome, changed_document: bool, in_git: bool, say: Say) -> None:

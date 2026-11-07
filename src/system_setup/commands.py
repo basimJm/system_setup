@@ -13,7 +13,7 @@ from typing import Callable, List, Optional
 
 from analyzer import Analyzer, AnalyzerError, ClaudeAnalyzer, PlanRejected, propose
 from catalog import AnalyzerSettings, CatalogError, load_analyzer_settings, load_catalog, load_document_settings
-from documents import BUSINESS_DOC_REL as SAVED_DOCUMENT, DocumentsError, run_documents
+from documents import ANALYZED_DOC_REL, BUSINESS_DOC_REL as SAVED_DOCUMENT, DocumentsError, run_documents, sha
 from engine import EngineError
 from manifest import ManifestError, templates_root, tool_root
 from plan import PLAN_FILE, Plan, PlanError, dumps, load_plan
@@ -188,6 +188,7 @@ def run_new(argv: List[str], generate: Callable, print_report: Callable, analyze
     extra = {PLAN_FILE: dumps(plan)}
     if document is not None:
         extra[BUSINESS_DOC_REL] = document if document.endswith("\n") else document + "\n"
+        extra[ANALYZED_DOC_REL] = sha(document.strip()) + "\n"
     templates = (args.templates or templates_root()).resolve()
     hook = None
     if doc_settings is not None:

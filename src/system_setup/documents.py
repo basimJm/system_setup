@@ -30,6 +30,7 @@ STATE_REL = ".system_setup/documents.json"
 DATA_REL = ".system_setup/documents"
 REGISTRY_REL = ".claude/projects.json"
 BUSINESS_DOC_REL = "docs/BUSINESS.md"
+ANALYZED_DOC_REL = ".system_setup/analyzed_document.sha256"   # what the plan was last analyzed from: docs/BUSINESS.md itself may be edited
 MODULES_REL = "docs/modules"
 DRAFT_REL = "docs/api/draft"
 STATE_VERSION = 1

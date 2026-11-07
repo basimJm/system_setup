@@ -9,6 +9,7 @@ import subprocess
 from contextlib import redirect_stdout
 from pathlib import Path
 
+from documents import ANALYZED_DOC_REL, sha
 from _support import FIXTURE_KNOWLEDGE, FIXTURE_PLANS, FIXTURE_TEMPLATES, SAMPLE_DOCS, TempDirTest, valid_plan_data
 
 from analyzer import FakeAnalyzer
@@ -337,6 +338,21 @@ class AnalysisTest(UpdateTest):
         self.assertEqual(0, code, text)
         self.assertEqual([], fake.requests)
         self.assertIn("nothing to analyze", text)
+
+    def test_editing_the_saved_document_in_place_counts_as_a_change(self):
+        saved = self.system / "docs" / "BUSINESS.md"
+        saved.parent.mkdir(parents=True, exist_ok=True)
+        saved.write_text("# Acme Shop\n", encoding="utf-8")
+        recorded = self.system / ANALYZED_DOC_REL
+        recorded.parent.mkdir(parents=True, exist_ok=True)
+        recorded.write_text(sha("# Acme Shop") + "\n", encoding="utf-8")
+        saved.write_text("# Acme Shop\nNow with couriers.\n", encoding="utf-8")
+        self.commit("the owner edited the document")
+        fake = FakeAnalyzer([changed(with_driver_and_storage)])
+        code, text = self.update(None, "--business-doc", str(saved), analyzer=fake)
+        self.assertEqual(0, code, text)
+        self.assertEqual(1, len(fake.requests))
+        self.assertEqual(sha("# Acme Shop\nNow with couriers."), recorded.read_text(encoding="utf-8").strip())
 
     def test_a_failed_analysis_changes_nothing(self):
         saved = self.system / "docs" / "BUSINESS.md"
