@@ -152,8 +152,8 @@ class OrderAndInputsTest(GeneratedSystem):
         self.assertEqual("domain", labels[0])
         self.assertEqual(["brd:server-core", "prd:server-core", "brd:staff-admin", "prd:staff-admin", "design:staff-admin",
                           "brd:parent-web", "prd:parent-web", "design:parent-web"], labels[1:9])
-        self.assertEqual(["backlog:server-core", "backlog:staff-admin", "integration", "contract:staff-admin", "contract:parent-web"], labels[9:])
-        self.assertEqual(14, len(labels))
+        self.assertEqual(["backlog:server-core", "backlog:staff-admin", "backlog:parent-web", "integration", "contract:staff-admin", "contract:parent-web"], labels[9:])
+        self.assertEqual(15, len(labels))
         self.assertFalse(outcome.unfinished)
         by_label = {r.label: r for r in fake.requests}
         # the plan slice, never the whole plan; no deployment or other module's reason in a BRD
@@ -214,9 +214,9 @@ class BudgetAndResumeTest(GeneratedSystem):
         outcome = self.pipeline(second).run()
         self.assertFalse(outcome.stopped)
         self.assertFalse(set(second.labels()) & {"domain", "brd:server-core", "prd:server-core"})
-        self.assertEqual(11, len(second.requests))
-        self.assertEqual(14, len(self.state()["documents"]))
-        self.assertAlmostEqual(1.4, self.state()["spent_total_usd"])
+        self.assertEqual(12, len(second.requests))
+        self.assertEqual(15, len(self.state()["documents"]))
+        self.assertAlmostEqual(1.5, self.state()["spent_total_usd"])
 
     def test_the_per_call_cap_and_what_is_left_are_sent_to_the_model(self):
         fake = Canned(cost=0.2)
@@ -235,11 +235,11 @@ class BudgetAndResumeTest(GeneratedSystem):
         self.pipeline(Canned(cost=0.0731)).run()
         text = "\n".join(self.lines)
         self.assertIn("BUSINESS_DOMAIN.md: $0.0731, run total $0.0731 of $8.00", text)
-        self.assertIn("Cost this run $1.0234 of $8.00", text)
+        self.assertIn("Cost this run $1.0965 of $8.00", text)
 
     def test_a_hand_edited_document_is_kept_when_its_inputs_did_not_change(self):
         self.pipeline(Canned()).run()
-        path = self.repo / "docs" / "modules" / "parent-web" / "Parent_Web_Design_Script.md"
+        path = self.repo / "HFP-Web-ParentWeb" / "docs" / "Parent_Web_Design_Script.md"
         path.write_text(path.read_text(encoding="utf-8") + "\nOwner decision recorded by hand.\n", encoding="utf-8")
         again = Canned()
         outcome = self.pipeline(again).run()
@@ -255,7 +255,7 @@ class ChangedInputTest(GeneratedSystem):
         next(m for m in plan.modules if m.id == "parent-web").why = "Parents also see a yearly statement."
         again = Canned()
         self.pipeline(again, plan=plan).run()
-        self.assertEqual({"brd:parent-web", "prd:parent-web", "design:parent-web", "contract:parent-web", "integration"}, set(again.labels()))
+        self.assertEqual({"brd:parent-web", "prd:parent-web", "design:parent-web", "backlog:parent-web", "contract:parent-web", "integration"}, set(again.labels()))
 
     def test_a_changed_domain_redoes_every_document_that_cites_it(self):
         self.pipeline(Canned()).run()
@@ -380,7 +380,7 @@ class RepairAndFailureTest(GeneratedSystem):
         self.assertEqual("invalid", record["status"])
         self.assertTrue(any("missing the heading `## 4. Cross-cutting behaviour`" in p for p in record["problems"]))
         self.assertTrue((self.repo / "HFP-Admin-Dashboard" / "docs" / "Admin_PRD.md").is_file())
-        self.assertEqual(14, len(fake.labels()) - 1)  # one repair call more than the 14 documents
+        self.assertEqual(15, len(fake.labels()) - 1)  # one repair call more than the 15 documents
         self.assertEqual("invalid", [r for r in outcome.results if r.id == "prd:parent-web"][0].status)
         self.assertTrue(any("prd:parent-web" in l or "PRD parent-web" in l for l in self.lines if "CHECK FAILED" in l))
         # the rest of the run finished: the later documents exist
@@ -494,11 +494,12 @@ class FactsAndDocumentsTest(GeneratedSystem):
         self.assertEqual(before, {p: (self.repo / p).read_text(encoding="utf-8") for p in before}, "running twice changes nothing")
         self.assertEqual(0, self.tasks("check").returncode, "the context budgets still hold")
 
-    def test_documents_are_written_where_the_template_keeps_them_and_unmapped_modules_get_a_folder(self):
+    def test_documents_are_written_where_the_template_keeps_them(self):
         self.pipeline(Canned()).run()
         for rel in ("HFP-Server/docs/HFP_Backend_BRD.md", "HFP-Server/docs/HFP_Backend_PRD.md", "HFP-Admin-Dashboard/docs/Admin_BRD.md",
                     "HFP-Admin-Dashboard/docs/Admin_PRD.md", "HFP-Admin-Dashboard/docs/Admin_Design_Script.md",
-                    "docs/modules/parent-web/Parent_Web_BRD.md", "docs/modules/parent-web/Parent_Web_PRD.md", "docs/modules/parent-web/Parent_Web_Design_Script.md"):
+                    "HFP-Web-ParentWeb/docs/Parent_Web_BRD.md", "HFP-Web-ParentWeb/docs/Parent_Web_PRD.md",
+                    "HFP-Web-ParentWeb/docs/Parent_Web_Design_Script.md", "HFP-Web-ParentWeb/docs/HFP_ParentWeb_Tasks.md"):
             self.assertTrue((self.repo / rel).is_file(), rel)
         self.assertFalse((self.repo / "HFP-Server" / "docs" / "HFP_Server_PRD.md").exists())
         self.assertFalse((self.repo / "HFP-Server" / "docs" / "HFP_Server_Design_Script.md").exists())
@@ -537,9 +538,9 @@ class NewCommandTest(TempDirTest):
         self.assertIn("Before the first task", prompt)
         self.assertIn("review", prompt.lower())
         self.assertNotIn("Complete `BUSINESS_DOMAIN.md`", prompt)
-        self.assertIn("written by the tool: 14 document(s)", prompt)
+        self.assertIn("written by the tool: 15 document(s)", prompt)
         self.assertIn("tasks.py check: OK", text)
-        self.assertIn("Documents: 14 written", text)
+        self.assertIn("Documents: 15 written", text)
 
     def test_no_documents_leaves_the_starters_and_the_manual_prompt(self):
         fake = FakeAnalyzer([])
@@ -547,7 +548,7 @@ class NewCommandTest(TempDirTest):
         self.assertEqual(0, code, text[-1500:])
         self.assertEqual([], fake.requests)
         target = self.root / SCHOOL
-        self.assertFalse((target / ".system_setup").exists())
+        self.assertFalse((target / ".system_setup" / "documents.json").exists())
         self.assertIn("Complete `BUSINESS_DOMAIN.md`", (target / "docs" / "AGENT_PROMPT.md").read_text(encoding="utf-8"))
         self.assertIn("--no-documents", text)
 

@@ -1,11 +1,113 @@
 {
   "version": 1,
+  "note": "`generated: true` = a dedicated overlay under templates/sdk/kinds/. Any other SDK (listed here or new in a plan) is built from the generic overlay. `ports` = what a provider adapter implements, by channel (`*` = any); an SDK without `ports` uses `generic_port`.",
+  "generic_port": {
+    "interface": "__SDK_TITLE__Port",
+    "methods": [
+      "execute"
+    ],
+    "call": "adapter.execute({ operation: 'ping', payload: {} })"
+  },
   "sdks": [
-    {"id": "otp", "title": "One-time codes", "description": "Sign-in and confirmation codes sent to a phone or an e-mail address.", "generated": true},
-    {"id": "notifications", "title": "Notifications", "description": "Push notifications and e-mail sent to users.", "generated": true},
-    {"id": "payments", "title": "Payments", "description": "Charging, refunding and reconciling money through a payment gateway or mobile money.", "generated": true},
-    {"id": "storage", "title": "File storage", "description": "Uploads of photos and documents, with signed links and a CDN.", "generated": true},
-    {"id": "analytics", "title": "Analytics", "description": "Usage events and reports about what people do in the system.", "generated": true},
-    {"id": "maps", "title": "Maps and places", "description": "Addresses, distances, delivery zones and live location.", "generated": false}
+    {
+      "id": "otp",
+      "title": "One-time codes",
+      "description": "Sign-in and confirmation codes sent to a phone or an e-mail address.",
+      "generated": true,
+      "ports": {
+        "*": {
+          "interface": "OtpChannel",
+          "methods": [
+            "send"
+          ],
+          "call": "adapter.send({ to: '+1000', code: '1234', language: 'en', purpose: 'LOGIN', ttlSec: 60 })"
+        }
+      }
+    },
+    {
+      "id": "notifications",
+      "title": "Notifications",
+      "description": "Push notifications and e-mail sent to users.",
+      "generated": true,
+      "ports": {
+        "push": {
+          "interface": "PushSender",
+          "methods": [
+            "send"
+          ],
+          "call": "adapter.send({ tokens: ['device-token'], body: 'hello' })"
+        },
+        "email": {
+          "interface": "EmailSender",
+          "methods": [
+            "send"
+          ],
+          "call": "adapter.send({ to: ['a@example.com'], subject: 'hello', text: 'hello' })"
+        }
+      }
+    },
+    {
+      "id": "payments",
+      "title": "Payments",
+      "description": "Charging, refunding and reconciling money through a payment gateway or mobile money.",
+      "generated": true,
+      "ports": {
+        "*": {
+          "interface": "PaymentGateway",
+          "methods": [
+            "createSession",
+            "verify",
+            "refund",
+            "parseWebhook",
+            "close"
+          ],
+          "call": "adapter.verify('session-1')"
+        }
+      }
+    },
+    {
+      "id": "storage",
+      "title": "File storage",
+      "description": "Uploads of photos and documents, with signed links and a CDN.",
+      "generated": true,
+      "ports": {
+        "*": {
+          "interface": "StorageProvider",
+          "methods": [
+            "createUploadUrl",
+            "confirmUpload",
+            "getSignedUrl",
+            "read",
+            "write",
+            "delete"
+          ],
+          "sync": [
+            "getPublicUrl"
+          ],
+          "call": "adapter.read('photos/a.jpg')"
+        }
+      }
+    },
+    {
+      "id": "analytics",
+      "title": "Analytics",
+      "description": "Usage events and reports about what people do in the system.",
+      "generated": true,
+      "ports": {
+        "*": {
+          "interface": "AnalyticsSink",
+          "methods": [
+            "deliver"
+          ],
+          "call": "adapter.deliver([])"
+        }
+      }
+    },
+    {
+      "id": "maps",
+      "title": "Maps and places",
+      "description": "Addresses, distances, delivery zones and live location.",
+      "generated": false
+    }
   ]
 }

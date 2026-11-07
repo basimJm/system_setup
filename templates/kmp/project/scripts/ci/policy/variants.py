@@ -83,5 +83,11 @@ def _check_workflow(config: Config, section: dict) -> list[Violation]:
 
 
 def check(config: Config) -> list[Violation]:
+    """An app generated for one platform declares no variants of the other (empty lists in policy.json): those checks are skipped."""
     section = config.section("variants")
-    return _check_android(config, section) + _check_ios(config, section) + _check_workflow(config, section)
+    found: list[Violation] = []
+    if section["flavors"] or section["buildTypes"]:
+        found += _check_android(config, section)
+    if section["iosConfigurations"] or section["iosSchemes"]:
+        found += _check_ios(config, section)
+    return found + _check_workflow(config, section)

@@ -4,7 +4,8 @@
 Usage (run from anywhere inside the repo):
   tasks.py next <project> [--all]      first TODO task whose dependencies are DONE (--all: every ready task)
   tasks.py show <ID>                   one task row with its dependencies and dependents
-  tasks.py set <ID> <STATUS> [--note T]  change a status; DONE unblocks dependents, then rebuilds the board
+  tasks.py set <ID> <STATUS> [--note T]  change a status; DONE unblocks dependents, copies the task block's `Lesson:` line
+                                       to docs/knowledge/LESSONS.local.md (de-duplicated), then rebuilds the board
   tasks.py board                       cross-project board (also written into INTEGRATION.md)
   tasks.py blocked                     every BLOCKED/PENDING task with what it waits for
   tasks.py check                       validate ids, statuses and dependency consistency (exit 1 on problems)
@@ -25,6 +26,13 @@ HEADER_PREFIX = "| ID |"
 DEP_HEADERS = ("needs", "server", "depends", "blocked by")
 EMPTY_CELLS = {"", "-", "—", "–", "none", "n/a"}
 CHARS_PER_TOKEN = 4
+LOCAL_LESSONS_REL = Path("docs") / "knowledge" / "LESSONS.local.md"
+LOCAL_LESSONS_HEADER = ("# Lessons learned in this project (collected by `tasks.py set <ID> DONE`)\n\n"
+                        "> One line per lesson, from the `Lesson:` line of a finished task block. Review them with "
+                        "`SYSTEM_SETUP lessons import <this project>`, which adds the ones you approve to the tool's lessons.\n\n")
+LESSON_LINE = re.compile(r"(?mi)^-\s*Lesson:\s*(.*?)\s*$")
+LOCAL_LESSON = re.compile(r"^- \[([A-Z][A-Z0-9]*-\d+[a-z]?)\] (.+)$")
+NO_LESSON = {"", "none", "n/a", "no", "nothing", "-", "—", "–", "<one line or none>"}
 
 
 def repo_root(start: Path | None = None) -> Path:
@@ -147,6 +155,35 @@ class Backlogs:
         task.status, task.cells = status, cells
         return f"{task.id}: {old} -> {status} ({task.file.relative_to(self.root)})"
 
+    # ---- lessons -------------------------------------------------------
+    def lesson_of(self, task_id: str) -> str:
+        """The one-line `- Lesson:` of the task's block in its project's session file; '' when there is none or it says none."""
+        session = self.root / self.projects[self.tasks[task_id].project]["session"]
+        if not session.is_file():
+            return ""
+        block = next((b for b in re.split(r"(?m)^###\s+", session.read_text(encoding="utf-8")) if re.match(rf"{re.escape(task_id)}\b", b)), "")
+        found = LESSON_LINE.search(block)
+        lesson = " ".join((found.group(1) if found else "").strip("` ").split())
+        return "" if lesson.lower().rstrip(".") in NO_LESSON else lesson
+
+    @staticmethod
+    def _same(text: str) -> str:
+        return " ".join(re.sub(r"[^a-z0-9]+", " ", text.lower()).split())
+
+    def collect_lesson(self, task_id: str) -> str:
+        """Copies a real lesson to docs/knowledge/LESSONS.local.md as `- [ID] text`, skipping one already there; returns what happened."""
+        lesson = self.lesson_of(task_id)
+        if not lesson:
+            return ""
+        path = self.root / LOCAL_LESSONS_REL
+        text = path.read_text(encoding="utf-8") if path.is_file() else LOCAL_LESSONS_HEADER
+        known = {self._same(m.group(2)) for m in (LOCAL_LESSON.match(line) for line in text.splitlines()) if m}
+        if self._same(lesson) in known:
+            return f"lesson of {task_id} is already in {LOCAL_LESSONS_REL.as_posix()}"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text.rstrip("\n") + f"\n- [{task_id}] {lesson}\n", encoding="utf-8")
+        return f"lesson of {task_id} recorded in {LOCAL_LESSONS_REL.as_posix()}"
+
     # ---- reports -------------------------------------------------------
     def board(self) -> str:
         today = _dt.date.today().isoformat()
@@ -246,6 +283,8 @@ def main(argv: list[str]) -> int:
     elif cmd == "set":
         note = args[args.index("--note") + 1] if "--note" in args else None
         print("\n".join(b.set_status(args[0], args[1], note)))
+        if args[1].upper() == "DONE":
+            print(b.collect_lesson(args[0]) or "no lesson recorded (the task block has no `Lesson:` line, or it says none)")
         print(f"board written: {b.write_board().relative_to(b.root)}")
     elif cmd == "board":
         print(b.board())

@@ -74,14 +74,14 @@ class SamplePlansTest(TempDirTest):
 class SampleGenerationTest(TempDirTest):
     def setUp(self):
         super().setUp()
-        # the fixture sdk template ships storage / otp / payments; add the two other catalog SDKs the real plans ask for
+        # the fixture sdk template ships storage / otp / payments; add the other catalog SDKs the real plans ask for
         self.templates = self.root / "templates"
         shutil.copytree(FIXTURE_TEMPLATES, self.templates)
         manifest = self.templates / "sdk" / "TEMPLATE.json"
         data = json.loads(manifest.read_text(encoding="utf-8"))
         data["kinds"]["analytics"] = {"dir": "kinds/analytics", "prefix": "ANA", "title": "Analytics"}
         manifest.write_text(json.dumps(data), encoding="utf-8")
-        for kind in ("notifications", "analytics"):
+        for kind in ("notifications", "analytics", "generic"):   # generic = the overlay of an SDK the template does not declare (maps, ...)
             folder = self.templates / "sdk" / "kinds" / kind
             (folder / "src").mkdir(parents=True, exist_ok=True)
             (folder / "src" / f"{kind}.ts").write_text(f"// {kind}: overlay\n", encoding="utf-8")

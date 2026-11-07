@@ -1,0 +1,13 @@
+{
+  "id": "smtp",
+  "sdk": "notifications",
+  "channel": "email",
+  "title": "SMTP server",
+  "ported_from": "a production SMTP channel (pooled transport, error classification), generalized",
+  "dependencies": {"nodemailer": "^10.1.1"},
+  "dev_dependencies": {"@types/nodemailer": "^8.0.2"},
+  "env": ["__SDK_PREFIX___SMTP_HOST", "__SDK_PREFIX___SMTP_PORT", "__SDK_PREFIX___SMTP_USER", "__SDK_PREFIX___SMTP_PASSWORD", "__SDK_PREFIX___SMTP_FROM_ADDRESS", "__SDK_PREFIX___SMTP_FROM_NAME"],
+  "exports": ["export {", "  SmtpEmailSender,", "  type MailMessage,", "  type SmtpSenderOptions,", "  type SmtpTransportLike,", "} from './adapters/smtp';", "export { createSmtpTransport, type SmtpConnection } from './adapters/smtp-vendor';"],
+  "usage": "createNotifications({ environment: 'prod', email: { provider: 'custom' }, emailSender: new SmtpEmailSender({ transport: createSmtpTransport({ host, user, pass }), from: { name, address } }) });",
+  "notes": "Keys only: the consumer reads the values from its own secret store."
+}

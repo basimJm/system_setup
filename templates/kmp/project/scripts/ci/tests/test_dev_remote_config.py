@@ -28,6 +28,8 @@ def host(url: str) -> str:
 
 class DevRemoteConfigTest(unittest.TestCase):
     def setUp(self) -> None:
+        if not (PROJECT / "iosApp/Configuration/Dev.xcconfig").is_file():
+            self.skipTest("this app was generated without an iOS host")
         self.gradle = properties(PROJECT / "gradle.properties")
         self.ios_dev = properties(PROJECT / "iosApp/Configuration/Dev.xcconfig")
 

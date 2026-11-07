@@ -8,9 +8,11 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
+from lessons import LESSONS_FILE, LessonsError, for_project
 from prompts import FIXED_PREFIXES, Spec
+from rules import load_rule_defs, rules_map
 
 REGISTRY_REL = Path(".claude") / "projects.json"
 DOC_TEMPLATES_REL = Path("docs") / "templates"
@@ -30,12 +32,14 @@ BACKLOG_HEADER = "| ID | Task | Branch | Needs | Status | Sources / notes |\n|--
 GATE_COMMANDS = {
     "server": "npm run verify",
     "admin": "sh scripts/gate.sh",
+    "web": "sh scripts/gate.sh",
     "app": "scripts/ci/run_local_checks.sh",
     "sdk": "npm run verify",
 }
 INSTALL_COMMANDS = {
     "server": "npm install",
     "admin": "npm install",
+    "web": "npm install",
     "app": "./gradlew tasks (Android Studio / Xcode open the hosts)",
     "sdk": "npm install",
 }
@@ -68,6 +72,10 @@ def projects_registry(spec: Spec) -> Dict[str, object]:
     for app in spec.apps:
         projects[app.slug] = project_entry(f"{spec.app_dir(app)} (KMP app)", "kmp", prefixes[app.slug], spec.app_dir(app),
                                            app.slug, f"{spec.prefix}_{app.project}_Tasks.md")
+    web_prefixes = spec.web_prefixes()
+    for web in spec.webs:
+        projects[web.slug] = project_entry(f"{spec.web_dir(web)} (web app)", "web", web_prefixes[web.slug], spec.web_dir(web),
+                                           web.slug, f"{spec.prefix}_{web.project}_Tasks.md")
     for sdk in spec.sdks:
         projects[sdk] = project_entry(f"{spec.sdk_dir(sdk)} (SDK)", "sdk", spec.sdk_prefix(sdk), spec.sdk_dir(sdk), "server",
                                       f"{spec.prefix}_Package_{spec.sdk_title_of(sdk)}_Tasks.md")
@@ -77,6 +85,7 @@ def projects_registry(spec: Spec) -> Dict[str, object]:
         "board_file": BOARD_FILE,
         "statuses": STATUSES,
         "owner_input_markers": OWNER_INPUT_MARKERS,
+        "rules": rules_map(load_rule_defs(), spec.rule_settings),
         "projects": projects,
     }
 
@@ -86,10 +95,14 @@ def workspace_values(spec: Spec, registry: Dict[str, object]) -> Dict[str, str]:
     projects: Dict[str, Dict[str, str]] = registry["projects"]  # type: ignore[assignment]
     app_rows = [f"| `{spec.app_dir(app)}/` | {app.name} app (KMP + Compose Multiplatform, `{spec.app_package(app)}`, "
                 f"tasks `{projects[app.slug]['prefix']}`, master `{app.slug}`) | {SCAFFOLD_STATUS} |" for app in spec.apps]
+    app_rows += [f"| `{spec.web_dir(web)}/` | {web.name} web app (React + Vite, from the web template, "
+                 f"tasks `{projects[web.slug]['prefix']}`, master `{web.slug}`) | {SCAFFOLD_STATUS} |" for web in spec.webs]
     sdk_rows = [f"| `{spec.sdk_dir(sdk)}/` | SDK `{spec.sdk_package(sdk)}` (ports + adapters, tasks `{projects[sdk]['prefix']}`, "
                 f"master `server`) | {SCAFFOLD_STATUS} |" for sdk in spec.sdks]
     projects_json = json.dumps(projects, indent=2, ensure_ascii=False).replace("\n", "\n" + PROJECTS_JSON_INDENT)
-    return {"__APPS_TABLE__": "\n".join(app_rows), "__SDKS_TABLE__": "\n".join(sdk_rows), "__PROJECTS_JSON__": projects_json}
+    rules_json = json.dumps(registry["rules"], indent=2).replace("\n", "\n" + PROJECTS_JSON_INDENT)   # the rules map the generated hooks read
+    return {"__APPS_TABLE__": "\n".join(app_rows), "__SDKS_TABLE__": "\n".join(sdk_rows), "__PROJECTS_JSON__": projects_json,
+            "__RULES_JSON__": rules_json}
 
 
 def projects_table(registry: Dict[str, object]) -> str:
@@ -197,15 +210,21 @@ def ensure_project_files(repo_root: Path, registry: Dict[str, object]) -> List[s
     return created
 
 
-def copy_knowledge(repo_root: Path, knowledge_dir: Optional[Path]) -> List[str]:
-    """Copies the tool's `knowledge/*.md` (lessons, playbooks) to `docs/knowledge/` and links it from the README."""
+def copy_knowledge(repo_root: Path, knowledge_dir: Optional[Path], lesson_tags: Optional[Set[str]] = None) -> List[str]:
+    """Copies the tool's `knowledge/*.md` (lessons, playbooks) to `docs/knowledge/` and links it from the README. With `lesson_tags`
+    (the project's module tags) LESSONS.md is cut down to the lessons that match them (lessons.py)."""
     if knowledge_dir is None or not knowledge_dir.is_dir():
         return []
     copied = []
     target = repo_root / KNOWLEDGE_REL
     for source in sorted(knowledge_dir.glob("*.md")):
         target.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target / source.name)
+        try:
+            if lesson_tags is None or source.name != LESSONS_FILE:
+                raise LessonsError("copied as it is")
+            (target / source.name).write_text(for_project(source.read_text(encoding="utf-8"), lesson_tags), encoding="utf-8")
+        except LessonsError:   # not the lessons file, or an older file without IDs and tags: copied whole
+            shutil.copyfile(source, target / source.name)
         copied.append(f"{KNOWLEDGE_REL.as_posix()}/{source.name}")
     readme = repo_root / "README.md"
     if copied and readme.is_file() and KNOWLEDGE_REL.as_posix() not in readme.read_text(encoding="utf-8"):
@@ -256,7 +275,8 @@ def next_steps(spec: Spec, registry: Dict[str, object], git_done: bool = True, d
                  "the owner merges masters into main.")
     projects: Dict[str, Dict[str, str]] = registry["projects"]  # type: ignore[assignment]
     for name, project in projects.items():
-        kind = "server" if name == "server" else "admin" if name == "admin" else "sdk" if name in spec.sdks else "app"
+        kind = ("server" if name == "server" else "admin" if name == "admin" else "sdk" if name in spec.sdks
+                else "web" if name in {web.slug for web in spec.webs} else "app")
         lines.append(f"{project['dir']}: install `{INSTALL_COMMANDS[kind]}` · gate `{GATE_COMMANDS[kind]}` · "
                      f"first task `python3 scripts/tasks.py next {name}` then `tasks.py set {project['prefix']}-001 \"IN PROGRESS\"`")
     if documents:

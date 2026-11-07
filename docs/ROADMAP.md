@@ -48,35 +48,39 @@ Each phase is one branch and one PR into `main`.
       web-only school fee portal.
 
 ### 3. Documents and backlogs
-- [ ] From the plan and the document: `BUSINESS_DOMAIN.md`, per module BRD, PRD, Design Script and backlog, plus `INTEGRATION.md`,
+- [x] From the plan and the document: `BUSINESS_DOMAIN.md`, per module BRD, PRD, Design Script and backlog, plus `INTEGRATION.md`,
       a starting API contract and the root and project `CLAUDE.md` facts.
-- [ ] One small model call per document, resumable, with a total budget and a printed cost.
-- [ ] Backlogs pass `tasks.py check`, server tasks first, clients `BLOCKED` on them, and every open question is a `PENDING` row.
-- [ ] Nothing from a previous business appears in the output.
+- [x] One small model call per document, resumable, with a total budget and a printed cost.
+- [x] Backlogs pass `tasks.py check`, server tasks first, clients `BLOCKED` on them, and every open question is a `PENDING` row.
+- [x] Nothing from a previous business appears in the output.
+  Proof: school portal 14 documents, 79 tasks, $1.74; Arabic marketplace 20 documents, 124 tasks, $3.14; `tasks.py check` OK, privacy scan
+  clean, re-run skipped all 20 at $0. The last box is only true for the documents: the server template still ships `merchant` and
+  `customer` modules, fixed in Phase 8.
 
 ### 4. Modules and platforms
-- [ ] A `web` module kind (customer or merchant web app) built from the web template; any number of apps and web apps.
-- [ ] Platform choice removes unused folders, Gradle targets and CI jobs. A web-only and an Android-only system both build.
+- [x] A `web` module kind (customer or merchant web app) built from the web template; any number of apps and web apps.
+- [x] Platform choice removes unused folders, Gradle targets and CI jobs. A web-only and an Android-only system both build.
 
 ### 5. SDKs and providers
-- [ ] SDK and provider lists as data. Real adapters ported from the source system where they exist.
-- [ ] A new SDK or unknown provider gets a skeleton: port, fake adapter, contract test, failing adapter test, backlog row.
-- [ ] A published SDK records package and version, creates no folder, and the server depends on it.
+- [x] SDK and provider lists as data. Real adapters ported from the source system where they exist. (fcm, smtp, http-sms; s3 family builtin; payments and analytics adapters of the source were not ported)
+- [x] A new SDK or unknown provider gets a skeleton: port, fake adapter, contract test, failing adapter test, backlog row.
+- [x] A published SDK records package and version, creates no folder, and the server depends on it.
 
 ### 6. Deployment
-- [ ] A host per part from `deploy.json` (Render, Docker on a server, AWS, Fly, Railway, Cloudflare, Vercel) or `custom`.
-- [ ] Config and a guide for the chosen host only; no host name left in anything else. Configs are validated; a real deploy
-      happens only where an account exists, and the report says which.
+- [x] A host per part from `deploy.json` (Render, Docker on a server, AWS, Fly, Railway, Cloudflare, Vercel; Netlify added) or `custom`. (server and admin generated; a web module's files are written once the web template gives the Spec a `web_dir`)
+- [x] Config and a guide for the chosen host only; no host name left in anything else. Configs are validated; a real deploy
+      happens only where an account exists, and the report says which. (configs parsed in tests; no deploy was run: no account; `docker compose config` not run: no Docker; the admin build script `scripts/write-hosting.ts` still names its three header-file targets: code, not a document)
 
 ### 7. Rules and lessons
-- [ ] Each rule has an ID and can be on, off or edited in the plan; hooks follow it; turning off a safety rule asks to confirm.
-- [ ] Each lesson has an ID, tags and how it is enforced (rule, policy check, template or note). A project gets what matches its modules.
-- [ ] The task block gains `Lesson: <one line or none>`; `tasks.py set DONE` collects them in `docs/knowledge/LESSONS.local.md`.
-- [ ] `lessons import <project>` removes duplicates and business names, shows a diff and adds only what is approved.
-- [ ] The source system's recent lessons are harvested, generalized and added.
+- [x] Each rule has an ID and can be on, off or edited in the plan; hooks follow it; turning off a safety rule asks to confirm.
+- [x] Each lesson has an ID, tags and how it is enforced (rule, policy check, template or note). A project gets what matches its modules.
+- [x] The task block gains `Lesson: <one line or none>`; `tasks.py set DONE` collects them in `docs/knowledge/LESSONS.local.md`.
+- [x] `lessons import <project>` removes duplicates and business names, shows a diff and adds only what is approved.
+- [x] The source system's recent lessons are harvested, generalized and added.
 
 ### 8. Update and full proof
-- [ ] `update` adds a module or SDK and refreshes documents without overwriting work.
+- [ ] Server audiences come from the plan: no `merchant` or `customer` module, route or contract unless the plan has that audience.
+- [x] `update` adds a module or SDK and refreshes documents without overwriting work. (additions only; removals and changed parts become PENDING rows; an edited document gets a `.proposed.md`)
 - [ ] The fallback time zone is `UTC` and any zone or currency works without editing template tests (today the fallback is
       `Etc/GMT-3` and template tests pin it).
 - [ ] End to end on the three samples: generated, checked, built, first task run through the production line.

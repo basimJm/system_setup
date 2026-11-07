@@ -30,6 +30,7 @@ STATE_REL = ".system_setup/documents.json"
 DATA_REL = ".system_setup/documents"
 REGISTRY_REL = ".claude/projects.json"
 BUSINESS_DOC_REL = "docs/BUSINESS.md"
+ANALYZED_DOC_REL = ".system_setup/analyzed_document.sha256"   # what the plan was last analyzed from: docs/BUSINESS.md itself may be edited
 MODULES_REL = "docs/modules"
 DRAFT_REL = "docs/api/draft"
 STATE_VERSION = 1
@@ -170,7 +171,7 @@ def make_targets(plan: Plan, registry: Dict[str, Any], root: Path) -> List[Targe
             key = "server"
         elif module.kind == "admin" and "admin" in projects and "admin" not in used:
             key = "admin"
-        elif module.kind == "app" and module.id in projects and module.id not in used:
+        elif module.kind in ("app", "web") and module.id in projects and module.id not in used:
             key = module.id
         used.add(key)
         entry = projects.get(key, {}) if key else {}
@@ -183,8 +184,10 @@ def make_targets(plan: Plan, registry: Dict[str, Any], root: Path) -> List[Targe
 
 class Pipeline:
     def __init__(self, root: Path, plan: Plan, document: str, catalog: Catalog, analyzer: Analyzer, settings: DocumentSettings,
-                 prompts: Optional[Prompts] = None, say: Callable[[str], None] = print, budget_usd: Optional[float] = None):
+                 prompts: Optional[Prompts] = None, say: Callable[[str], None] = print, budget_usd: Optional[float] = None,
+                 protect_edited: bool = False):
         self.root, self.plan, self.document = root, plan, document
+        self.protect_edited = protect_edited   # `update`: a document the person edited is kept and the new text goes to `<name>.proposed.<ext>`
         self.catalog, self.analyzer, self.settings = catalog, analyzer, settings
         self.prompts = prompts or Prompts.load()
         self.say = say
@@ -464,7 +467,10 @@ class Pipeline:
             if data is None and not claimed:
                 continue
             if path.is_file() and recorded and sha(path.read_text(encoding="utf-8")) != recorded:
-                self.notes.append(f"{rel} was changed after it was written; kept as it is")
+                if self.protect_edited and sha(text) != recorded:
+                    self.propose(rel, text)
+                else:
+                    self.notes.append(f"{rel} was changed after it was written; kept as it is")
                 continue
             if path.is_file() and path.read_text(encoding="utf-8") == text:
                 self.state["rendered"][t.project] = sha(text)
@@ -492,6 +498,21 @@ class Pipeline:
         if job.kind == "backlog":
             return f"{DATA_REL}/{job.id.replace(':', '.')}.json"
         return job.target.path(job.kind)
+
+    def edited(self, job: Job) -> bool:
+        """True when the document was written by an earlier run and the file on disk is no longer that text."""
+        record = self.state["documents"].get(job.id)
+        path = self.root / self.output_path(job)
+        return bool(record and record.get("output_sha") and path.is_file() and sha(path.read_text(encoding="utf-8")) != record["output_sha"])
+
+    def propose(self, rel: str, text: str) -> str:
+        """Writes `text` next to the edited file `rel` as `<name>.proposed<ext>` and says so; the person's file is not touched."""
+        path = Path(rel)
+        proposed = path.with_name(f"{path.stem}.proposed{path.suffix}").as_posix()
+        write_text(self.root / proposed, text)
+        self.created.append(proposed)
+        self.notes.append(f"{rel} was edited after it was written: your file is kept and the new text is in {proposed}")
+        return proposed
 
     def cached(self, job: Job, input_sha: str) -> Optional[str]:
         """The output of a finished job whose input has not changed; the edited text when someone changed the file since."""
@@ -576,6 +597,10 @@ class Pipeline:
             write_text(self.root / f"{DATA_REL}/{job.id.replace(':', '.')}.json", json.dumps(value, indent=2, ensure_ascii=False) + "\n")
         else:
             text = value
+        if self.protect_edited and job.kind != "backlog" and self.edited(job):
+            self.propose(rel, text)
+            self.out[job.id] = (self.root / rel).read_text(encoding="utf-8")   # what a later run reads back, so nothing downstream is redone
+            return rel, sha(text)
         write_text(self.root / rel, text)
         if job.kind != "backlog":
             self.created.append(rel)
@@ -704,5 +729,5 @@ class Pipeline:
 
 def run_documents(root: Path, plan: Plan, document: str, catalog: Catalog, analyzer: Analyzer, settings: DocumentSettings,
                   say: Callable[[str], None] = print, budget_usd: Optional[float] = None, resume_hint: str = "",
-                  prompts: Optional[Prompts] = None) -> Outcome:
-    return Pipeline(root, plan, document, catalog, analyzer, settings, prompts, say, budget_usd).run(resume_hint)
+                  prompts: Optional[Prompts] = None, protect_edited: bool = False) -> Outcome:
+    return Pipeline(root, plan, document, catalog, analyzer, settings, prompts, say, budget_usd, protect_edited).run(resume_hint)

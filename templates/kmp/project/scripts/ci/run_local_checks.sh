@@ -12,7 +12,7 @@ if [ -f docs/api/openapi.json ]; then python3 scripts/api_sync.py --check; else 
 echo "== detekt + Compose rules"
 scripts/ci/run_detekt.sh
 
-if [ -n "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ] && [ -x ./gradlew ]; then
+if [ -d androidApp ] && [ -n "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ] && [ -x ./gradlew ]; then
   echo "== Gradle: unit tests and every Android variant"
   ./gradlew testAndroidHostTest assembleDevDebug assembleDevRelease assembleProdDebug assembleProdRelease \
     lintDevDebug lintDevRelease lintProdDebug lintProdRelease
@@ -20,7 +20,7 @@ else
   echo "Android SDK not found: Gradle checks are skipped here; CI runs them."
 fi
 
-if [ "${SKIP_IOS:-}" != "1" ] && command -v xcodebuild >/dev/null 2>&1; then
+if [ -d iosApp ] && [ "${SKIP_IOS:-}" != "1" ] && command -v xcodebuild >/dev/null 2>&1; then
   echo "== iOS: every configuration for the simulator + Kotlin/Native tests"
   scripts/ci/run_ios_checks.sh
 else

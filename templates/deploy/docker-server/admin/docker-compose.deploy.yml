@@ -1,0 +1,18 @@
+# Run the __PART_TITLE__ on any Docker host: docker compose -f docker-compose.deploy.yml up -d --build
+# Public build values (never secrets) are read from the shell when the image is built.
+
+name: __SERVICE_NAME__
+
+services:
+  site:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+__EACH_ENV__
+        - __ENV_KEY__
+__END_EACH__
+    image: __SERVICE_NAME__:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    ports:
+      - '${SITE_BIND:-127.0.0.1}:${SITE_PORT:-__PART_PORT__}:__PART_PORT__'

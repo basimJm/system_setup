@@ -1,22 +1,23 @@
-"""TEMPLATE.json: the contract between the engine and every template kind (workspace, server, admin, sdk, kmp)."""
+"""TEMPLATE.json: the contract between the engine and every template kind (workspace, server, admin, web, sdk, kmp)."""
 from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 MANIFEST_NAME = "TEMPLATE.json"
 # `__APP_DIR_<n>__` / `__SDK_DIR_<name>__` are the documented families; concrete tokens start upper-case and a later
 # segment may be a lower-case name (`__SDK_DIR_storage__`).
 TOKEN_RE = re.compile(r"__[A-Z][A-Z0-9]*(?:_(?:[A-Za-z0-9]+|<[a-z]+>))*__")
-KINDS = ("workspace", "server", "admin", "sdk", "kmp")
+KINDS = ("workspace", "server", "admin", "web", "sdk", "kmp")
 # Where each kind lands inside the generated repo (relative to its root). A template may override this with "dest".
 DEFAULT_DEST = {
     "workspace": ".",
     "server": "__SERVER_DIR__",
     "admin": "__ADMIN_DIR__",
+    "web": "__WEB_DIR__",
     "sdk": "__SDK_DIR__",
     "kmp": "__APP_DIR__",
 }
@@ -29,6 +30,8 @@ SDK_KIND_KEYS = ("prefix", "title")   # optional: "dir" = overlay folder inside 
 # Copied byte for byte and never substituted, per kind (on top of binary_globs): vendored skills keep their files intact.
 DEFAULT_VERBATIM = {"workspace": [".claude/skills/**"]}
 TARGETED_KEYS = ("file", "placeholder", "find", "replace_with")
+PRUNE_KEYS = ("skip", "edits", "post_generate")
+PRUNE_EDIT_KEYS = ("file", "find")   # plus "replace_with": a string, empty to delete the text
 
 
 class ManifestError(ValueError):
@@ -51,6 +54,10 @@ class Manifest:
     layers: List[str] = field(default_factory=list)          # sub-folders copied in order (later ones overlay)
     kinds: Dict[str, Dict[str, str]] = field(default_factory=dict)  # sdk only: name -> {dir, prefix, title}
     targeted: List[Dict[str, str]] = field(default_factory=list)   # {file, placeholder, find, replace_with}
+    # Optional parts of the template, e.g. a platform: group -> {skip: [globs], edits: [{file, find, replace_with}],
+    # post_generate: [commands]}. A group the caller drops removes those files, edits and commands (see `instantiate`).
+    prune: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    base: Optional["Manifest"] = None   # `"base": "<template>"`: that template's files, rules and tokens come first
 
     @property
     def tokens(self) -> List[str]:
@@ -106,12 +113,53 @@ def parse_manifest(data: object, root: Path) -> Manifest:
                 f"{where}: every 'targeted' edit needs the string keys {', '.join(TARGETED_KEYS)}")
         _expect(TOKEN_RE.fullmatch(edit["placeholder"]) is not None,
                 f"{where}: targeted placeholder {edit['placeholder']!r} is not a __TOKEN__")
+    prune = _prune(data.get("prune", {}), where)
+    base = data.get("base", "")
+    _expect(isinstance(base, str) and (not base or re.fullmatch(r"[a-z][a-z0-9-]*", base) is not None and base != kind),
+            f"{where}: 'base' must be the folder name of another template")
     return Manifest(kind=kind, description=str(data.get("description", "")), root=root, placeholders=list(data["placeholders"]),
                     sentinels=dict(data.get("sentinels", {})), rename_paths=dict(data.get("rename_paths", {})),
                     skip=list(data.get("skip", [])), post_generate=list(data.get("post_generate", [])),
                     binary_globs=list(data.get("binary_globs", [])), dest=dest, layers=layers,
                     verbatim_globs=list(DEFAULT_VERBATIM.get(kind, [])),
-                    kinds={k: dict(v) for k, v in kinds.items()}, targeted=[dict(e) for e in targeted])
+                    kinds={k: dict(v) for k, v in kinds.items()}, targeted=[dict(e) for e in targeted], prune=prune)
+
+
+def _prune(raw: object, where: Path) -> Dict[str, Dict[str, Any]]:
+    _expect(isinstance(raw, dict), f"{where}: 'prune' must map a group name (e.g. ios) to its removals")
+    assert isinstance(raw, dict)
+    groups: Dict[str, Dict[str, Any]] = {}
+    for name, group in raw.items():
+        _expect(isinstance(group, dict) and set(group) <= set(PRUNE_KEYS), f"{where}: prune[{name!r}] may only have {', '.join(PRUNE_KEYS)}")
+        for key in ("skip", "post_generate"):
+            value = group.get(key, [])
+            _expect(isinstance(value, list) and all(isinstance(v, str) and v for v in value),
+                    f"{where}: prune[{name!r}].{key} must be a list of non-empty strings")
+        edits = group.get("edits", [])
+        _expect(isinstance(edits, list), f"{where}: prune[{name!r}].edits must be a list")
+        for edit in edits:
+            _expect(isinstance(edit, dict) and all(isinstance(edit.get(k), str) and edit[k] for k in PRUNE_EDIT_KEYS)
+                    and isinstance(edit.get("replace_with"), str),
+                    f"{where}: every prune[{name!r}] edit needs the string keys file and find, and a string replace_with (may be empty)")
+        groups[name] = {"skip": list(group.get("skip", [])), "edits": [dict(e) for e in edits],
+                        "post_generate": list(group.get("post_generate", []))}
+    return groups
+
+
+def inherit(own: Manifest, base: Manifest, declared: Dict[str, Any]) -> Manifest:
+    """A template with `"base"` is the base template plus its own overlay: lists add up, maps are overridden key by key,
+    `post_generate` is the base's unless the template declares its own."""
+    own.base = base
+    own.placeholders = [*base.placeholders, *[t for t in own.placeholders if t not in base.placeholders]]
+    own.sentinels = {**base.sentinels, **own.sentinels}
+    own.rename_paths = {**base.rename_paths, **own.rename_paths}
+    own.skip = [*base.skip, *own.skip]
+    own.binary_globs = [*base.binary_globs, *own.binary_globs]
+    own.targeted = [*base.targeted, *own.targeted]
+    own.prune = {**base.prune, **own.prune}
+    if "post_generate" not in declared:
+        own.post_generate = list(base.post_generate)
+    return own
 
 
 def _layers(data: dict, kind: str, root: Path, where: Path) -> List[str]:
@@ -141,6 +189,13 @@ def load_manifest(template_dir: Path) -> Manifest:
     manifest = parse_manifest(data, template_dir)
     _expect(manifest.kind == template_dir.name,
             f"{path}: kind {manifest.kind!r} does not match the folder name {template_dir.name!r}")
+    base_name = data.get("base", "")
+    if base_name:
+        base_dir = template_dir.parent / base_name
+        _expect((base_dir / MANIFEST_NAME).is_file(), f"{path}: base template {base_name!r} not found in {template_dir.parent}")
+        base = load_manifest(base_dir)
+        _expect(base.base is None, f"{path}: the base template {base_name!r} has a base of its own; only one level is supported")
+        inherit(manifest, base, data)
     return manifest
 
 

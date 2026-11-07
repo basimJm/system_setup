@@ -14,9 +14,20 @@ SCHEME_XML = (
 XCCONFIG = "APP_ENV = {e}\nAPI_BASE_URL = https:/$()/x\nAPP_DISPLAY_NAME = BRAND\nPRODUCT_BUNDLE_IDENTIFIER = com.x\nDATA_SOURCE = mock\n"
 
 
+FULL_VARIANTS = {
+    "flavors": ["dev", "prod"], "buildTypes": ["debug", "release"],
+    "iosConfigurations": ["Debug-Dev", "Release-Dev", "Debug-Prod", "Release-Prod"],
+    "iosSchemes": {"iosApp-Dev": ["Debug-Dev", "Release-Dev"], "iosApp-Prod": ["Debug-Prod", "Release-Prod"]},
+    "iosXcconfigKeys": ["APP_ENV", "API_BASE_URL", "APP_DISPLAY_NAME", "PRODUCT_BUNDLE_IDENTIFIER", "DATA_SOURCE"],
+    "gradlePropertyKeys": ["DEV_API_BASE_URL", "PROD_API_BASE_URL", "DEV_DATA_SOURCE", "PROD_DATA_SOURCE"],
+    "workflow": WORKFLOW,
+}
+
+
 class VariantsTest(TempProject):
     def setUp(self):
         super().setUp()
+        self.config.data["variants"] = dict(FULL_VARIANTS)  # the app's own policy.json drops the platform it did not choose
         self.build_valid()
 
     def build_valid(self):
@@ -71,6 +82,18 @@ class VariantsTest(TempProject):
         messages = self.messages()
         self.assertIn("workflow does not build 'prod'", messages)
         self.assertIn("workflow does not build 'iosApp-Prod'", messages)
+
+    def test_an_android_only_app_declares_no_ios_variants_and_needs_no_xcode_project(self):
+        self.config.data["variants"].update(iosConfigurations=[], iosSchemes={})
+        (self.root / PBXPROJ).unlink()
+        (self.root.parent / WORKFLOW).write_text("dev prod debug release", encoding="utf-8")
+        self.assertEqual(self.messages(), [])
+
+    def test_an_ios_only_app_declares_no_android_variants_and_needs_no_android_plugin(self):
+        self.config.data["variants"].update(flavors=[], buildTypes=[], gradlePropertyKeys=[])
+        (self.root / PLUGIN).unlink()
+        (self.root.parent / WORKFLOW).write_text("iosApp-Dev iosApp-Prod Debug-Dev Release-Dev Debug-Prod Release-Prod", encoding="utf-8")
+        self.assertEqual(self.messages(), [])
 
 
 if __name__ == "__main__":

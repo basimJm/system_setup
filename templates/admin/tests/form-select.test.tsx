@@ -93,7 +93,10 @@ describe('MultiSelect', () => {
     await userEvent.click(screen.getByRole('option', { name: 'Southport' }));
     expect(screen.getByRole('status')).toHaveTextContent('northville,southport');
     expect(screen.getByRole('listbox')).toBeVisible();
-    expect(screen.getByRole('option', { name: 'Northville' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('option', { name: 'Northville' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Remove Northville' }));
     expect(screen.getByRole('status')).toHaveTextContent('southport');
     await userEvent.click(screen.getByRole('option', { name: 'Southport' }));

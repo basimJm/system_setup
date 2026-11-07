@@ -22,10 +22,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from business import (FIELDS, PROMPT_FILE, REVIEW_PROMPT_NAME, Business, ask_business, business_from, load_business_file,  # noqa: E402
                       prompt_placeholders, write_agent_prompt, write_business_input)
+from deploy import write_deployment  # noqa: E402
 from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
-from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, slug_from, split_list, system_prefix_from,  # noqa: E402
+from lessons import module_tags  # noqa: E402
+from rules import load_rule_defs, write_rules  # noqa: E402
+from sdks import add_published_dependencies, append_backlog_rows, apply_providers, record_published  # noqa: E402
+from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, parse_webs, slug_from, split_list, system_prefix_from,  # noqa: E402
                      validate_app_specs, validate_github_name, validate_npm_scope, validate_package, validate_prefix,
                      validate_required, validate_sdk_names, validate_team_id, validate_url)
 from workspace import (copy_knowledge, ensure_project_files, git_init, next_steps, projects_registry, projects_table,  # noqa: E402
@@ -47,6 +51,8 @@ class Report:
     documents: Any = None  # the Outcome of the document step (documents.py), when it ran
     identity_left: Dict[str, List[str]] = field(default_factory=dict)
     steps: List[str] = field(default_factory=list)
+    deploy_files: List[str] = field(default_factory=list)   # the chosen hosts' config and guides (deploy.py)
+    warnings: List[str] = field(default_factory=list)       # things that work but need the person's attention (printed after the report)
 
     @property
     def unresolved(self) -> Dict[str, List[str]]:
@@ -84,6 +90,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--no-admin", action="store_true", help="skip the admin web panel")
     parser.add_argument("--app", action="append", default=None, metavar="NAME[:slug[:arabic]]",
                         help="a KMP app, repeatable, e.g. --app Customer:customer --app Merchant:merchant")
+    parser.add_argument("--web", action="append", default=None, metavar="NAME[:slug[:arabic]]",
+                        help="a web app (customer portal, merchant site ...) from the web template, repeatable, e.g. --web 'Parent Portal:parent-portal'")
     parser.add_argument("--sdk", action="append", default=None, metavar="NAME",
                         help=f"an SDK from the catalog ({', '.join(SDK_CATALOG)}), repeatable or comma separated")
     parser.add_argument("--dev-api-url")
@@ -145,7 +153,7 @@ def collect(args: argparse.Namespace, reader: Callable[[str], str] = input) -> S
     sdks_text = value(sdks_text, "SDKs from the catalog, comma separated (Enter = none)", "", check=validate_sdk_names)
     spec = Spec(system_name=name, system_name_ar=name_ar, prefix=prefix, package_root=package_root, npm_scope=npm_scope,
                 target=target.resolve(), with_server=with_server, with_admin=with_admin, apps=parse_apps(apps_text),
-                sdks=split_list(sdks_text))
+                sdks=split_list(sdks_text), webs=parse_webs(",".join(args.web or [])))
     spec.dev_api_url = value(args.dev_api_url, "Dev API base URL", spec.dev_api_url, check=validate_url)
     spec.prod_api_url = value(args.prod_api_url, "Prod API base URL", spec.prod_api_url, check=validate_url)
     spec.dev_web_url = value(args.dev_web_url, "Dev web URL (admin panel, deep links)", spec.dev_web_url, check=validate_url)
@@ -182,6 +190,8 @@ def needed_kinds(spec: Spec) -> List[str]:
         kinds.append("sdk")
     if spec.apps:
         kinds.append("kmp")
+    if spec.webs:
+        kinds.append("web")
     kinds.append("workspace")
     return kinds
 
@@ -205,10 +215,11 @@ def apply_sdk_kinds(spec: Spec, manifest: Optional[Manifest]) -> None:
     if manifest is None:
         return
     if manifest.kinds:
-        unknown = [sdk for sdk in spec.sdks if sdk not in manifest.kinds]
+        # An SDK the template does not declare is built from the generic overlay when the plan derived its names (planspec).
+        unknown = [sdk for sdk in spec.sdks if sdk not in manifest.kinds and sdk not in spec.sdk_overrides]
         if unknown:
             raise ManifestError(f"the sdk template has no kind(s) {', '.join(unknown)}; it declares: {', '.join(sorted(manifest.kinds))}")
-        spec.sdk_overrides = {sdk: dict(manifest.kinds[sdk]) for sdk in spec.sdks}
+        spec.sdk_overrides = {sdk: dict(manifest.kinds[sdk]) if sdk in manifest.kinds else spec.sdk_overrides[sdk] for sdk in spec.sdks}
     if manifest.layers != ["."]:
         missing = [sdk for sdk in spec.sdks if not (manifest.root / spec.sdk_layer(sdk)).is_dir()]
         if missing:
@@ -232,9 +243,19 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         report.results.append(instantiate(manifests["server"], spec.target, values, parts))
     if "admin" in manifests:
         report.results.append(instantiate(manifests["admin"], spec.target, values, parts))
+    for web in spec.webs:
+        report.results.append(instantiate(manifests["web"], spec.target, dict(values, **spec.web_values(web)), parts))
+    sdk_rows: Dict[str, List[Any]] = {}
     for sdk in spec.sdks:
         sdk_values = dict(values, **spec.sdk_values(sdk))
-        report.results.append(instantiate(manifests["sdk"], spec.target, sdk_values, parts))
+        result = instantiate(manifests["sdk"], spec.target, sdk_values, parts)
+        applied = apply_providers(spec, sdk, manifests["sdk"].root, spec.skeleton_missing)   # chosen providers: adapter, builtin or skeleton
+        sdk_rows[sdk] = applied.rows
+        if applied.written or spec.sdk_overrides.get(sdk):   # generated names change line breaks: format once before `verify`
+            result.post_generate = [part for command in result.post_generate for part in (["npm run format", command] if command == "npm run verify" else [command])]
+        if applied.dependencies_added:   # the shipped lock does not list the adapters' packages: `npm ci` would refuse it
+            result.post_generate = ["npm install" if command == "npm ci" else command for command in result.post_generate]
+        report.results.append(result)
     if spec.apps:
         app_results = instantiate_apps(manifests["kmp"], spec.target, spec)
         report.results.extend(app_results)
@@ -243,9 +264,20 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
             if left:
                 report.identity_left[spec.app_dir(app)] = left
     report.results.append(instantiate(manifests["workspace"], spec.target, dict(values, **workspace_values(spec, registry)), parts))
+    write_rules(spec.target, load_rule_defs(), spec.rule_settings)   # .claude/rules.md: ids, rules turned off or edited in the plan
     if not registry_shipped(spec.target, registry):
         write_registry(spec.target, registry)
     report.created = ensure_project_files(spec.target, registry)
+    projects = registry["projects"]
+    for sdk, rows in sdk_rows.items():   # one backlog row per skeleton adapter / unproven adapter / new SDK port, after the starter rows
+        append_backlog_rows(spec.target / projects[sdk]["backlog"], projects[sdk]["prefix"], rows)
+    if add_published_dependencies(spec):   # the server depends on the published SDKs; its lock is stale until `npm install`
+        for result in report.results:
+            if result.kind == "server":
+                result.post_generate = ["npm install" if command == "npm ci" else command for command in result.post_generate]
+    record_published(spec)
+    deployed = write_deployment(spec, templates, registry)   # only the chosen host's config + guide per part, docs/DEPLOYMENT.md, PENDING rows
+    report.deploy_files, report.warnings = deployed.files, deployed.warnings
     report.created.append(write_business_input(spec.target, spec.business, spec.system_name, spec.today.isoformat()))
     for rel, text in (extra_files or {}).items():  # e.g. system.plan.json and the business document, part of the first commit
         path = spec.target / rel
@@ -261,7 +293,7 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         report.documents.status_text() if written else ""), REVIEW_PROMPT_NAME if written else "AGENT_PROMPT")
     if prompt_rel:
         report.created.append(prompt_rel)
-    report.knowledge = copy_knowledge(spec.target, knowledge if knowledge is not None else tool / "knowledge")
+    report.knowledge = copy_knowledge(spec.target, knowledge if knowledge is not None else tool / "knowledge", module_tags(spec))
     if run_post:
         for result in report.results:
             report.post_failures.extend(run_post_generate(result))
@@ -279,6 +311,7 @@ def describe(spec: Spec) -> str:
     if spec.with_admin:
         parts.append(spec.admin_dir)
     parts.extend(spec.app_dir(app) for app in spec.apps)
+    parts.extend(spec.web_dir(web) for web in spec.webs)
     parts.extend(spec.sdk_dir(sdk) for sdk in spec.sdks)
     return f"{spec.system_name} ({spec.prefix}, {spec.package_root}, {spec.npm_scope}) in {spec.target}\n  parts: " + ", ".join(parts)
 
@@ -288,6 +321,8 @@ def print_report(report: Report, run_post: bool) -> None:
         print(f"  {result.kind:9} -> {result.dest}  ({len(result.files)} files, {len(result.binaries)} binary)")
         if result.overwritten:
             print(f"            overwrote {len(result.overwritten)} file(s) written by an earlier template")
+    if report.deploy_files:
+        print(f"  deployment: {len(report.deploy_files)} file(s) for the chosen host(s): " + ", ".join(report.deploy_files))
     if report.created:
         print(f"  per-project files created ({len(report.created)}): " + ", ".join(report.created))
     if report.knowledge:
@@ -308,6 +343,10 @@ def print_report(report: Report, run_post: bool) -> None:
             print(f"  {rel}: {', '.join(literals)}")
     for app_dir, rest in report.identity_left.items():
         print(f"\n{app_dir} still mentions the kmp sentinel identity in {len(rest)} file(s): " + ", ".join(rest[:10]))
+    if report.warnings:
+        print(f"\nWarnings ({len(report.warnings)}):")
+        for warning in report.warnings:
+            print(f"  ! {warning}")
     commands = [(r.kind, c) for r in report.results for c in r.post_generate]
     if commands:
         print("\nPost-generate commands" + (" (run):" if run_post else " (not run; pass --run-post or run them yourself):"))
@@ -326,7 +365,7 @@ def print_report(report: Report, run_post: bool) -> None:
 
 
 def main(argv: List[str]) -> int:
-    if argv and argv[0] in ("intake", "new", "documents"):  # the plan-driven flow (commands.py); the flat command below is unchanged
+    if argv and argv[0] in ("intake", "new", "documents", "lessons", "update"):  # the plan-driven flow (commands.py); the flat command below is unchanged
         from commands import run
         return run(argv, generate, print_report)
     args = parse_args(argv)

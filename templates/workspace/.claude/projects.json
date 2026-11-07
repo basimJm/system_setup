@@ -1,5 +1,5 @@
 {
-  "_comment": "Registry of every project and SDK in the __SYSTEM_NAME__ monorepo. Read by scripts/tasks.py (backlog queries, status propagation, INTEGRATION.md board) and by .claude/hooks (master branches, session files). Paths are relative to the repo root. Adding a project = one entry here + its backlog/session/memory/Integration files (see README.md).",
+  "_comment": "Registry of every project and SDK in the __SYSTEM_NAME__ monorepo. Read by scripts/tasks.py (backlog queries, status propagation, INTEGRATION.md board) and by .claude/hooks (master branches, session files, the `rules` map: a rule set to false is not enforced). Paths are relative to the repo root. Adding a project = one entry here + its backlog/session/memory/Integration files (see README.md).",
   "board_file": "INTEGRATION.md",
   "statuses": ["TODO", "IN PROGRESS", "IN REVIEW", "DONE", "PENDING", "BLOCKED", "CANCELLED"],
   "owner_input_markers": ["user input", "owner input", "owner decision"],
@@ -202,5 +202,6 @@
       "worker_cache_read": 1000000
     }
   },
+  "rules": __RULES_JSON__,
   "projects": __PROJECTS_JSON__
 }

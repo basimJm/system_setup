@@ -3,7 +3,7 @@
 import os
 import re
 import sys
-from _common import read_input, is_source_file, is_test_file, project_dir
+from _common import read_input, is_source_file, is_test_file, project_dir, rule_on
 
 ALLOWED_PATH_HINTS = ("config", "constants", "env", ".example", "/test", "Test.", ".test.", ".spec.", "build.gradle", "settings.gradle", "gradle/")
 PATTERNS = {
@@ -14,12 +14,17 @@ PATTERNS = {
     "localhost/port": re.compile(r"['\"](?:localhost|127\.0\.0\.1)(?::\d+)?['\"]"),
 }
 
-def findings(path, text):
+SECRET_KINDS = ("secret/API key", "private key block")
+
+
+def findings(path, text, rules=None):
+    """Secret shapes follow the `no-secrets` rule, URLs/IPs/ports the `no-hardcoded` rule (a rule the plan turned off is not checked)."""
     if not is_source_file(path) or is_test_file(path):
         return []
+    names = [n for n in PATTERNS if rule_on("no-secrets" if n in SECRET_KINDS else "no-hardcoded", rules)]
     if any(hint in path for hint in ALLOWED_PATH_HINTS):
-        return [n for n in ("secret/API key", "private key block") if PATTERNS[n].search(text)]
-    return [name for name, rx in PATTERNS.items() if rx.search(text)]
+        names = [n for n in names if n in SECRET_KINDS]
+    return [n for n in names if PATTERNS[n].search(text)]
 
 def main():
     data = read_input()

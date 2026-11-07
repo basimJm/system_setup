@@ -13,7 +13,7 @@ from typing import Callable, List, Optional
 
 from analyzer import Analyzer, AnalyzerError, ClaudeAnalyzer, PlanRejected, propose
 from catalog import AnalyzerSettings, CatalogError, load_analyzer_settings, load_catalog, load_document_settings
-from documents import BUSINESS_DOC_REL as SAVED_DOCUMENT, DocumentsError, run_documents
+from documents import ANALYZED_DOC_REL, BUSINESS_DOC_REL as SAVED_DOCUMENT, DocumentsError, run_documents, sha
 from engine import EngineError
 from manifest import ManifestError, templates_root, tool_root
 from plan import PLAN_FILE, Plan, PlanError, dumps, load_plan
@@ -25,7 +25,7 @@ from workspace import git_init, run_tasks_check
 INTAKE_PROMPT_FILE = "INTAKE_PROMPT.md"
 INTAKE_START = "Start the interview now."
 BUSINESS_DOC_REL = SAVED_DOCUMENT
-SUBCOMMANDS = ("intake", "new", "documents")
+SUBCOMMANDS = ("intake", "new", "documents", "lessons", "update")
 NO_CLAUDE_MDS = {"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"}
 
 NO_CLAUDE_HELP = """\
@@ -188,6 +188,7 @@ def run_new(argv: List[str], generate: Callable, print_report: Callable, analyze
     extra = {PLAN_FILE: dumps(plan)}
     if document is not None:
         extra[BUSINESS_DOC_REL] = document if document.endswith("\n") else document + "\n"
+        extra[ANALYZED_DOC_REL] = sha(document.strip()) + "\n"
     templates = (args.templates or templates_root()).resolve()
     hook = None
     if doc_settings is not None:
@@ -262,6 +263,12 @@ def print_deferred(deferred: List[str], say: Callable[[str], None] = print) -> N
 
 
 def run(argv: List[str], generate: Callable, print_report: Callable, **seams) -> int:
+    if argv[0] == "lessons":   # lessons.py / lessons_cmd.py: list the tool's lessons, import a project's reviewed ones
+        from lessons_cmd import run_lessons
+        return run_lessons(argv[1:], **{k: v for k, v in seams.items() if k in ("say", "reader")})
+    if argv[0] == "update":   # update.py: a changed business or plan is followed with additions only
+        from update import run_update
+        return run_update(argv[1:], generate, **{k: v for k, v in seams.items() if k in ("analyzer", "reader", "say")})
     if argv[0] == "documents":
         return run_documents_command(argv[1:], **{k: v for k, v in seams.items() if k in ("analyzer", "say")})
     if argv[0] == "intake":

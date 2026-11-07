@@ -32,7 +32,7 @@
       "platforms": {"allowed": ["android", "ios", "web"], "default": ["android", "ios"]},
       "deployable": false,
       "stores_data": false,
-      "generated": "android and ios together"
+      "generated": "Android, iOS or both; a web platform becomes a separate web app"
     },
     {
       "id": "web",
@@ -41,7 +41,7 @@
       "platforms": {"allowed": ["web"], "default": ["web"]},
       "deployable": true,
       "stores_data": false,
-      "generated": false
+      "generated": "from the web template, in its own folder"
     }
   ]
 }
