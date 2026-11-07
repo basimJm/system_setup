@@ -462,6 +462,7 @@ class Spec:
             "__WEB_DIR__": self.web_dir(web),
             "__WEB_PREFIX__": self.web_prefixes()[web.slug],
             "__WEB_MASTER__": web.slug,
+            "__WEB_DOC_PREFIX__": "_".join(re.findall(r"[A-Za-z0-9]+", web.name)) + "_",   # `Parent_Web_`: the stem of its BRD, PRD, Tasks files
         }
 
     def sdk_values(self, sdk: str) -> Dict[str, str]:

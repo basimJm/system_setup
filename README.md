@@ -114,7 +114,7 @@ catalog name, chosen or not, so a package can name a sibling), `__DEV_API_URL__`
 `__OWNER_GITHUB__`, `__REPO_NAME__`, `__YEAR__`, `__DATE__`, `__APPS_LIST__`, `__WEBS_LIST__`, `__SDKS_LIST__`, `__MASTERS_LIST__`
 (back-ticked, comma separated), `__WEB_DIR_<n>__`, `__WEB_NAME_<n>__`, `__WEB_SLUG_<n>__`, `__WEB_PREFIX_<n>__` (n = 1-based
 web app index). While the `web` template is instantiated for one web app: `__WEB_NAME__`, `__WEB_NAME_AR__`, `__WEB_SLUG__`,
-`__WEB_DIR__`, `__WEB_PREFIX__`, `__WEB_MASTER__`.
+`__WEB_DIR__`, `__WEB_PREFIX__`, `__WEB_MASTER__`, `__WEB_DOC_PREFIX__` (`Parent_Web_`, replaces the admin template's `Admin_` in the names of its BRD, PRD, Design Script and Tasks files).
 
 Workspace only (engine-computed, each on its own line, multi-line values): `__APPS_TABLE__`, `__SDKS_TABLE__`
 (rows `| \`dir/\` | description | status |`), `__PROJECTS_JSON__` (the `projects` object of `projects.json`, indented

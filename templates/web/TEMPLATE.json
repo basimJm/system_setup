@@ -7,18 +7,24 @@
     "__WEB_NAME_AR__",
     "__WEB_SLUG__",
     "__WEB_DIR__",
-    "__WEB_PREFIX__"
+    "__WEB_PREFIX__",
+    "__WEB_DOC_PREFIX__"
   ],
   "sentinels": {
     "__SYSTEM_PREFIX__-Admin-Dashboard": "__WEB_DIR__",
     "__ADMIN_DIR__": "__WEB_DIR__",
     "__SYSTEM_NAME__ Admin": "__WEB_NAME__",
     "لوحة تحكم __SYSTEM_NAME_AR__": "__WEB_NAME_AR__",
-    "__SYSTEM_SLUG__-admin-dashboard": "__WEB_SLUG__"
+    "__SYSTEM_SLUG__-admin-dashboard": "__WEB_SLUG__",
+    "Admin_": "__WEB_DOC_PREFIX__"
   },
   "notes": {
     "target_dir": "<system prefix>-Web-<Name> (the value of __WEB_DIR__)",
     "base": "templates/admin is read first (files, skip list, binary globs, sentinels, targeted edits, post_generate); the sentinels above replace the admin identity by the web app's own",
-    "after_generation": "the sample module `items` and the `/admin/v1` contract come from the admin template: replace them with the screens and the API of this web app's audience (its backlog and PRD say which)"
+    "after_generation": "the sample module `items` and the `/admin/v1` contract come from the admin template: replace them with the screens and the API of this web app's audience (its backlog and PRD say which)",
+    "docs": "the admin product documents (Admin_BRD.md, Admin_PRD.md, Admin_Design_Script.md, Admin_Tasks.md) are renamed to the web app's own stem (Parent_Web_BRD.md ...) in paths and in every text that names them, so the documents step writes the web app's BRD, PRD and Design Script there"
+  },
+  "rename_paths": {
+    "Admin_": "__WEB_DOC_PREFIX__"
   }
 }

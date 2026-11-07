@@ -8,6 +8,7 @@ import subprocess
 from _support import FIXTURE_KNOWLEDGE, FIXTURE_TEMPLATES, TOOL_ROOT, TempDirTest, make_spec, valid_plan_data
 
 from catalog import load_catalog
+from documents import make_targets
 from cli import generate, needed_kinds
 from engine import EngineError, instantiate
 from kmp import dropped_platforms
@@ -323,3 +324,21 @@ class GeneratedSystemTest(TempDirTest):
         self.assertEqual(["server", "web", "workspace"], [r.kind for r in report.results])
         self.assertEqual(["server", "parent-portal"], spec.masters())
         self.assertEqual({}, report.unresolved)
+
+
+class DocumentTargetsTest(TempDirTest):
+    """Where the documents of each module go: a web module has its own project, a second admin panel still gets a module folder."""
+
+    def test_web_and_app_modules_map_to_their_project_and_a_second_admin_to_a_module_folder(self):
+        data = valid_plan_data()
+        data["modules"] += [
+            {"id": "parents", "kind": "web", "name": "Parents", "audience": "parents", "why": "pay", "platforms": ["web"]},
+            {"id": "admin-two", "kind": "admin", "name": "Second admin", "audience": "x", "why": "y", "platforms": ["web"]}]
+        plan = Plan.from_dict(data, CATALOG)
+        spec = make_spec(self.root / "sys", webs=[WebSpec("Parents", "parents")], apps=[AppSpec("Customer", "customer")])
+        registry = projects_registry(spec)
+        targets = {t.module.id: t for t in make_targets(plan, registry, self.root)}
+        self.assertEqual(("parents", "ACME-Web-Parents/docs"), (targets["parents"].key, targets["parents"].docs_dir))
+        self.assertEqual("Parents", targets["parents"].stem)
+        self.assertEqual(("customer", "ACME-Mobile-Customer/docs"), (targets["customer"].key, targets["customer"].docs_dir))
+        self.assertEqual(("", "docs/modules/admin-two"), (targets["admin-two"].key, targets["admin-two"].docs_dir))
