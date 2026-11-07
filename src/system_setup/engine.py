@@ -244,7 +244,7 @@ def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
 
 
 def apply_prune_edits(manifest: Manifest, dest: Path, values: Mapping[str, str], drop: Sequence[str]) -> None:
-    """The `edits` of every dropped prune group: exact `find` -> `replace_with` in one written file. A file or a text that
+    """The `edits` of every dropped prune group: exact `find` -> `replace_with` in one written file (both written as in the template). A file or a text that
     is not there is an error, so a template that changed under its prune list is noticed, never skipped silently."""
     for group in drop:
         for edit in manifest.prune[group]["edits"]:
@@ -253,9 +253,10 @@ def apply_prune_edits(manifest: Manifest, dest: Path, values: Mapping[str, str],
             if not path.is_file():
                 raise EngineError(f"{manifest.kind}: prune {group}: file {rel} was not generated")
             text = path.read_text(encoding="utf-8")
-            if edit["find"] not in text:
+            if render_text(edit["find"], manifest, values) not in text:
                 raise EngineError(f"{manifest.kind}: prune {group}: text not found in {rel}: {edit['find'][:80]!r}")
-            path.write_text(text.replace(edit["find"], edit["replace_with"]), encoding="utf-8")
+            needle = render_text(edit["find"], manifest, values)   # written as in the template; sentinels and tokens render like the file
+            path.write_text(text.replace(needle, render_text(edit["replace_with"], manifest, values)), encoding="utf-8")
 
 
 def apply_targeted(manifest: Manifest, dest: Path, values: Mapping[str, str]) -> None:

@@ -288,6 +288,26 @@
           "file": "config/policy.json",
           "find": "    \"iosConfigurations\": [\n      \"Debug-Dev\",\n      \"Release-Dev\",\n      \"Debug-Prod\",\n      \"Release-Prod\"\n    ],\n    \"iosSchemes\": {\n      \"iosApp-Dev\": [\n        \"Debug-Dev\",\n        \"Release-Dev\"\n      ],\n      \"iosApp-Prod\": [\n        \"Debug-Prod\",\n        \"Release-Prod\"\n      ]\n    },\n",
           "replace_with": "    \"iosConfigurations\": [],\n    \"iosSchemes\": {},\n"
+        },
+        {
+          "file": "config/policy-baseline.json",
+          "find": "  \"core/common/src/iosMain/kotlin/com/acme/shop/core/common/Analytics.ios.kt\": {\n    \"H003\": 1\n  },\n",
+          "replace_with": ""
+        },
+        {
+          "file": "config/policy-baseline.json",
+          "find": "  \"core/network/src/iosMain/kotlin/com/acme/shop/core/network/client/NetworkLog.ios.kt\": {\n    \"Q002\": 1\n  },\n",
+          "replace_with": ""
+        },
+        {
+          "file": "config/policy-baseline.json",
+          "find": "  },\n  \"core/ui/src/iosMain/kotlin/com/acme/shop/core/ui/utils/getDefaultLocale.ios.kt\": {\n    \"H003\": 1\n  }\n}",
+          "replace_with": "  }\n}"
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "find": " and every iOS configuration (xcodebuild + Kotlin/Native tests + SwiftLint).",
+          "replace_with": "."
         }
       ],
       "post_generate": [
@@ -333,6 +353,16 @@
           "file": "scripts/ci/run_detekt.sh",
           "find": "$ROOT/androidApp/src,",
           "replace_with": ""
+        },
+        {
+          "file": "config/policy-baseline.json",
+          "find": "  \"androidApp/src/main/kotlin/com/acme/shop/main/MainActivity.kt\": {\n    \"H006\": 1\n  },\n",
+          "replace_with": ""
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "find": "every Android variant (assemble + lint +\n# unit tests + R8/APK-size budget) and every iOS configuration",
+          "replace_with": "every iOS configuration"
         }
       ],
       "post_generate": [
