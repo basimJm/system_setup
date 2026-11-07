@@ -49,9 +49,9 @@ class PlanToSpecTest(TempDirTest):
 
     def test_everything_not_generated_is_listed(self):
         text = "\n".join(self.convert(plan_of()).deferred)
-        for part in ("deployment of 'server': host render, database postgres, cache redis", "deployment of 'admin': host vercel",
-                     "other languages ar", "language of the generated documents: en", "countries IE"):
+        for part in ("other languages ar", "language of the generated documents: en", "countries IE"):
             self.assertIn(part, text)
+        self.assertNotIn("deployment of", text)   # phase 6: the chosen host's files are generated (see test_deploy.py)
         self.assertNotIn("SDK '", text)   # phase 5: every SDK and provider of the plan is generated, so none is listed as later
 
     def test_web_modules_and_single_platform_apps_are_recorded_and_sdks_are_generated(self):
@@ -126,7 +126,8 @@ class NewCommandTest(TempDirTest):
         self.assertFalse((target / "docs" / "BUSINESS.md").exists())
         self.assertIn("tasks.py check: OK", text)
         self.assertIn("Recorded in the plan, generated in a later phase", text)
-        self.assertIn("deployment of 'server': host render", text)
+        self.assertNotIn("deployment of 'server'", text)   # phase 6: no longer a later-phase item
+        self.assertIn("database 'postgres' of 'server'", text)   # the plan's database is not the template's: a warning, not a silent drop
         business_input = (target / "docs" / "BUSINESS_INPUT.md").read_text(encoding="utf-8")
         self.assertIn("Order: PLACED -> DELIVERED", business_input)
         self.assertIn("How is alcohol handled?", business_input)

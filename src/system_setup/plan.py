@@ -422,7 +422,8 @@ class _Reader:
             seen.add(part)
             host = self.text(item, "host", where, limit=SHORT)
             chosen = self.catalog.find_host(host) if host else None
-            if chosen is not None and module is not None and chosen.parts and module.kind not in chosen.parts:
+            if (chosen is not None and module is not None and module.kind in self.catalog.kinds and self.catalog.kinds[module.kind].deployable
+                    and chosen.parts and module.kind not in chosen.parts):
                 self.fail(f"{where}.host", f"{chosen.title} does not host a {module.kind} part (it hosts: {', '.join(chosen.parts)}); "
                           f"choose one of: {', '.join(h.id for h in self.catalog.hosts_for(module.kind))}")
             out.append(Deployment(part, host, self.catalog.find_host(host) is not None,

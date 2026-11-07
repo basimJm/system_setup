@@ -253,6 +253,9 @@ def write_deployment(spec: Any, templates: Path, registry: Dict[str, Any]) -> Wr
     if deployment is None or not deployment.parts:
         return written
     root = templates / OVERLAYS_DIR
+    if not root.is_dir():   # a templates folder without overlays (a custom or test one): say so, write nothing
+        written.warnings = deployment.warnings + [f"{templates} has no '{OVERLAYS_DIR}' folder, so no deployment files were written for the plan's hosts"]
+        return written
     for part in deployment.parts:
         if part.directory and (spec.target / part.directory).is_dir():
             write_part(spec, root, deployment.part_info[part.kind], part, written)
