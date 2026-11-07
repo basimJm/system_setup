@@ -83,11 +83,11 @@ def classify(project: Path, document: Document, say: Say) -> Tuple[List[Candidat
         raise LessonsError(f"{project / LOCAL_REL} not found: finish a task with a `Lesson:` line and `tasks.py set <ID> DONE` first")
     try:
         plan = json.loads((project / PLAN_REL).read_text(encoding="utf-8"))
-        prefixes = [p for p in tags_by_prefix(project)]
+        prefixes = list(tags_by_prefix(project)) + [(plan.get("system") or {}).get("prefix", "")]
     except (OSError, ValueError):
         plan, prefixes = {}, []
         say(f"note: {project / PLAN_REL} not found, so business names are not checked (private patterns still are)")
-    names = names_from_plan(plan, prefixes)
+    names = names_from_plan(plan)
     prefix_tags = tags_by_prefix(project)
     known = [(l.id, l.text) for l in document.lessons()]
     candidates: List[Candidate] = []
@@ -101,7 +101,7 @@ def classify(project: Path, document: Document, say: Say) -> Tuple[List[Candidat
         if match:
             duplicates.append(f"[{task}] {'the same as' if match[1] == 'same' else 'close to'} {match[0]}")
             continue
-        cleaned, flags = scrub(text, names)
+        cleaned, flags = scrub(text, names, prefixes)
         candidates.append(Candidate(task, text, cleaned, prefix_tags.get(task.split("-")[0], [DEFAULT_TAG]), flags))
         known.append((f"[{task}]", text))   # a repeat inside the same batch is a duplicate too
     return candidates, duplicates, secrets

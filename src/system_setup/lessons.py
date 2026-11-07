@@ -176,15 +176,15 @@ def find_duplicate(text: str, known: Iterable[Tuple[str, str]]) -> Optional[Tupl
 
 # ---------- business names and private patterns ----------
 
-def names_from_plan(plan: dict, extra: Iterable[str] = ()) -> List[str]:
-    """The names of one system that must not enter the tool: system name/slug/prefix/package/scope, modules, actors, task prefixes."""
+def names_from_plan(plan: dict) -> List[str]:
+    """The names of one system that must not enter the tool: system name/slug/package/scope, modules, actors. Prefixes are not
+    here: a prefix such as NOT is an English word, so `scrub` takes them apart and matches only `PREFIX-...` (task ids, folders)."""
     system = plan.get("system") or {}
-    found = [system.get(k, "") for k in ("name", "name_ar", "slug", "prefix", "package_root", "npm_scope")]
+    found = [system.get(k, "") for k in ("name", "name_ar", "slug", "package_root", "npm_scope")]
     for module in plan.get("modules") or []:
         found += [module.get("id", ""), module.get("name", "")]
     for actor in (plan.get("business") or {}).get("actors") or []:
         found.append(actor.get("name", ""))
-    found += list(extra)
     names: Dict[str, str] = {}
     for name in found:
         name = (name or "").strip()
@@ -198,9 +198,16 @@ def name_pattern(name: str) -> "re.Pattern[str]":
     return re.compile(r"(?<![\w])" + r"[\s_-]*".join(words) + r"(?![\w])", re.I)
 
 
-def scrub(text: str, names: Iterable[str]) -> Tuple[str, List[str]]:
-    """The text with every business name and private pattern replaced by `<...>`, and what was found (names, pattern kinds)."""
+def scrub(text: str, names: Iterable[str], prefixes: Iterable[str] = ()) -> Tuple[str, List[str]]:
+    """The text with every business name, `PREFIX-...` task id or folder name and private pattern replaced by `<...>`, and what was
+    found (names, pattern kinds). Prefixes match case-sensitively and only with a dash after them."""
     found: List[str] = []
+    prefixes = sorted({p for p in prefixes if p}, key=len, reverse=True)
+    if prefixes:
+        ids = re.compile(r"\b(?:" + "|".join(re.escape(p) for p in prefixes) + r")-[\w-]+")
+        if ids.search(text):
+            found.append("a task id or folder name of the project")
+            text = ids.sub("<name>", text)
     for name in names:
         pattern = name_pattern(name)
         if pattern.search(text):

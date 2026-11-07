@@ -118,21 +118,23 @@ class NamesAndPrivatePatterns(TempDirTest):
     PLAN = valid_plan_data()
 
     def test_names_come_from_the_plan_and_generic_words_are_left_out(self):
-        names = names_from_plan(self.PLAN, ["ACME"])
+        names = names_from_plan(self.PLAN)
         lowered = [n.lower() for n in names]
-        for expected in ("acme shop", "acme-shop", "acme"):
+        for expected in ("acme shop", "acme-shop"):
             self.assertIn(expected, lowered)
+        self.assertNotIn("acme", lowered)   # the prefix is matched only as `ACME-...`
         self.assertTrue({"server", "admin", "app"}.isdisjoint(lowered))
 
     def test_scrub_replaces_names_in_any_spelling_and_private_patterns(self):
         text, found = scrub("At Acme Shop the acme-shop server (ops@example.com, http://10.0.0.1:3000, /Users/x/y) failed; ACME-001.",
-                            names_from_plan(self.PLAN, ["ACME"]))
-        self.assertEqual("At <name> the <name> server (<removed>, <removed>, <removed>) failed; <name>-001.", text)
-        for part in ("the name 'Acme Shop'", "an e-mail address", "a web address", "an absolute path"):
+                            names_from_plan(self.PLAN), ["ACME", "NOT"])
+        self.assertEqual("At <name> the <name> server (<removed>, <removed>, <removed>) failed; <name>.", text)
+        for part in ("the name 'Acme Shop'", "an e-mail address", "a web address", "an absolute path", "a task id or folder name of the project"):
             self.assertIn(part, found)
         self.assertEqual(("Retry the sync.", []), scrub("Retry the sync.", names_from_plan(self.PLAN)))
         self.assertEqual("The <name> package.", scrub("The acmeshop package.", ["Acme Shop"])[0])   # slug-like spellings too
         self.assertEqual("An acme-shopping cart stays.", scrub("An acme-shopping cart stays.", ["Acme Shop"])[0])   # but not longer words
+        self.assertEqual("Do NOT retry, not <name>.", scrub("Do NOT retry, not NOT-004.", [], ["NOT"])[0])   # a prefix that is a word is matched only as an id
 
 
 class Import(TempDirTest):
