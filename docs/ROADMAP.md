@@ -55,8 +55,8 @@ Each phase is one branch and one PR into `main`.
 - [ ] Nothing from a previous business appears in the output.
 
 ### 4. Modules and platforms
-- [ ] A `web` module kind (customer or merchant web app) built from the web template; any number of apps and web apps.
-- [ ] Platform choice removes unused folders, Gradle targets and CI jobs. A web-only and an Android-only system both build.
+- [x] A `web` module kind (customer or merchant web app) built from the web template; any number of apps and web apps.
+- [x] Platform choice removes unused folders, Gradle targets and CI jobs. A web-only and an Android-only system both build.
 
 ### 5. SDKs and providers
 - [x] SDK and provider lists as data. Real adapters ported from the source system where they exist. (fcm, smtp, http-sms; s3 family builtin; payments and analytics adapters of the source were not ported)

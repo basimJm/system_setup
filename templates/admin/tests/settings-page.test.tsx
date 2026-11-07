@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { MOCK_SETTING_DEFAULTS } from '@/data/mock/settingsFixture';
 import SettingsPage from '@/presentation/settings/SettingsPage';
 import { makeContainer, renderWithApp } from './helpers/render';
 
@@ -74,8 +75,8 @@ describe('SettingsPage', () => {
     await userEvent.type(reminders, '60, 15');
     const failures = await box(/Failed background jobs that raise an alert/);
     expect(failures).toHaveValue('5');
-    expect(screen.getByText('Etc/GMT-3')).toBeInTheDocument();
-    expect(screen.getByText('XXX')).toBeInTheDocument();
+    expect(screen.getByText(String(MOCK_SETTING_DEFAULTS.timezone))).toBeInTheDocument();
+    expect(screen.getByText(String(MOCK_SETTING_DEFAULTS.currency))).toBeInTheDocument();
     await userEvent.clear(failures);
     await userEvent.type(failures, '8');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));

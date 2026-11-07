@@ -369,7 +369,7 @@ class _Reader:
             kind = self.catalog.kinds.get(module.kind)
             if module.kind and kind is None:
                 self.fail(f"{where}.kind", f"{module.kind!r} is not one of {', '.join(self.catalog.kinds)}")
-            if module.kind == "app" and module.id in RESERVED_APP_IDS:
+            if module.kind in ("app", "web") and module.id in RESERVED_APP_IDS:
                 self.fail(f"{where}.id", f"{module.id!r} is reserved for a master branch; name the app differently")
             module.platforms = self.strings(item, "platforms", where, minimum=1, limit=20)
             allowed = kind.allowed_platforms if kind else list(self.catalog.platforms)

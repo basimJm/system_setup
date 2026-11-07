@@ -14,12 +14,12 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from manifest import MANIFEST_NAME, Manifest
 
 ALWAYS_SKIP = (".git", "__pycache__", ".DS_Store")
-BLOCK_RE = re.compile(r"^[^\S\n]*__EACH_(APP|SDK)__[^\n]*\n(.*?)^[^\S\n]*__END_EACH__[^\n]*\n?", re.M | re.S)
+BLOCK_RE = re.compile(r"^[^\S\n]*__EACH_(APP|SDK|WEB)__[^\n]*\n(.*?)^[^\S\n]*__END_EACH__[^\n]*\n?", re.M | re.S)
 LEFTOVER_RE = re.compile(r"__[A-Z][A-Z0-9]*(?:_[A-Za-z0-9]+)*__")
 
 
@@ -137,17 +137,17 @@ def matches_any(rel: PurePosixPath, globs: Iterable[str]) -> bool:
     return False
 
 
-def is_skipped(rel: PurePosixPath, manifest: Manifest) -> bool:
+def is_skipped(rel: PurePosixPath, manifest: Manifest, extra_skip: Iterable[str] = ()) -> bool:
     if rel.name == MANIFEST_NAME and len(rel.parts) == 1:
         return True
     if any(part in ALWAYS_SKIP for part in rel.parts):
         return True
-    return matches_any(rel, manifest.skip)
+    return matches_any(rel, manifest.skip) or matches_any(rel, extra_skip)
 
 
 def layer_dirs(manifest: Manifest, values: Mapping[str, str]) -> List[Path]:
     """The template folders to copy, in overlay order; tokens in a layer name (`kinds/__SDK_NAME__`) are rendered."""
-    dirs = []
+    dirs = layer_dirs(manifest.base, values) if manifest.base else []   # a template with a base overlays its own files on it
     for layer in manifest.layers or ["."]:
         rendered = substitute_tokens(layer, values)
         if "__" in rendered:
@@ -161,7 +161,8 @@ def layer_dirs(manifest: Manifest, values: Mapping[str, str]) -> List[Path]:
     return dirs
 
 
-def template_files(manifest: Manifest, values: Optional[Mapping[str, str]] = None) -> List[Tuple[PurePosixPath, Path]]:
+def template_files(manifest: Manifest, values: Optional[Mapping[str, str]] = None,
+                   extra_skip: Iterable[str] = ()) -> List[Tuple[PurePosixPath, Path]]:
     """(relative output path, source file) for every file of every layer; a later layer replaces an earlier one."""
     chosen: Dict[PurePosixPath, Path] = {}
     for folder in layer_dirs(manifest, values or {}):
@@ -169,7 +170,7 @@ def template_files(manifest: Manifest, values: Optional[Mapping[str, str]] = Non
             if not path.is_file() and not path.is_symlink():
                 continue
             rel = PurePosixPath(path.relative_to(folder).as_posix())
-            if not is_skipped(rel, manifest):
+            if not is_skipped(rel, manifest, extra_skip):
                 chosen[rel] = path
     return sorted(chosen.items())
 
@@ -187,11 +188,16 @@ def resolve_dest(manifest: Manifest, repo_root: Path, values: Mapping[str, str])
 # ---------- generation ----------
 
 def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
-                parts: Optional[Mapping[str, Iterable[Mapping[str, str]]]] = None) -> Result:
-    """Writes one template into `repo_root` (under the manifest's dest). Returns what it did."""
+                parts: Optional[Mapping[str, Iterable[Mapping[str, str]]]] = None, drop: Sequence[str] = ()) -> Result:
+    """Writes one template into `repo_root` (under the manifest's dest). Returns what it did. `drop` names the template's
+    `prune` groups to remove: their files are not copied, their edits are applied and their commands are not listed."""
+    unknown = [group for group in drop if group not in manifest.prune]
+    if unknown:
+        raise EngineError(f"{manifest.kind}: no prune group {', '.join(unknown)} (the template declares: {', '.join(manifest.prune) or 'none'})")
     dest = resolve_dest(manifest, repo_root, values)
     result = Result(kind=manifest.kind, dest=dest)
-    for rel, source in template_files(manifest, values):
+    removed_files = [glob for group in drop for glob in manifest.prune[group]["skip"]]
+    for rel, source in template_files(manifest, values, removed_files):
         out_rel = render_path(rel, manifest, values)
         out = dest / Path(*out_rel.parts)
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -231,8 +237,26 @@ def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
                 result.files.append(out)
         shutil.copymode(source, out)
     apply_targeted(manifest, dest, values)
-    result.post_generate = [render_text(cmd, manifest, values) for cmd in manifest.post_generate]
+    apply_prune_edits(manifest, dest, values, drop)
+    removed_commands = {cmd for group in drop for cmd in manifest.prune[group]["post_generate"]}
+    result.post_generate = [render_text(cmd, manifest, values) for cmd in manifest.post_generate if cmd not in removed_commands]
     return result
+
+
+def apply_prune_edits(manifest: Manifest, dest: Path, values: Mapping[str, str], drop: Sequence[str]) -> None:
+    """The `edits` of every dropped prune group: exact `find` -> `replace_with` in one written file (both written as in the template). A file or a text that
+    is not there is an error, so a template that changed under its prune list is noticed, never skipped silently."""
+    for group in drop:
+        for edit in manifest.prune[group]["edits"]:
+            rel = render_path(PurePosixPath(edit["file"]), manifest, values)
+            path = dest / Path(*rel.parts)
+            if not path.is_file():
+                raise EngineError(f"{manifest.kind}: prune {group}: file {rel} was not generated")
+            text = path.read_text(encoding="utf-8")
+            if render_text(edit["find"], manifest, values) not in text:
+                raise EngineError(f"{manifest.kind}: prune {group}: text not found in {rel}: {edit['find'][:80]!r}")
+            needle = render_text(edit["find"], manifest, values)   # written as in the template; sentinels and tokens render like the file
+            path.write_text(text.replace(needle, render_text(edit["replace_with"], manifest, values)), encoding="utf-8")
 
 
 def apply_targeted(manifest: Manifest, dest: Path, values: Mapping[str, str]) -> None:

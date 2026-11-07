@@ -26,7 +26,7 @@ from engine import EngineError, Result, check_target, instantiate, run_post_gene
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
 from sdks import add_published_dependencies, append_backlog_rows, apply_providers, record_published  # noqa: E402
-from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, slug_from, split_list, system_prefix_from,  # noqa: E402
+from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, parse_webs, slug_from, split_list, system_prefix_from,  # noqa: E402
                      validate_app_specs, validate_github_name, validate_npm_scope, validate_package, validate_prefix,
                      validate_required, validate_sdk_names, validate_team_id, validate_url)
 from workspace import (copy_knowledge, ensure_project_files, git_init, next_steps, projects_registry, projects_table,  # noqa: E402
@@ -85,6 +85,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--no-admin", action="store_true", help="skip the admin web panel")
     parser.add_argument("--app", action="append", default=None, metavar="NAME[:slug[:arabic]]",
                         help="a KMP app, repeatable, e.g. --app Customer:customer --app Merchant:merchant")
+    parser.add_argument("--web", action="append", default=None, metavar="NAME[:slug[:arabic]]",
+                        help="a web app (customer portal, merchant site ...) from the web template, repeatable, e.g. --web 'Parent Portal:parent-portal'")
     parser.add_argument("--sdk", action="append", default=None, metavar="NAME",
                         help=f"an SDK from the catalog ({', '.join(SDK_CATALOG)}), repeatable or comma separated")
     parser.add_argument("--dev-api-url")
@@ -146,7 +148,7 @@ def collect(args: argparse.Namespace, reader: Callable[[str], str] = input) -> S
     sdks_text = value(sdks_text, "SDKs from the catalog, comma separated (Enter = none)", "", check=validate_sdk_names)
     spec = Spec(system_name=name, system_name_ar=name_ar, prefix=prefix, package_root=package_root, npm_scope=npm_scope,
                 target=target.resolve(), with_server=with_server, with_admin=with_admin, apps=parse_apps(apps_text),
-                sdks=split_list(sdks_text))
+                sdks=split_list(sdks_text), webs=parse_webs(",".join(args.web or [])))
     spec.dev_api_url = value(args.dev_api_url, "Dev API base URL", spec.dev_api_url, check=validate_url)
     spec.prod_api_url = value(args.prod_api_url, "Prod API base URL", spec.prod_api_url, check=validate_url)
     spec.dev_web_url = value(args.dev_web_url, "Dev web URL (admin panel, deep links)", spec.dev_web_url, check=validate_url)
@@ -183,6 +185,8 @@ def needed_kinds(spec: Spec) -> List[str]:
         kinds.append("sdk")
     if spec.apps:
         kinds.append("kmp")
+    if spec.webs:
+        kinds.append("web")
     kinds.append("workspace")
     return kinds
 
@@ -234,6 +238,8 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         report.results.append(instantiate(manifests["server"], spec.target, values, parts))
     if "admin" in manifests:
         report.results.append(instantiate(manifests["admin"], spec.target, values, parts))
+    for web in spec.webs:
+        report.results.append(instantiate(manifests["web"], spec.target, dict(values, **spec.web_values(web)), parts))
     sdk_rows: Dict[str, List[Any]] = {}
     for sdk in spec.sdks:
         sdk_values = dict(values, **spec.sdk_values(sdk))
@@ -297,6 +303,7 @@ def describe(spec: Spec) -> str:
     if spec.with_admin:
         parts.append(spec.admin_dir)
     parts.extend(spec.app_dir(app) for app in spec.apps)
+    parts.extend(spec.web_dir(web) for web in spec.webs)
     parts.extend(spec.sdk_dir(sdk) for sdk in spec.sdks)
     return f"{spec.system_name} ({spec.prefix}, {spec.package_root}, {spec.npm_scope}) in {spec.target}\n  parts: " + ", ".join(parts)
 

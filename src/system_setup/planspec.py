@@ -12,7 +12,7 @@ from business import Business
 from catalog import Catalog
 from plan import Plan
 from sdks import plan_sdks
-from prompts import AppSpec, Spec, slug_from
+from prompts import AppSpec, Spec, WebSpec, slug_from
 
 ARABIC = re.compile(r"[؀-ۿ]")
 MOBILE = ("android", "ios")
@@ -51,27 +51,37 @@ def business_of(plan: Plan) -> Business:
 
 
 def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
-    """The engine builds one server, one admin panel, KMP apps for Android and iOS together, and every internal SDK of the plan (see sdks.py)."""
+    """The engine builds one server, one admin panel, any number of KMP apps (Android, iOS or both) and web apps, and every
+    internal SDK of the plan (see sdks.py). A module whose platforms are mobile and web becomes a KMP app and a separate web app."""
     deferred: List[str] = []
+    deferred_notes: List[str] = []   # decisions taken while converting; listed first, they are not "later phase" items
     servers = [m for m in plan.modules if m.kind == "server"]
     admins = [m for m in plan.modules if m.kind == "admin"]
     deferred += [f"server module '{m.id}' ({m.name}): the engine builds one server; this one is recorded only" for m in servers[1:]]
     deferred += [f"admin module '{m.id}' ({m.name}): the engine builds one admin panel; this one is recorded only" for m in admins[1:]]
     apps: List[AppSpec] = []
+    webs: List[WebSpec] = []
+    used = {module.id for module in plan.modules}
+
     for module in plan.modules:
         label = f"'{module.id}' ({module.name})"
+        arabic = module.name if ARABIC.search(module.name) else ""
         if module.kind == "web":
-            deferred.append(f"web module {label} for {module.audience}: a web app is not generated yet")
+            webs.append(WebSpec(name=title_of(module.id), slug=module.id, name_ar=arabic))
         elif module.kind == "app":
-            targets = [p for p in module.platforms if p in MOBILE]
-            if not targets:
-                deferred.append(f"app module {label}: only {', '.join(module.platforms)} was chosen, and the engine generates Android and iOS apps")
-                continue
-            apps.append(AppSpec(name=title_of(module.id), slug=module.id, name_ar=module.name if ARABIC.search(module.name) else ""))
-            if sorted(targets) != sorted(MOBILE):
-                deferred.append(f"app module {label}: platform {', '.join(targets)} only was chosen, but the generated app still holds both Android and iOS")
+            targets = [p for p in MOBILE if p in module.platforms]
+            if targets:
+                apps.append(AppSpec(name=title_of(module.id), slug=module.id, name_ar=arabic, platforms=targets))
             if "web" in module.platforms:
-                deferred.append(f"app module {label}: the web target was chosen and is not generated yet")
+                slug = module.id if not targets else f"{module.id}-web"
+                while slug != module.id and slug in used:
+                    slug += "-2"
+                used.add(slug)
+                webs.append(WebSpec(name=title_of(slug), slug=slug, name_ar=arabic))
+                if targets:
+                    deferred_notes.append(f"app module {label}: the web platform becomes its own web app '{slug}' next to the {'/'.join(targets)} app")
+            if not targets and "web" not in module.platforms:
+                deferred.append(f"app module {label}: only {', '.join(module.platforms)} was chosen, and the engine generates Android, iOS and web apps")
         elif module.kind not in ("server", "admin"):
             deferred.append(f"module {label} of kind {module.kind}: not generated yet")
     selection = plan_sdks(plan, catalog)   # SDKs and providers: sdks.py (internal = generated, published = a dependency, none = nothing)
@@ -92,7 +102,7 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
         notes.append(f"the system name '{plan.system.name}' does not give the slug '{plan.system.slug}', so folders are named from the slug ('{name}')")
     spec = Spec(system_name=name, system_name_ar=plan.system.name_ar or plan.system.name, prefix=plan.system.prefix,
                 package_root=plan.system.package_root, npm_scope=plan.system.npm_scope, target=target.resolve(),
-                with_server=bool(servers), with_admin=bool(admins), apps=apps, sdks=[s.id for s in selection.internal], business=business_of(plan),
+                with_server=bool(servers), with_admin=bool(admins), apps=apps, webs=webs, sdks=[s.id for s in selection.internal], business=business_of(plan),
                 sdk_overrides=selection.overrides, sdk_plans={s.id: s for s in selection.internal}, published_sdks=selection.published,
                 skeleton_missing=list(catalog.skeleton_missing))
-    return Conversion(spec, notes + deferred)
+    return Conversion(spec, notes + deferred_notes + deferred)

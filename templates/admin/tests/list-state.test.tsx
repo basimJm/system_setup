@@ -31,7 +31,9 @@ describe('parseListState', () => {
   });
 
   it('reads page, size, search, sort and repeated filters', () => {
-    const s = parse('page=3&pageSize=50&q=%20noor%20&sort=name:asc&status=b&status=a&city=northville');
+    const s = parse(
+      'page=3&pageSize=50&q=%20noor%20&sort=name:asc&status=b&status=a&city=northville',
+    );
     expect(s).toMatchObject({
       page: 3,
       pageSize: 50,

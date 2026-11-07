@@ -30,8 +30,9 @@ class TimeFormatTest {
     }
 
     @Test
-    fun formatsInstantsInTheBusinessZone() {
-        assertEquals(DateTimeText("18/10/2026", "1:00 PM"), TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM"))
+    fun formatsInstantsInTheGivenZone() {
+        // A fixed-offset zone, so the expectation does not depend on the business time zone the app was generated with.
+        assertEquals(DateTimeText("18/10/2026", "1:00 PM"), TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM", zoneId = "Etc/GMT-3"))
         assertNull(TimeFormat.instantText("soon", "AM", "PM"))
     }
 
@@ -41,7 +42,7 @@ class TimeFormatTest {
         assertSame(BusinessTime.zone, BusinessTime.zone)
         assertEquals(
             TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM"),
-            TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM", zoneId = "Etc/GMT-3"),
+            TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM", zoneId = BusinessTime.ZONE_ID),
         )
     }
 

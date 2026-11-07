@@ -21,6 +21,7 @@ SDK_DESCRIPTIONS = {
 APP_PREFIX_LENGTH = 3
 SYSTEM_PREFIX_LENGTH = 4  # default folder/task prefix of the system: 'Acme Shop' -> ACME, 'Zed' -> ZED
 FIXED_PREFIXES = {"server": "SRV", "admin": "ADM"}
+MOBILE_PLATFORMS = ("android", "ios")
 MAIN_BRANCH = "main"
 API_VERSION_SEGMENT = "v1"
 URL_TOKENS = ("__DEV_API_URL__", "__PROD_API_URL__", "__DEV_WEB_URL__", "__PROD_WEB_URL__")
@@ -190,14 +191,39 @@ class AppSpec:
     name: str   # display name, e.g. "Customer"
     slug: str   # kebab, e.g. "customer" (also the master branch name)
     name_ar: str = ""
+    platforms: List[str] = field(default_factory=lambda: list(MOBILE_PLATFORMS))  # android, ios, or both
 
     @property
     def project(self) -> str:
         return pascal_from(self.name)
 
 
+@dataclass
+class WebSpec:
+    """A web app (customer portal, merchant site ...): the web template in its own folder, with its own prefix and master."""
+    name: str
+    slug: str
+    name_ar: str = ""
+
+    @property
+    def project(self) -> str:
+        return pascal_from(self.name)
+
+
+def parse_platforms(value: str) -> List[str]:
+    """'android', 'ios' or 'both' (also 'android+ios'): the mobile platforms of a KMP app."""
+    text = value.strip().lower()
+    if text in ("", "both", "all"):
+        return list(MOBILE_PLATFORMS)
+    chosen = [p for p in MOBILE_PLATFORMS if p in re.split(r"[+/ ]+", text)]
+    if not chosen or len(chosen) != len([p for p in re.split(r"[+/ ]+", text) if p]):
+        raise ValueError(f"platforms {value!r}: use android, ios or both")
+    return chosen
+
+
 def parse_app(spec: str) -> AppSpec:
-    """'Customer:customer' or 'Customer' (slug derived). An optional third part is the Arabic name."""
+    """'Customer:customer' or 'Customer' (slug derived). An optional third part is the Arabic name, a fourth the
+    platforms (android, ios or both; default both)."""
     parts = [p.strip() for p in spec.split(":")]
     if not parts or not parts[0]:
         raise ValueError("an app needs a display name, e.g. 'Customer:customer'")
@@ -208,11 +234,30 @@ def parse_app(spec: str) -> AppSpec:
         raise ValueError(f"app {name!r}: slug {slug!r}: {error}")
     if slug in FIXED_PREFIXES or slug == MAIN_BRANCH:
         raise ValueError(f"app slug {slug!r} is reserved for a master branch")
-    return AppSpec(name=name, slug=slug, name_ar=parts[2] if len(parts) > 2 else "")
+    platforms = parse_platforms(parts[3]) if len(parts) > 3 else list(MOBILE_PLATFORMS)
+    return AppSpec(name=name, slug=slug, name_ar=parts[2] if len(parts) > 2 else "", platforms=platforms)
+
+
+def parse_web(spec: str) -> WebSpec:
+    """'Parent Portal:parent-portal' or 'Parent Portal' (slug derived); an optional second part is the Arabic name."""
+    parts = [p.strip() for p in spec.split(":")]
+    if not parts or not parts[0]:
+        raise ValueError("a web app needs a display name, e.g. 'Parent Portal:parent-portal'")
+    slug = parts[1] if len(parts) > 1 and parts[1] else slug_from(parts[0])
+    error = validate_slug(slug)
+    if error:
+        raise ValueError(f"web app {parts[0]!r}: slug {slug!r}: {error}")
+    if slug in FIXED_PREFIXES or slug == MAIN_BRANCH:
+        raise ValueError(f"web app slug {slug!r} is reserved for a master branch")
+    return WebSpec(name=parts[0], slug=slug, name_ar=parts[2] if len(parts) > 2 else "")
 
 
 def parse_apps(value: str) -> List[AppSpec]:
     return [parse_app(item) for item in split_list(value)]
+
+
+def parse_webs(value: str) -> List[WebSpec]:
+    return [parse_web(item) for item in split_list(value)]
 
 
 @dataclass
@@ -227,6 +272,7 @@ class Spec:
     with_admin: bool = True
     apps: List[AppSpec] = field(default_factory=list)
     sdks: List[str] = field(default_factory=list)
+    webs: List[WebSpec] = field(default_factory=list)
     dev_api_url: str = "https://api-dev.example.com"
     prod_api_url: str = "https://api.example.com"
     dev_web_url: str = "https://dev.example.com"
@@ -260,6 +306,9 @@ class Spec:
 
     def app_dir(self, app: AppSpec) -> str:
         return f"{self.prefix}-Mobile-{app.project}"
+
+    def web_dir(self, web: WebSpec) -> str:
+        return f"{self.prefix}-Web-{web.project}"
 
     def app_package(self, app: AppSpec) -> str:
         return f"{self.package_root}.{package_segment(app.slug)}"
@@ -295,14 +344,23 @@ class Spec:
     def sdk_package(self, sdk: str) -> str:
         return f"{self.npm_scope}/{sdk}"
 
-    def app_prefixes(self) -> Dict[str, str]:
+    def _client_prefixes(self) -> Dict[str, str]:
+        """Task prefix of every KMP app, then every web app (unique among themselves, the SDKs and the fixed ones)."""
         taken = list(FIXED_PREFIXES.values()) + [self.sdk_prefix(sdk) for sdk in self.sdks]
         result: Dict[str, str] = {}
-        for app in self.apps:
-            prefix = unique_prefix(prefix_from(app.slug), taken, app.slug)
+        for slug in [app.slug for app in self.apps] + [web.slug for web in self.webs]:
+            prefix = unique_prefix(prefix_from(slug), taken, slug)
             taken.append(prefix)
-            result[app.slug] = prefix
+            result[slug] = prefix
         return result
+
+    def app_prefixes(self) -> Dict[str, str]:
+        prefixes = self._client_prefixes()
+        return {app.slug: prefixes[app.slug] for app in self.apps}
+
+    def web_prefixes(self) -> Dict[str, str]:
+        prefixes = self._client_prefixes()
+        return {web.slug: prefixes[web.slug] for web in self.webs}
 
     def all_prefixes(self) -> Dict[str, str]:
         """Project key -> task prefix for every chosen part (unique by construction)."""
@@ -311,19 +369,20 @@ class Spec:
             prefixes["server"] = FIXED_PREFIXES["server"]
         if self.with_admin:
             prefixes["admin"] = FIXED_PREFIXES["admin"]
-        prefixes.update(self.app_prefixes())
+        prefixes.update(self._client_prefixes())
         for sdk in self.sdks:
             prefixes[sdk] = self.sdk_prefix(sdk)
         return prefixes
 
     def masters(self) -> List[str]:
-        """One master branch per project: server (also every SDK), admin, one per app. `main` belongs to the owner."""
+        """One master branch per project: server (also every SDK), admin, one per app and per web app. `main` belongs to the owner."""
         masters: List[str] = []
         if self.with_server or self.sdks:
             masters.append("server")
         if self.with_admin:
             masters.append("admin")
         masters.extend(app.slug for app in self.apps)
+        masters.extend(web.slug for web in self.webs)
         return masters
 
     # --- token values ---
@@ -347,6 +406,7 @@ class Spec:
             "__YEAR__": str(self.today.year),
             "__DATE__": self.today.isoformat(),
             "__APPS_LIST__": ", ".join(app.slug for app in self.apps),
+            "__WEBS_LIST__": ", ".join(web.slug for web in self.webs),
             "__SDKS_LIST__": ", ".join(self.sdks),
             "__MASTERS_LIST__": ", ".join(f"`{m}`" for m in self.masters()),
         }
@@ -363,6 +423,14 @@ class Spec:
                 f"__APP_PACKAGE_{index}__": self.app_package(app),
                 f"__APP_PROJECT_{index}__": app.project,
                 f"__APP_PREFIX_{index}__": prefixes[app.slug],
+            })
+        web_prefixes = self.web_prefixes()
+        for index, web in enumerate(self.webs, start=1):
+            values.update({
+                f"__WEB_DIR_{index}__": self.web_dir(web),
+                f"__WEB_NAME_{index}__": web.name,
+                f"__WEB_SLUG_{index}__": web.slug,
+                f"__WEB_PREFIX_{index}__": web_prefixes[web.slug],
             })
         for sdk in sorted(set(SDK_CATALOG) | set(self.sdks)):  # a package may name a sibling even when it is not chosen
             upper = sdk.upper()
@@ -389,6 +457,18 @@ class Spec:
             "__REALTIME_NAMESPACE__": self.app_realtime_namespace(app),
         }
 
+    def web_values(self, web: WebSpec) -> Dict[str, str]:
+        """Contextual tokens while the web template is instantiated for one web app."""
+        return {
+            "__WEB_NAME__": web.name,
+            "__WEB_NAME_AR__": web.name_ar or web.name,
+            "__WEB_SLUG__": web.slug,
+            "__WEB_DIR__": self.web_dir(web),
+            "__WEB_PREFIX__": self.web_prefixes()[web.slug],
+            "__WEB_MASTER__": web.slug,
+            "__WEB_DOC_PREFIX__": "_".join(re.findall(r"[A-Za-z0-9]+", web.name)) + "_",   # `Parent_Web_`: the stem of its BRD, PRD, Tasks files
+        }
+
     def sdk_values(self, sdk: str) -> Dict[str, str]:
         """Contextual tokens while the sdk template is instantiated for one SDK."""
         return {
@@ -406,4 +486,5 @@ class Spec:
 
     def part_values(self) -> Dict[str, List[Dict[str, str]]]:
         """Per-app and per-SDK value sets for repeated blocks (`__EACH_APP__` / `__EACH_SDK__`)."""
-        return {"APP": [self.app_values(app) for app in self.apps], "SDK": [self.sdk_values(sdk) for sdk in self.sdks]}
+        return {"APP": [self.app_values(app) for app in self.apps], "SDK": [self.sdk_values(sdk) for sdk in self.sdks],
+                "WEB": [self.web_values(web) for web in self.webs]}

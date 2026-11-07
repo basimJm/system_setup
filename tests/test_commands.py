@@ -54,7 +54,7 @@ class PlanToSpecTest(TempDirTest):
             self.assertIn(part, text)
         self.assertNotIn("SDK '", text)   # phase 5: every SDK and provider of the plan is generated, so none is listed as later
 
-    def test_web_modules_and_single_platform_apps_are_recorded_and_sdks_are_generated(self):
+    def test_single_platform_apps_and_web_modules_are_generated_and_sdks_follow_their_source(self):
         data = valid_plan_data()
         data["modules"] += [
             {"id": "portal", "kind": "web", "name": "Portal", "audience": "parents", "why": "pay", "platforms": ["web"]},
@@ -69,11 +69,14 @@ class PlanToSpecTest(TempDirTest):
         conversion = self.convert(Plan.from_dict(data, CATALOG))
         spec, text = conversion.spec, "\n".join(conversion.deferred)
         self.assertEqual(["customer", "driver"], [a.slug for a in spec.apps])
+        self.assertEqual([["android", "ios"], ["android"]], [a.platforms for a in spec.apps])
+        self.assertEqual(["portal", "kiosk"], [w.slug for w in spec.webs])   # a web module and an app module that chose only web
         self.assertEqual(["otp", "payments", "maps", "loyalty"], spec.sdks)   # internal ones, new SDKs included
         self.assertEqual(["storage"], [item.id for item in spec.published_sdks])
         self.assertEqual({"maps", "loyalty"}, set(spec.sdk_overrides))
-        for part in ("web module 'portal'", "'driver' (Driver): platform android only was chosen", "app module 'kiosk' (Kiosk): only web was chosen",
-                     "admin module 'admin-two'"):
+        for gone in ("web module", "platform android only", "only web was chosen", "web target", "not generated yet"):
+            self.assertNotIn(gone, text)
+        for part in ("admin module 'admin-two'",):
             self.assertIn(part, text)
         self.assertNotIn("SDK '", text)
 
