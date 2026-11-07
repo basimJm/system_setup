@@ -2,7 +2,7 @@
 """PreToolUse(Bash): enforce branching and pre-push verification rules."""
 import re
 import sys
-from _common import read_input, current_branch, task_block, task_verified, PROTECTED_BRANCHES
+from _common import read_input, current_branch, task_block, task_verified, task_block_required, rule_on, PROTECTED_BRANCHES
 
 PROTECTED = "|".join(PROTECTED_BRANCHES)
 
@@ -18,33 +18,36 @@ def strip_text(command):
 SEGMENT_SPLIT = re.compile(r"&&|\|\||;|\||\n")
 
 
-def violation(command, branch, block_lookup=task_block):
+def violation(command, branch, block_lookup=task_block, rules=None):
     """Check each shell segment separately so flags of other commands (e.g. `gh pr --base main`) don't leak in."""
     for segment in SEGMENT_SPLIT.split(strip_text(command)):
-        reason = segment_violation(" ".join(segment.split()), branch, block_lookup)
+        reason = segment_violation(" ".join(segment.split()), branch, block_lookup, rules)
         if reason:
             return reason
     return None
 
 
-def segment_violation(cmd, branch, block_lookup):
+def segment_violation(cmd, branch, block_lookup, rules=None):
+    """Each check is a rule of .claude/projects.json: a rule the plan turned off is not enforced."""
     if not re.search(r"\bgit\b", cmd):
         return None
-    if "--no-verify" in cmd:
+    if "--no-verify" in cmd and rule_on("no-hook-bypass", rules):
         return "Do not bypass git hooks (--no-verify)."
-    if re.search(r"\bgit\s+commit\b", cmd) and branch in PROTECTED_BRANCHES:
+    protected = rule_on("no-protected-commits", rules)
+    if protected and re.search(r"\bgit\s+commit\b", cmd) and branch in PROTECTED_BRANCHES:
         return f"Committing on '{branch}' is forbidden. Run: git checkout main && git pull --ff-only && git checkout -b <type>/<name>."
     if re.search(r"\bgit\s+push\b", cmd):
-        if re.search(r"(--force\b|-f\b|--force-with-lease)", cmd):
+        if rule_on("no-force-push", rules) and re.search(r"(--force\b|-f\b|--force-with-lease)", cmd):
             return "Force push is forbidden."
-        if re.search(rf"(\s|:)({PROTECTED})(\s|$)", cmd) or branch in PROTECTED_BRANCHES:
+        if protected and (re.search(rf"(\s|:)({PROTECTED})(\s|$)", cmd) or branch in PROTECTED_BRANCHES):
             return "Pushing to main/master is forbidden. Push your feature branch and open a PR."
-        block = block_lookup(branch)
-        if not block:
-            return f"No task block for branch '{branch}' in the project's .claude/session.md. Add it (template in .claude/hooks.md)."
-        if not task_verified(block):
-            return ("Before pushing: complete the verification loop ('Loops: 1/1') and the 4-role review "
-                    "('Review: PASSED') in the project's .claude/session.md (see .claude/hooks.md §2).")
+        if task_block_required(rules):
+            block = block_lookup(branch)
+            if not block:
+                return f"No task block for branch '{branch}' in the project's .claude/session.md. Add it (template in .claude/hooks.md)."
+            if not task_verified(block, rules):
+                return ("Before pushing: complete the verification loop ('Loops: 1/1') and the 4-role review "
+                        "('Review: PASSED') in the project's .claude/session.md (see .claude/hooks.md §2).")
     return None
 
 def main():

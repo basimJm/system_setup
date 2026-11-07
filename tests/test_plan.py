@@ -134,8 +134,8 @@ class PlanValidationTest(TempDirTest):
         plan = Plan.from_dict(broken(lambda d: d["deployment"][1].pop("database")), CATALOG)
         self.assertEqual(("none", "none"), (plan.deployment[1].database, plan.deployment[1].cache))
 
-    def test_rules_stay_empty_in_version_1(self):
-        self.assertProblem(broken(lambda d: d.update(rules=[{"id": "R1"}])), "rules", "must be empty")
+    def test_rule_overrides_are_checked_against_the_catalog(self):
+        self.assertProblem(broken(lambda d: d.update(rules=[{"id": "R1"}])), "rules[0].id", "not a rule of catalog/rules.json")
 
     def test_open_questions(self):
         self.assertProblem(broken(lambda d: d["open_questions"][0].update(id="Bad Id")), "open_questions[0].id", "lowercase")

@@ -102,7 +102,7 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
                 package_root=plan.system.package_root, npm_scope=plan.system.npm_scope, target=target.resolve(),
                 with_server=bool(servers), with_admin=bool(admins), apps=apps, webs=webs, sdks=[s.id for s in selection.internal], business=business_of(plan),
                 sdk_overrides=selection.overrides, sdk_plans={s.id: s for s in selection.internal}, published_sdks=selection.published,
-                skeleton_missing=list(catalog.skeleton_missing))
+                skeleton_missing=list(catalog.skeleton_missing), rule_settings=list(plan.rules))
     spec.deployment = plan_deployment(plan, catalog, spec)   # deploy.py: the chosen host's files are written by generate()
     deferred += spec.deployment.deferred
     return Conversion(spec, notes + deferred_notes + deferred)

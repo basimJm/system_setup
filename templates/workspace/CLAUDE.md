@@ -19,6 +19,6 @@ A feature across modules: `python3 scripts/line.py new <name>`, fill the packet 
 ## Read on demand, once, only when needed
 - Delivery rules: `.claude/rules.md`. Review checklist and task block template: `.claude/hooks.md`. Roles: `.claude/roles.md`.
 - System overview: `docs/knowledge/system-overview.md`. Integration: `INTEGRATION.md`.
-- Older task blocks and facts: `docs/knowledge/`, `<project>/docs/knowledge/` (search them with `recall.py`).
+- Lessons that match this system's modules: `docs/knowledge/LESSONS.md`. Older task blocks and facts: `docs/knowledge/`, `<project>/docs/knowledge/` (search them with `recall.py`).
 
 @.claude/memory.md

@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from business import IANA_ZONE_RE
 from catalog import Catalog
+from rules import STATES, RuleSetting, find_def, load_rule_defs
 from prompts import validate_npm_scope, validate_package, validate_prefix, validate_slug
 
 SCHEMA_VERSION = 1
@@ -146,7 +147,7 @@ class Plan:
     modules: List[Module] = field(default_factory=list)
     sdks: List[Sdk] = field(default_factory=list)
     deployment: List[Deployment] = field(default_factory=list)
-    rules: List[Any] = field(default_factory=list)
+    rules: List[RuleSetting] = field(default_factory=list)   # overrides per rule of catalog/rules.json: on, off or edited text
     open_questions: List[OpenQuestion] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -288,9 +289,7 @@ class _Reader:
             business=section("business", self.business, BusinessInfo), modules=self.modules(data))
         plan.sdks = self.sdks(data)
         plan.deployment = self.deployment(data, plan.modules)
-        rules = self.items(data, "rules", "")
-        if rules:
-            self.fail("rules", f"must be empty in schema version {SCHEMA_VERSION} (rules arrive in a later phase), not {len(rules)} item(s)")
+        plan.rules = self.rules(data)
         plan.open_questions = self.questions(data)
         if self.errors:
             raise PlanError(self.errors, self.source)
@@ -429,6 +428,30 @@ class _Reader:
             out.append(Deployment(part, host, self.catalog.find_host(host) is not None,
                                   self.text(item, "database", where, limit=SHORT, default="none") or "none",
                                   self.text(item, "cache", where, limit=SHORT, default="none") or "none"))
+        return out
+
+    def rules(self, data: Dict[str, Any]) -> List[RuleSetting]:
+        """`rules`: [{"id", "state": "on"|"off", "text": edited wording, "confirmed": true}]. Turning a safety rule off needs `confirmed`."""
+        defs, out, seen = load_rule_defs(), [], set()
+        for index, raw in enumerate(self.items(data, "rules", "")):
+            where = f"rules[{index}]"
+            item = self.obj(raw, where, ["id"], ["state", "text", "confirmed"])
+            confirmed = item.get("confirmed", False)
+            if not isinstance(confirmed, bool):
+                self.fail(f"{where}.confirmed", f"must be true or false, not {type(confirmed).__name__}")
+                confirmed = False
+            setting = RuleSetting(id=self.text(item, "id", where, limit=40), state=self.text(item, "state", where, limit=3, default="on"),
+                                  text=self.text(item, "text", where, empty=True, limit=LONG), confirmed=confirmed)
+            rule = find_def(defs, setting.id)
+            if setting.id and rule is None:
+                self.fail(f"{where}.id", f"{setting.id!r} is not a rule of catalog/rules.json")
+            if setting.id in seen:
+                self.fail(f"{where}.id", f"{setting.id!r} is used twice")
+            seen.add(setting.id)
+            self.choice(setting.state, f"{where}.state", STATES)
+            if rule is not None and rule.safety and setting.state == "off" and not confirmed:
+                self.fail(f"{where}.confirmed", f"{rule.id!r} is a safety rule: turning it off needs \"confirmed\": true, set after you decided it on purpose")
+            out.append(setting)
         return out
 
     def questions(self, data: Dict[str, Any]) -> List[OpenQuestion]:

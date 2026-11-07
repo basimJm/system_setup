@@ -72,11 +72,11 @@ Each phase is one branch and one PR into `main`.
       happens only where an account exists, and the report says which. (configs parsed in tests; no deploy was run: no account; `docker compose config` not run: no Docker; the admin build script `scripts/write-hosting.ts` still names its three header-file targets: code, not a document)
 
 ### 7. Rules and lessons
-- [ ] Each rule has an ID and can be on, off or edited in the plan; hooks follow it; turning off a safety rule asks to confirm.
-- [ ] Each lesson has an ID, tags and how it is enforced (rule, policy check, template or note). A project gets what matches its modules.
-- [ ] The task block gains `Lesson: <one line or none>`; `tasks.py set DONE` collects them in `docs/knowledge/LESSONS.local.md`.
-- [ ] `lessons import <project>` removes duplicates and business names, shows a diff and adds only what is approved.
-- [ ] The source system's recent lessons are harvested, generalized and added.
+- [x] Each rule has an ID and can be on, off or edited in the plan; hooks follow it; turning off a safety rule asks to confirm.
+- [x] Each lesson has an ID, tags and how it is enforced (rule, policy check, template or note). A project gets what matches its modules.
+- [x] The task block gains `Lesson: <one line or none>`; `tasks.py set DONE` collects them in `docs/knowledge/LESSONS.local.md`.
+- [x] `lessons import <project>` removes duplicates and business names, shows a diff and adds only what is approved.
+- [x] The source system's recent lessons are harvested, generalized and added.
 
 ### 8. Update and full proof
 - [ ] Server audiences come from the plan: no `merchant` or `customer` module, route or contract unless the plan has that audience.
