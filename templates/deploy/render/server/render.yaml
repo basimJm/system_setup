@@ -1,0 +1,14 @@
+# __SERVICE_NAME__ on Render. Render reads render.yaml at the repository root; see docs/HOSTING.md.
+services:
+  - type: web
+    name: __SERVICE_NAME__
+    runtime: node
+    rootDir: __PART_DIR__
+    buildCommand: __PART_BUILD__
+    startCommand: __PART_START__
+    healthCheckPath: __PART_HEALTH__
+    envVars:
+__EACH_ENV__
+      - key: __ENV_KEY__
+        sync: false
+__END_EACH__

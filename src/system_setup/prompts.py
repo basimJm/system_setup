@@ -234,6 +234,7 @@ class Spec:
     apple_team_id: str = ""
     owner_github: str = "owner"
     repo_name: str = ""
+    deployment: Any = None   # phase 6: deploy.DeploymentPlan (where each part runs); None for the flat command
     today: _dt.date = field(default_factory=_dt.date.today)
     # Per-SDK metadata from templates/sdk/TEMPLATE.json `kinds` (name -> {prefix, title, dir = overlay folder,
     # description}); derived names when absent.

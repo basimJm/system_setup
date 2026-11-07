@@ -1,0 +1,1 @@
+{"extends": ["_docker-static"], "kinds": {"web": "admin"}}

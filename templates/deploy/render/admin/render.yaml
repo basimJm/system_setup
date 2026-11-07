@@ -1,0 +1,17 @@
+# __SERVICE_NAME__ on Render (static site). Render reads render.yaml at the repository root; see docs/HOSTING.md.
+services:
+  - type: web
+    name: __SERVICE_NAME__
+    runtime: static
+    rootDir: __PART_DIR__
+    buildCommand: __PART_BUILD__
+    staticPublishPath: __PART_OUTPUT__
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+__EACH_ENV__
+      - key: __ENV_KEY__
+        sync: false
+__END_EACH__

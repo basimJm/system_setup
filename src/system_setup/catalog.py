@@ -57,6 +57,8 @@ class Choice:
     id: str
     title: str
     parts: List[str] = field(default_factory=list)
+    deploy: str = ""         # hosts: the overlay folder templates/deploy/<deploy>/ written for a part on this host
+    supported: bool = True   # databases and caches: the generated server template runs on it
 
 
 @dataclass
@@ -70,6 +72,7 @@ class Catalog:
     caches: List[Choice]
     generic_port: Dict[str, Any] = field(default_factory=dict)   # the port of an SDK that has no `ports` of its own
     skeleton_missing: List[str] = field(default_factory=list)    # what a generated adapter skeleton still lacks
+    deploy_parts: Dict[str, Dict[str, Any]] = field(default_factory=dict)   # deploy.json `parts`: build, start, port, health, env per part kind
 
     # ---- lookups (case-insensitive on the id or the title) ----
     def sdk_known(self, sdk_id: str) -> bool:
@@ -144,7 +147,8 @@ def _text(item: Dict[str, Any], key: str, file: str) -> str:
 
 
 def _choices(data: Dict[str, Any], key: str, file: str) -> List[Choice]:
-    choices = [Choice(_text(item, "id", file), _text(item, "title", file), list(item.get("parts") or []))
+    choices = [Choice(_text(item, "id", file), _text(item, "title", file), list(item.get("parts") or []), str(item.get("deploy") or ""),
+                      bool(item.get("supported", True)))
                for item in _items(data, key, file)]
     _unique([choice.id for choice in choices], key, file)
     return choices
@@ -201,8 +205,12 @@ def load_catalog(root: Optional[Path] = None) -> Catalog:
     if not (generic_port.get("interface") and generic_port.get("methods")):
         raise CatalogError("sdks.json: `generic_port` needs `interface` and `methods`")
     missing = [str(item) for item in (providers_data.get("skeleton") or {}).get("missing", [])]
+    deploy_parts = deploy.get("parts") or {}
+    if not isinstance(deploy_parts, dict) or not all(isinstance(v, dict) for v in deploy_parts.values()):
+        raise CatalogError("deploy.json: `parts` maps a part kind to {title, static, port, health, build, start, output, env}")
     return Catalog(platforms, kinds, sdks, providers, _choices(deploy, "hosts", "deploy.json"),
-                   _choices(deploy, "databases", "deploy.json"), _choices(deploy, "caches", "deploy.json"), generic_port, missing)
+                   _choices(deploy, "databases", "deploy.json"), _choices(deploy, "caches", "deploy.json"), generic_port, missing,
+                   deploy_parts)
 
 
 @dataclass(frozen=True)

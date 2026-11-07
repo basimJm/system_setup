@@ -10,6 +10,7 @@ from typing import List
 
 from business import Business
 from catalog import Catalog
+from deploy import plan_deployment
 from plan import Plan
 from sdks import plan_sdks
 from prompts import AppSpec, Spec, slug_from
@@ -76,9 +77,6 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
             deferred.append(f"module {label} of kind {module.kind}: not generated yet")
     selection = plan_sdks(plan, catalog)   # SDKs and providers: sdks.py (internal = generated, published = a dependency, none = nothing)
     deferred += selection.deferred
-    for item in plan.deployment:
-        extra = ", ".join(p for p in (f"database {item.database}" if item.database != "none" else "", f"cache {item.cache}" if item.cache != "none" else "") if p)
-        deferred.append(f"deployment of '{item.part}': host {item.host}" + (f", {extra}" if extra else "") + "; deployment files come in a later phase")
     other_languages = [code for code in plan.languages.supported if code != plan.languages.default]
     if other_languages:
         deferred.append(f"other languages {', '.join(other_languages)}: recorded for the documents and apps")
@@ -95,4 +93,6 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
                 with_server=bool(servers), with_admin=bool(admins), apps=apps, sdks=[s.id for s in selection.internal], business=business_of(plan),
                 sdk_overrides=selection.overrides, sdk_plans={s.id: s for s in selection.internal}, published_sdks=selection.published,
                 skeleton_missing=list(catalog.skeleton_missing))
+    spec.deployment = plan_deployment(plan, catalog, spec)   # deploy.py: the chosen host's files are written by generate()
+    deferred += spec.deployment.deferred
     return Conversion(spec, notes + deferred)
