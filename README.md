@@ -27,7 +27,8 @@ Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s tests 
 |---|---|---|---|---|
 | Backend API | `server` | `<PREFIX>-Server/` | `SRV` | `server` |
 | Admin web panel | `admin` | `<PREFIX>-Admin-Dashboard/` | `ADM` | `admin` |
-| Each KMP app (`Name:slug[:arabic]`) | `kmp` (one copy per app) | `<PREFIX>-Mobile-<Name>/` | 3 letters of the slug (`CUS`), unique | `<slug>` |
+| Each KMP app (`Name:slug[:arabic[:platforms]]`) | `kmp` (one copy per app) | `<PREFIX>-Mobile-<Name>/` | 3 letters of the slug (`CUS`), unique | `<slug>` |
+| Each web app (`Name:slug[:arabic]`, customer portal, merchant site ...) | `web` (the admin template as `base`, one copy per web app) | `<PREFIX>-Web-<Name>/` | 3 letters of the slug (`PAR`), unique among apps, web apps and SDKs | `<slug>` |
 | Each SDK (storage, otp, notifications, payments, analytics) | `sdk` (`common/` + `kinds/<name>/` overlay, one copy per SDK) | `<slug>-<name>/` | from the sdk manifest (`STO`, `OTP`, `NOT`, `PAY`, `ANA`) | `server` |
 | Workspace root | `workspace` | the target folder | `T` (repo chores) | `main` |
 
@@ -38,7 +39,7 @@ ship them the engine writes `CLAUDE.md`, `docs/<PREFIX>_<Name>_Tasks.md` (first 
 `.claude/{session,memory,Integration}.md` from `templates/workspace/docs/templates/*_TEMPLATE.md` (built-in starters
 when the workspace template has no doc templates). `knowledge/*.md` (lessons, playbooks) is copied to
 `docs/knowledge/` and linked from the generated `README.md`. Then `python3 scripts/tasks.py check` runs in the result,
-`git init -b main` + first commit, one local branch per master (`server`, `admin`, `<app-slug>`), and the next steps are
+`git init -b main` + first commit, one local branch per master (`server`, `admin`, `<app-slug>`, `<web-slug>`), and the next steps are
 printed (push/protect the branches, install + gate + first task per project).
 
 ## 2. Questions (Enter keeps the default; `--yes` takes flags and defaults, never prompts)
@@ -52,7 +53,8 @@ printed (push/protect the branches, install + gate + first task per project).
 | npm scope of the SDKs | `--npm-scope` | `@<slug>` |
 | Target folder | `--target` | `./<slug>`; must be absent or empty, never inside this tool |
 | Include the backend / admin panel? | `--no-server` / `--no-admin` | yes / yes |
-| KMP apps as `Name:slug[:arabic]`, comma separated | `--app` (repeatable) | none; slugs kebab-case, unique, not `main`/`server`/`admin` |
+| KMP apps as `Name:slug[:arabic[:platforms]]`, comma separated | `--app` (repeatable) | none; slugs kebab-case, unique, not `main`/`server`/`admin`; `platforms` = `android`, `ios` or `both` (default both) |
+| Web apps as `Name:slug[:arabic]`, comma separated | `--web` (repeatable, a flag only: no question) | none; same slug rules; each becomes its own folder, prefix, master and backlog |
 | SDKs from the catalog | `--sdk` (repeatable or comma separated) | none; must exist in the sdk manifest's `kinds` **and** have an overlay folder |
 | Dev / prod API base URL, dev / prod web URL | `--dev-api-url` … `--prod-web-url` | `https://api-dev.example.com` … ; **`https://<host>` only, no path** (the apps derive the bare host for xcconfig) |
 | Apple Team ID | `--team-id` | skip (empty); 10 `[A-Z0-9]` |
@@ -109,8 +111,10 @@ System-wide, available to every kind: `__SYSTEM_NAME__`, `__SYSTEM_NAME_AR__`, `
 app index), `__SDK_DIR_<name>__` / `__SDK_DIR_<NAME>__`, `__SDK_PACKAGE_<NAME>__`, `__SDK_PREFIX_<NAME>__` (every
 catalog name, chosen or not, so a package can name a sibling), `__DEV_API_URL__`, `__PROD_API_URL__`, `__DEV_WEB_URL__`,
 `__PROD_WEB_URL__`, `__DEV_API_HOST__`, `__PROD_API_HOST__`, `__DEV_WEB_HOST__`, `__PROD_WEB_HOST__`, `__APPLE_TEAM_ID__`,
-`__OWNER_GITHUB__`, `__REPO_NAME__`, `__YEAR__`, `__DATE__`, `__APPS_LIST__`, `__SDKS_LIST__`, `__MASTERS_LIST__`
-(back-ticked, comma separated).
+`__OWNER_GITHUB__`, `__REPO_NAME__`, `__YEAR__`, `__DATE__`, `__APPS_LIST__`, `__WEBS_LIST__`, `__SDKS_LIST__`, `__MASTERS_LIST__`
+(back-ticked, comma separated), `__WEB_DIR_<n>__`, `__WEB_NAME_<n>__`, `__WEB_SLUG_<n>__`, `__WEB_PREFIX_<n>__` (n = 1-based
+web app index). While the `web` template is instantiated for one web app: `__WEB_NAME__`, `__WEB_NAME_AR__`, `__WEB_SLUG__`,
+`__WEB_DIR__`, `__WEB_PREFIX__`, `__WEB_MASTER__`.
 
 Workspace only (engine-computed, each on its own line, multi-line values): `__APPS_TABLE__`, `__SDKS_TABLE__`
 (rows `| \`dir/\` | description | status |`), `__PROJECTS_JSON__` (the `projects` object of `projects.json`, indented
@@ -136,8 +140,8 @@ Per SDK, while the `sdk` template is instantiated for that SDK: `__SDK_NAME__` =
 `__SDK_KIND_TITLE__`, `__SDK_DIR__`, `__SDK_PACKAGE__` (`<scope>/<name>`), `__SDK_PREFIX__`, `__SDK_DESCRIPTION__`,
 `__SDK_LAYER__` (the overlay folder).
 
-Repeated blocks (any text file): lines between `__EACH_APP__` … `__END_EACH__` (or `__EACH_SDK__`) are repeated once per
-app/SDK with the per-app/per-SDK tokens filled in; the block disappears when there is none.
+Repeated blocks (any text file): lines between `__EACH_APP__` … `__END_EACH__` (or `__EACH_SDK__`, `__EACH_WEB__`) are repeated once per
+app/SDK/web app with the per-app/per-SDK tokens filled in; the block disappears when there is none.
 
 ## 4. `templates/<kind>/TEMPLATE.json`
 
@@ -166,7 +170,21 @@ app/SDK with the per-app/per-SDK tokens filled in; the block disappears when the
 - **layers**: sub-folders copied in order, later ones overlay earlier ones. Defaults: `sdk` = `common/` then the kind's
   overlay (`kinds.<name>.dir`, else `kinds/<name>/`); `kmp` = `project/` when present; otherwise the template root.
 - **dest** (optional): where the part lands relative to the repo root; defaults per kind (`__SERVER_DIR__`,
-  `__ADMIN_DIR__`, `__SDK_DIR__`, `__APP_DIR__`, `.` for workspace).
+  `__ADMIN_DIR__`, `__WEB_DIR__`, `__SDK_DIR__`, `__APP_DIR__`, `.` for workspace).
+- **base** (optional): the folder name of another template, read first. The template is that template plus its own overlay:
+  the base's files are copied, then this template's own files replace or add to them; `placeholders`, `skip`,
+  `binary_globs`, `targeted` and `prune` add up, `sentinels` and `rename_paths` are overridden key by key, and
+  `post_generate` is the base's unless the template declares its own. One level only; a missing base is refused. The `web`
+  template is `{"kind": "web", "base": "admin"}` plus sentinels that replace the admin identity (folder, package name, names).
+- **prune** (optional): parts of the template a caller can drop, as `{group: {skip, edits, post_generate}}`. A dropped
+  group's `skip` globs are not copied, its `edits` (`file`, exact `find`, `replace_with`, empty to delete; `find` and
+  `replace_with` are written as in the template, so sentinels and tokens render like the file) run on the generated files
+  and its `post_generate` commands are not listed. A missing file or text is an error, so a template that changed under its
+  list is noticed. The `kmp` template has the groups `ios` and `android`, dropped when the app did not choose that platform:
+  an Android-only app has no `iosApp/`, no `iosMain` folders, no iOS target in the build-logic plugins, `core/network` or
+  `core/storage`, no `ktor-ios` catalog entry, no iOS CI job and no iOS variants in `config/policy.json`; an iOS-only app has
+  no `androidApp/`, no `:androidApp` in `settings.gradle.kts`, no Android CI job and no Android variants. The shared
+  modules keep their Android library target in an iOS-only app (the convention plugins apply it everywhere).
 - **kinds** (sdk only): the SDK catalog the template ships; `prefix` and `title` fill `__SDK_PREFIX__` / `__SDK_TITLE__`,
   `dir` names the overlay folder, `description` fills `__SDK_DESCRIPTION__`. A chosen SDK without an overlay folder is
   refused before anything is written.
@@ -204,6 +222,15 @@ does not know.
 2. Put a fixture under `tests/fixtures/templates/<kind>/` (a few files exercising sentinels, renames, skip, a binary)
    and extend `tests/test_e2e.py`; keep `python3 -m unittest discover -s tests` green.
 3. Document the new tokens here and in the template's `TEMPLATE.json` `placeholders`.
+4. A kind that is only a variation of another (the `web` kind is the admin template under another identity) needs no copy of
+   the files: give it `"base": "<template>"` and only the sentinels, skip globs and files that differ (section 4).
+   An optional part of a template (a platform) is a `prune` group, not a code branch.
+
+The `web` kind follows these steps: `KINDS`, `DEFAULT_DEST` (`__WEB_DIR__`) in `manifest.py`; the `web` instantiation in
+`cli.py` and `workspace.py` (registry kind `web`, backlog `<PREFIX>_<Name>_Tasks.md`); `WebSpec` and the unique task
+prefixes in `prompts.py`; `planspec.py` turns a `web` module, an `app` module with the `web` platform (a separate web app
+next to its KMP app, slug `<id>-web`) and an `app` module that chose only `web` into web apps; `catalog/modules.json`
+marks the kind as generated.
 
 ## 7. From a business description: `intake`, `new` and the plan
 
@@ -241,7 +268,7 @@ save the result as `BUSINESS.md`, then run `new --business-doc BUSINESS.md`.
 3. *Generate*: `system.plan.json` (the reviewed plan) and `docs/BUSINESS.md` (the document) are written into the new repository and
    committed with it. What the engine builds today is generated through `generate()`: the server, the admin panel, KMP apps (Android and
    iOS together) and the catalog SDKs set to build internally. Everything else in the plan is printed at the end under **Recorded in the plan,
-   generated in a later phase** (web modules, single-platform apps, new, published or no-code SDKs, providers, hosts, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
+   generated in a later phase** (new, published or no-code SDKs, providers, hosts, other languages; web modules, web platforms and single-platform apps are generated) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
    `system.plan.json` in the current folder so nothing paid for is lost.
 
 `new --plan FILE` skips the model for the plan: the plan is validated, reviewed (or accepted with `--yes`) and generated.
@@ -254,7 +281,7 @@ given (`--business-doc`, with or without `--plan`); `--plan` alone uses no model
 | Document | Where | Notes |
 |---|---|---|
 | `BUSINESS_DOMAIN.md` | root | written first; every other document cites its section numbers. `## 11. Error Codes` keeps the shipped block (the admin and app tests compare their error catalogs with it); the business's own codes are added as a proposal in §11.1 |
-| BRD, PRD, Design Script | `<project>/docs/` (a module with no generated project yet, such as a web app, goes to `docs/modules/<id>/`) | per module, server first; the server has no Design Script; screens `S01…`, flows `F01…`, capabilities `C01…`, requirements `B01…` |
+| BRD, PRD, Design Script | `<project>/docs/` (a module with no generated project, such as a second admin panel, goes to `docs/modules/<id>/`) | per module, server first; the server has no Design Script; screens `S01…`, flows `F01…`, capabilities `C01…`, requirements `B01…` |
 | backlog | the project's backlog file | JSON Schema output rendered here in the exact `\| ID \| Title \| Branch \| Needs \| Status \| Notes \|` format; foundation rows `TODO`, a row needing another project `BLOCKED`, each unanswered open question a `PENDING` row marked `**owner input**`, a final end-to-end row |
 | `INTEGRATION.md` | root | §3, §4, §5, §8 are written for the business; the rest of the template, including the live board markers, is kept |
 | API drafts | `<server>/docs/api/draft/openapi.<module>.draft.json` | OpenAPI 3.1 per client module, marked a starting draft, validated; never written over `docs/api/openapi.*.json`, which the server generates from code and its tests compare |

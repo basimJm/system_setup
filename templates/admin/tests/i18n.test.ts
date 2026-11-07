@@ -28,6 +28,8 @@ const ARABIC = /[؀-ۿ]/;
 // File-type chips (XLS / CSV / PDF) and the em-dash "no value" mark read the same in both languages.
 const LATIN_BY_DESIGN = new Set([
   'topbar.otherLanguageShort',
+  // The product name stays Latin when the owner gave no Arabic name (web apps use it as the title).
+  'app.name',
   'export.chip.XLSX',
   'export.chip.CSV',
   'export.chip.PDF',
