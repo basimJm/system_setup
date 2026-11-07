@@ -1,0 +1,13 @@
+{
+  "id": "http-sms",
+  "sdk": "otp",
+  "channel": "sms",
+  "title": "SMS gateway with a JSON HTTP API",
+  "ported_from": "a production SMS gateway channel (bounded fetch, status mapping), generalized to any JSON gateway",
+  "dependencies": {},
+  "dev_dependencies": {},
+  "env": ["__SDK_PREFIX___SMS_GATEWAY_URL", "__SDK_PREFIX___SMS_GATEWAY_API_KEY", "__SDK_PREFIX___SMS_SENDER_ID"],
+  "exports": ["export {", "  HttpSmsChannel,", "  mapSmsStatus,", "  type FetchLike,", "  type HttpSmsOptions,", "} from './adapters/http-sms';"],
+  "usage": "createOtp({ environment: 'prod', provider: 'code', store, secret, channel: new HttpSmsChannel({ url, apiKey, sender, render: (m) => `Your code is ${m.code}` }) });",
+  "notes": "Keys only. The gateway must accept POST JSON { to, from, text } with a bearer key and answer JSON with an `id` (or `messageId`)."
+}

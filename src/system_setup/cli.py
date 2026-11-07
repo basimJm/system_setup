@@ -25,6 +25,7 @@ from business import (FIELDS, PROMPT_FILE, REVIEW_PROMPT_NAME, Business, ask_bus
 from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
+from sdks import add_published_dependencies, append_backlog_rows, apply_providers, record_published  # noqa: E402
 from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, slug_from, split_list, system_prefix_from,  # noqa: E402
                      validate_app_specs, validate_github_name, validate_npm_scope, validate_package, validate_prefix,
                      validate_required, validate_sdk_names, validate_team_id, validate_url)
@@ -205,10 +206,11 @@ def apply_sdk_kinds(spec: Spec, manifest: Optional[Manifest]) -> None:
     if manifest is None:
         return
     if manifest.kinds:
-        unknown = [sdk for sdk in spec.sdks if sdk not in manifest.kinds]
+        # An SDK the template does not declare is built from the generic overlay when the plan derived its names (planspec).
+        unknown = [sdk for sdk in spec.sdks if sdk not in manifest.kinds and sdk not in spec.sdk_overrides]
         if unknown:
             raise ManifestError(f"the sdk template has no kind(s) {', '.join(unknown)}; it declares: {', '.join(sorted(manifest.kinds))}")
-        spec.sdk_overrides = {sdk: dict(manifest.kinds[sdk]) for sdk in spec.sdks}
+        spec.sdk_overrides = {sdk: dict(manifest.kinds[sdk]) if sdk in manifest.kinds else spec.sdk_overrides[sdk] for sdk in spec.sdks}
     if manifest.layers != ["."]:
         missing = [sdk for sdk in spec.sdks if not (manifest.root / spec.sdk_layer(sdk)).is_dir()]
         if missing:
@@ -232,9 +234,15 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         report.results.append(instantiate(manifests["server"], spec.target, values, parts))
     if "admin" in manifests:
         report.results.append(instantiate(manifests["admin"], spec.target, values, parts))
+    sdk_rows: Dict[str, List[Any]] = {}
     for sdk in spec.sdks:
         sdk_values = dict(values, **spec.sdk_values(sdk))
-        report.results.append(instantiate(manifests["sdk"], spec.target, sdk_values, parts))
+        result = instantiate(manifests["sdk"], spec.target, sdk_values, parts)
+        applied = apply_providers(spec, sdk, manifests["sdk"].root, spec.skeleton_missing)   # chosen providers: adapter, builtin or skeleton
+        sdk_rows[sdk] = applied.rows
+        if applied.dependencies_added:   # the shipped lock does not list the adapters' packages: `npm ci` would refuse it
+            result.post_generate = ["npm install" if command == "npm ci" else command for command in result.post_generate]
+        report.results.append(result)
     if spec.apps:
         app_results = instantiate_apps(manifests["kmp"], spec.target, spec)
         report.results.extend(app_results)
@@ -246,6 +254,14 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
     if not registry_shipped(spec.target, registry):
         write_registry(spec.target, registry)
     report.created = ensure_project_files(spec.target, registry)
+    projects = registry["projects"]
+    for sdk, rows in sdk_rows.items():   # one backlog row per skeleton adapter / unproven adapter / new SDK port, after the starter rows
+        append_backlog_rows(spec.target / projects[sdk]["backlog"], projects[sdk]["prefix"], rows)
+    if add_published_dependencies(spec):   # the server depends on the published SDKs; its lock is stale until `npm install`
+        for result in report.results:
+            if result.kind == "server":
+                result.post_generate = ["npm install" if command == "npm ci" else command for command in result.post_generate]
+    record_published(spec)
     report.created.append(write_business_input(spec.target, spec.business, spec.system_name, spec.today.isoformat()))
     for rel, text in (extra_files or {}).items():  # e.g. system.plan.json and the business document, part of the first commit
         path = spec.target / rel

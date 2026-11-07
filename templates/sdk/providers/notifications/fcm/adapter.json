@@ -1,0 +1,13 @@
+{
+  "id": "fcm",
+  "sdk": "notifications",
+  "channel": "push",
+  "title": "Firebase Cloud Messaging",
+  "ported_from": "a production push adapter (batched multicast, per-token outcome mapping), generalized",
+  "dependencies": {"firebase-admin": "^14.5.0"},
+  "dev_dependencies": {},
+  "env": ["__SDK_PREFIX___FCM_SERVICE_ACCOUNT_FILE", "__SDK_PREFIX___FCM_DRY_RUN"],
+  "exports": ["export {", "  FcmPushSender,", "  type FcmBatchResponse,", "  type FcmMessaging,", "  type FcmMulticastMessage,", "  type FcmSenderOptions,", "} from './adapters/fcm';", "export { createFirebaseMessaging } from './adapters/fcm-vendor';"],
+  "usage": "const messaging = createFirebaseMessaging(JSON.parse(serviceAccountJson));\ncreateNotifications({ environment: 'prod', push: { provider: 'custom' }, pushSender: new FcmPushSender({ messaging: messaging.messaging }) });",
+  "notes": "Keys only: the consumer reads the service-account file named by the first key and passes the parsed object to createFirebaseMessaging; it is never stored in this package."
+}
