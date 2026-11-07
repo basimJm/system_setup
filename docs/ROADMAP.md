@@ -48,11 +48,14 @@ Each phase is one branch and one PR into `main`.
       web-only school fee portal.
 
 ### 3. Documents and backlogs
-- [ ] From the plan and the document: `BUSINESS_DOMAIN.md`, per module BRD, PRD, Design Script and backlog, plus `INTEGRATION.md`,
+- [x] From the plan and the document: `BUSINESS_DOMAIN.md`, per module BRD, PRD, Design Script and backlog, plus `INTEGRATION.md`,
       a starting API contract and the root and project `CLAUDE.md` facts.
-- [ ] One small model call per document, resumable, with a total budget and a printed cost.
-- [ ] Backlogs pass `tasks.py check`, server tasks first, clients `BLOCKED` on them, and every open question is a `PENDING` row.
-- [ ] Nothing from a previous business appears in the output.
+- [x] One small model call per document, resumable, with a total budget and a printed cost.
+- [x] Backlogs pass `tasks.py check`, server tasks first, clients `BLOCKED` on them, and every open question is a `PENDING` row.
+- [x] Nothing from a previous business appears in the output.
+  Proof: school portal 14 documents, 79 tasks, $1.74; Arabic marketplace 20 documents, 124 tasks, $3.14; `tasks.py check` OK, privacy scan
+  clean, re-run skipped all 20 at $0. The last box is only true for the documents: the server template still ships `merchant` and
+  `customer` modules, fixed in Phase 8.
 
 ### 4. Modules and platforms
 - [x] A `web` module kind (customer or merchant web app) built from the web template; any number of apps and web apps.
@@ -76,6 +79,7 @@ Each phase is one branch and one PR into `main`.
 - [ ] The source system's recent lessons are harvested, generalized and added.
 
 ### 8. Update and full proof
+- [ ] Server audiences come from the plan: no `merchant` or `customer` module, route or contract unless the plan has that audience.
 - [ ] `update` adds a module or SDK and refreshes documents without overwriting work.
 - [ ] The fallback time zone is `UTC` and any zone or currency works without editing template tests (today the fallback is
       `Etc/GMT-3` and template tests pin it).
