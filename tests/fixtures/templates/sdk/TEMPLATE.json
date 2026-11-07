@@ -36,8 +36,8 @@
     }
   },
   "sentinels": {
-    "wab-sdk": "__SDK_DIR__",
-    "@wab/sdk": "__SDK_PACKAGE__"
+    "zed-sdk": "__SDK_DIR__",
+    "@zed/sdk": "__SDK_PACKAGE__"
   },
   "rename_paths": {
     "sdk_name": "__SDK_NAME__"

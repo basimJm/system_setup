@@ -24,7 +24,7 @@ import com.acme.shop.designsystem.components.textfield.AppTextField
 import com.acme.shop.designsystem.theme.AppTheme
 import com.acme.shop.designsystem.theme.AppWindowSize
 
-private val Jordan = CountryUi("JO", "الأردن", "+962", null, "^7[789][0-9]{7}$")
+private val SampleCountry = CountryUi("XA", "بلد أ", "+991", null, "^7[789][0-9]{7}$")
 private const val OTP_LENGTH_PREVIEW = 6
 
 /** The PRD forms (Login, Register, OTP) built from the kit: every field state next to each other. */
@@ -41,16 +41,16 @@ private fun FormGallery() {
         AppPhoneField(
             value = "",
             onValueChange = {},
-            country = Jordan,
+            country = SampleCountry,
             onCountryClick = {},
             label = "رقم الهاتف",
             placeholder = "7XXXXXXXX",
         )
-        AppPhoneField(value = "791234567", onValueChange = {}, country = Jordan, onCountryClick = {}, label = "رقم الهاتف")
+        AppPhoneField(value = "791234567", onValueChange = {}, country = SampleCountry, onCountryClick = {}, label = "رقم الهاتف")
         AppPhoneField(
             value = "12",
             onValueChange = {},
-            country = Jordan,
+            country = SampleCountry,
             onCountryClick = {},
             label = "رقم الهاتف",
             error = "رقم الهاتف غير صالح",
@@ -64,7 +64,7 @@ private fun FormGallery() {
         )
         AppTextField(value = "سارة", onValueChange = {}, label = "الاسم الأول", keyboardOptions = AppKeyboards.name)
         AppDropdownField(
-            options = listOf("عمّان", "إربد"),
+            options = listOf("الشمال", "الشرق"),
             selectedIndex = null,
             onSelect = {},
             placeholder = "اختر المدينة",

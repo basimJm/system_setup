@@ -19,7 +19,7 @@ describe('periodic jobs', () => {
           return Promise.resolve();
         },
       },
-      settings: fakeSettings({ timezone: 'Asia/Amman', 'notifications.retentionDays': 10 }),
+      settings: fakeSettings({ timezone: 'Etc/GMT-3', 'notifications.retentionDays': 10 }),
       notifications: {
         deleteReadBefore: (before) => {
           deleted.push(before);
@@ -38,7 +38,7 @@ describe('periodic jobs', () => {
         .map((j) => j.name)
         .sort(),
     );
-    expect(registered.every((j) => j.timeZone === 'Asia/Amman')).toBe(true);
+    expect(registered.every((j) => j.timeZone === 'Etc/GMT-3')).toBe(true);
     expect(Object.keys(jobs.handlers).sort()).toEqual(registered.map((j) => j.name).sort());
     const run = (name: string): Promise<void> => {
       const handler = jobs.handlers[name];

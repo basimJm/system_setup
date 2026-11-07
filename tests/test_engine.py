@@ -44,11 +44,11 @@ class SubstitutionTest(TempDirTest):
 
     def test_render_path_renames_across_folders_and_refuses_escapes(self):
         m = manifest(self.root, rename_paths={"com/acme/shop": "__APP_PACKAGE_PATH__", "AcmeShop": "__APP_PROJECT__",
-                                              "WAB": "__SYSTEM_PREFIX__"})
+                                              "ZED": "__SYSTEM_PREFIX__"})
         self.assertEqual(PurePosixPath("src/com/acme/customer/App.kt"),
                          render_path(PurePosixPath("src/com/acme/shop/App.kt"), m, VALUES))
         self.assertEqual(PurePosixPath("iosApp/Customer/ACME_Customer_Tasks.md"),
-                         render_path(PurePosixPath("iosApp/AcmeShop/WAB___APP_PROJECT___Tasks.md"), m, VALUES))
+                         render_path(PurePosixPath("iosApp/AcmeShop/ZED___APP_PROJECT___Tasks.md"), m, VALUES))
         with self.assertRaises(EngineError):
             render_path(PurePosixPath("__SYSTEM_PREFIX__"), m, {"__SYSTEM_PREFIX__": "../out"})
 
@@ -130,7 +130,7 @@ class TargetTest(TempDirTest):
         with self.assertRaises(EngineError):
             check_target(TOOL_ROOT, TOOL_ROOT)
         with self.assertRaises(EngineError):
-            check_target(TOOL_ROOT.parents[2], TOOL_ROOT)
+            check_target(TOOL_ROOT.parent, TOOL_ROOT)
 
     def test_target_must_be_absent_or_an_empty_folder(self):
         check_target(self.root / "fresh", self.root / "tool")

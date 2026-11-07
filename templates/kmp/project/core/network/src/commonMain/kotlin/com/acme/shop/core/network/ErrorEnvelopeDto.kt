@@ -6,7 +6,7 @@ import com.acme.shop.core.domain.FieldError
 import kotlinx.serialization.Serializable
 
 /**
- * The backend error envelope (`WAB-Server/CLAUDE.md` §6):
+ * The backend error envelope (`Acme-Server/CLAUDE.md` §6):
  * `{ "success": false, "message": "<localized>", "error": { "code", "details": [ { field, code, message } ], "traceId" } }`.
  */
 @Serializable

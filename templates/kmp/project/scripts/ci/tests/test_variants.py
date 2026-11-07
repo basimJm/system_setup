@@ -11,7 +11,7 @@ SCHEME_XML = (
     '<ProfileAction buildConfiguration="Release-{e}"/><AnalyzeAction buildConfiguration="Debug-{e}"/>'
     '<ArchiveAction buildConfiguration="Release-{e}"/></Scheme>'
 )
-XCCONFIG = "APP_ENV = {e}\nAPI_BASE_URL = https:/$()/x\nAPP_DISPLAY_NAME = WAB\nPRODUCT_BUNDLE_IDENTIFIER = com.x\nDATA_SOURCE = mock\n"
+XCCONFIG = "APP_ENV = {e}\nAPI_BASE_URL = https:/$()/x\nAPP_DISPLAY_NAME = BRAND\nPRODUCT_BUNDLE_IDENTIFIER = com.x\nDATA_SOURCE = mock\n"
 
 
 class VariantsTest(TempProject):

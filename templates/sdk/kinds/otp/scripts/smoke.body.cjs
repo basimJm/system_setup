@@ -1,6 +1,6 @@
 /* Consumer scenario run by scripts/package-smoke.cjs through CJS and ESM: the fake provider end to end. */
 module.exports = async (lib) => {
-  const phone = '+962791234567';
+  const phone = '+991791234567';
   const otp = lib.createOtp({ environment: 'dev', provider: 'fake', resendAfterSec: 0 });
   const sent = await otp.request({ phone, purpose: 'LOGIN', language: 'ar' });
   const code = otp.channel.lastCode(phone);

@@ -41,9 +41,10 @@ INSTALL_COMMANDS = {
 }
 
 
-def project_entry(title: str, prefix: str, directory: str, master: str, backlog_name: str) -> Dict[str, str]:
+def project_entry(title: str, kind: str, prefix: str, directory: str, master: str, backlog_name: str) -> Dict[str, str]:
     return {
         "title": title,
+        "kind": kind,
         "prefix": prefix,
         "dir": directory,
         "master": master,
@@ -55,20 +56,20 @@ def project_entry(title: str, prefix: str, directory: str, master: str, backlog_
 
 
 def projects_registry(spec: Spec) -> Dict[str, object]:
-    """`.claude/projects.json` in the exact shape the WAB `tasks.py` reads."""
+    """`.claude/projects.json` in the exact shape `tasks.py` reads."""
     projects: Dict[str, Dict[str, str]] = {}
     if spec.with_server:
-        projects["server"] = project_entry(f"{spec.server_dir} (backend API)", FIXED_PREFIXES["server"], spec.server_dir,
+        projects["server"] = project_entry(f"{spec.server_dir} (backend API)", "server", FIXED_PREFIXES["server"], spec.server_dir,
                                            "server", f"{spec.prefix}_Server_Tasks.md")
     if spec.with_admin:
-        projects["admin"] = project_entry(f"{spec.admin_dir} (web panel)", FIXED_PREFIXES["admin"], spec.admin_dir,
+        projects["admin"] = project_entry(f"{spec.admin_dir} (web panel)", "web", FIXED_PREFIXES["admin"], spec.admin_dir,
                                           "admin", f"{spec.prefix}_Admin_Tasks.md")
     prefixes = spec.app_prefixes()
     for app in spec.apps:
-        projects[app.slug] = project_entry(f"{spec.app_dir(app)} (KMP app)", prefixes[app.slug], spec.app_dir(app),
+        projects[app.slug] = project_entry(f"{spec.app_dir(app)} (KMP app)", "kmp", prefixes[app.slug], spec.app_dir(app),
                                            app.slug, f"{spec.prefix}_{app.project}_Tasks.md")
     for sdk in spec.sdks:
-        projects[sdk] = project_entry(f"{spec.sdk_dir(sdk)} (SDK)", spec.sdk_prefix(sdk), spec.sdk_dir(sdk), "server",
+        projects[sdk] = project_entry(f"{spec.sdk_dir(sdk)} (SDK)", "sdk", spec.sdk_prefix(sdk), spec.sdk_dir(sdk), "server",
                                       f"{spec.prefix}_Package_{spec.sdk_title_of(sdk)}_Tasks.md")
     return {
         "_comment": "Registry of every project and SDK in the monorepo. Read by scripts/tasks.py (backlog queries, "

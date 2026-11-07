@@ -12,7 +12,7 @@ enum class AppLanguage(val code: String, val isRtl: Boolean) {
         val DEFAULT: AppLanguage = ARABIC
 
         /**
-         * Accepts a stored code or a platform locale tag (`ar`, `ar_JO`, `en-US`, `EN`); anything unknown or
+         * Accepts a stored code or a platform locale tag (`ar`, `ar_EG`, `en-US`, `EN`); anything unknown or
          * blank falls back to [DEFAULT] so a bad stored value can never leave the app without a language.
          */
         fun fromCode(code: String?): AppLanguage {

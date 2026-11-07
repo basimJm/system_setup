@@ -30,7 +30,7 @@ describe('isSafeExternalHref', () => {
     ['https://example.com', true],
     ['http://example.com', true],
     ['mailto:a@b.co', true],
-    ['tel:+96279', true],
+    ['tel:+99179', true],
     ['javascript:alert(1)', false],
     ['data:text/html,x', false],
     ['/relative', false],
@@ -42,10 +42,10 @@ describe('primitives', () => {
   it('Text applies tone, size, strength and left-to-right isolation', () => {
     render(
       <Text as="span" tone="danger" size="md" strong ltr>
-        +962
+        +991
       </Text>,
     );
-    const el = screen.getByText('+962');
+    const el = screen.getByText('+991');
     expect(el.tagName).toBe('SPAN');
     expect(el).toHaveClass('app-text--danger', 'app-text--md', 'app-text--strong');
     expect(el).toHaveAttribute('dir', 'ltr');
@@ -103,14 +103,14 @@ describe('primitives', () => {
 
   it('Chip is static, or removable with an accessible button', async () => {
     const onRemove = vi.fn();
-    const { rerender } = render(<Chip>Amman</Chip>);
+    const { rerender } = render(<Chip>Northville</Chip>);
     expect(screen.queryByRole('button')).toBeNull();
     rerender(
-      <Chip onRemove={onRemove} removeLabel="Remove Amman">
-        Amman
+      <Chip onRemove={onRemove} removeLabel="Remove Northville">
+        Northville
       </Chip>,
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Remove Amman' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Northville' }));
     expect(onRemove).toHaveBeenCalledOnce();
   });
 
@@ -136,13 +136,13 @@ describe('primitives', () => {
       <KeyValue
         placeholder="Not set"
         items={[
-          { key: 'a', label: 'Phone', value: '+962', ltr: true },
+          { key: 'a', label: 'Phone', value: '+991', ltr: true },
           { key: 'b', label: 'Created', value: '' },
           { key: 'c', label: 'Other', value: null },
         ]}
       />,
     );
-    expect(screen.getByText('+962')).toHaveAttribute('dir', 'ltr');
+    expect(screen.getByText('+991')).toHaveAttribute('dir', 'ltr');
     expect(screen.getAllByText('Not set')).toHaveLength(2);
   });
 

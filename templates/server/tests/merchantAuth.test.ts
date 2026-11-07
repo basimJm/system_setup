@@ -15,8 +15,8 @@ import { proofFor, testOtp } from './helpers/otp';
 import { SECRET, fakeSettings, recordingAccess } from './helpers/rig';
 
 const logger = createLogger({ level: 'silent' });
-const OWNER_PHONE = '+962791234567';
-const STAFF_PHONE = '+962781234567';
+const OWNER_PHONE = '+991791234567';
+const STAFF_PHONE = '+991781234567';
 
 const gate = {
   request: () => Promise.reject(new Error('unused')),

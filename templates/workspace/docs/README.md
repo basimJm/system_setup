@@ -27,3 +27,6 @@ Precedence inside a project: **PRD > BRD > Design Script > design files**. A con
 - `Notes` names the PRD sections and OpenAPI operations to read, and for PENDING rows the owner input (`**owner input**`).
 - `tasks.py check` fails on duplicate ids, unknown statuses, unknown dependencies, BLOCKED rows whose needs are all DONE, TODO rows waiting on another project, PENDING rows without a note.
 - Pipes inside backticks (e.g. `` `fake|real` ``) are safe; any other `|` in a cell breaks the row.
+
+## A feature across modules: the packet
+`python3 scripts/line.py new <name>` writes `features/<name>/PACKET.md` from `features/PACKET_TEMPLATE.md`. Two pages at most: decisions, contract change, design, docs to update, and one `## Module:` section per module with its `Tasks:` and acceptance criteria. Workers get only this, so a decision missing here is a decision they will stop and ask about. `line.py check <name>` validates it.

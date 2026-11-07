@@ -11,7 +11,7 @@ describe('resolveLanguage', () => {
     ['en', 'en'],
     ['EN', 'en'],
     ['en-US', 'en'],
-    ['ar-JO', 'ar'],
+    ['ar-EG', 'ar'],
     ['en-US,en;q=0.9,ar;q=0.8', 'en'],
     ['ar;q=0.5,en;q=0.9', 'en'],
     ['fr,en;q=0.5', 'en'],

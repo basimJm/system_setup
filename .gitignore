@@ -1,3 +1,29 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Editors and OS
 .DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local environment and secrets: never commit these (only `.env.example` and the template env files are tracked)
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.jks
+*.keystore
+service-account*.json
+
+# Generated output and scratch
+/out/
+/tmp/
+*.log

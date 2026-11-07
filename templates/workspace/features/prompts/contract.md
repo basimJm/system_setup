@@ -1,0 +1,1 @@
+**First step only: the contract.** Change the schemas and route documentation so the OpenAPI describes the packet's contract, then regenerate and bump it as your module file says. Nothing else yet: other modules start building on these files as soon as you finish, and a later worker writes the implementation and its tests.

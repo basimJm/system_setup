@@ -12,7 +12,7 @@ export interface PhoneOtpRequest {
   readonly phone: string;
   readonly purpose: OtpPurpose;
   readonly language: Language;
-  /** Client IP (trust-proxy aware); the provider forwards it only when configured (ARQAM_SEND_IP). */
+  /** Client IP (trust-proxy aware); the provider forwards it only when configured. */
   readonly ip?: string;
 }
 

@@ -13,8 +13,8 @@ You are setting up a brand-new multi-project system with the SYSTEM_SETUP tool a
 business. Work in this order; do not skip the tests; ask the owner whenever a `<…>` value below is missing.
 
 ### 1. The tool
-- The tool lives at `<path to .claude/tools/SYSTEM_SETUP>` (in the source monorepo, or clone
-  `<git url of the repository that contains the tool>` and use `.claude/tools/SYSTEM_SETUP/`).
+- The tool lives at `<path to the system-setup repository>` (or clone `<git url of the repository that contains the tool>`
+  and use its root folder as `<tool>`).
 - Read `README.md` next to this file once (questions table, business file format, token contract).
 - Run its tests first: `python3 -m unittest discover -s <tool>/tests -p 'test_*.py'` — all green or stop and report.
 - The target folder must be **outside** the tool and empty: `<absolute target folder>`.
@@ -127,4 +127,5 @@ Open decisions — ask the owner, never decide them yourself (each is a `PENDING
 3. Implement + unit tests for every acceptance criterion; no hardcoded values (config, constants, settings); AR + EN strings in resources; server tasks regenerate the API contract and name the affected client tasks.
 4. Project gate green; one verification loop (`Loops: 1/1`); four-role review (`Review: PASSED`), fixing every blocking finding first.
 5. Commit, push, PR into the project's master (never `main`), merge when green if the owner granted it, `python3 scripts/tasks.py set <ID> DONE` (this unblocks dependents in other projects and rewrites the board), next task. Stop only on `PENDING`/`BLOCKED` rows and report them to the owner.
+6. **A feature across modules** goes through the feature line instead of one session per module: agree the decisions with the owner, write `features/my-feature/PACKET.md` (`python3 scripts/line.py new my-feature`, two pages at most), then `python3 scripts/line.py run my-feature` (contract first, then a thin worker per module, QA by script, one reviewer, fix workers) and `python3 scripts/line.py merge my-feature` when the report says every module passed. Read `features/my-feature/REPORT.md`; `python3 scripts/usage.py --feature my-feature` gives the tokens. Details: `.claude/rules.md`, "Feature line".
 <!-- AGENT_PROMPT:END -->

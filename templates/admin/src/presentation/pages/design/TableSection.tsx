@@ -21,12 +21,12 @@ interface ItemRow {
 }
 
 const STATES = ['ACTIVE', 'INACTIVE', 'ARCHIVED'] as const;
-const CITIES = ['amman', 'irbid', 'zarqa', 'aqaba'] as const;
+const CITIES = ['northville', 'eastford', 'southport', 'westbury'] as const;
 const ROW_COUNT = 47;
 const ROWS: readonly ItemRow[] = Array.from({ length: ROW_COUNT }, (_, i) => ({
   id: `I-${String(1000 + i)}`,
   name: `${String(i + 1)}`,
-  city: CITIES[i % CITIES.length] ?? 'amman',
+  city: CITIES[i % CITIES.length] ?? 'northville',
   state: STATES[i % STATES.length] ?? 'ACTIVE',
 }));
 

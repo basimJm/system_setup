@@ -10,7 +10,7 @@ import { ExportMenu } from '../../components/data/ExportMenu';
 import { FilterBar, type ActiveFilter } from '../../components/data/FilterBar';
 import { Select } from '../../components/form/Select';
 
-const CITY_KEYS = ['amman', 'irbid', 'zarqa'] as const;
+const CITY_KEYS = ['northville', 'eastford', 'southport'] as const;
 const NO_CITY = '';
 
 /** Gallery section for the filter kit (ADM-016): filter bar with chips, date range with compare, export menu. */

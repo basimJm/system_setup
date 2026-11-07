@@ -60,7 +60,7 @@ fun AppRadioButton(selected: Boolean, onClick: () -> Unit, modifier: Modifier = 
     )
 }
 
-/** Price range (JOD) slider. */
+/** Price range slider. */
 @Composable
 fun AppRangeSlider(
     value: ClosedFloatingPointRange<Float>,

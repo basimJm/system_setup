@@ -54,14 +54,14 @@ export class FakePaymentProvider implements PaymentProvider {
 
   createSession(request: CreateSessionRequest): Promise<PaymentSession> {
     assertIdempotencyKey(request.idempotencyKey);
-    if (!Number.isSafeInteger(request.amountFils) || request.amountFils <= 0)
+    if (!Number.isSafeInteger(request.amountMinor) || request.amountMinor <= 0)
       return Promise.reject(new RangeError('amount must be a positive whole number'));
     if (!PAYMENT_REFERENCE_PATTERN.test(request.reference.split('@')[0] ?? ''))
       return Promise.reject(new RangeError('invalid payment reference'));
     return this.sessionKeys.run(request.idempotencyKey, JSON.stringify(request), () => {
       const sessionId = randomUUID();
       this.sessions.set(sessionId, {
-        amount: request.amountFils,
+        amount: request.amountMinor,
         reference: request.reference,
         status: 'PENDING',
         refunded: 0,
@@ -69,7 +69,7 @@ export class FakePaymentProvider implements PaymentProvider {
       return Promise.resolve({
         sessionId,
         status: 'PENDING' as const,
-        amountFils: request.amountFils,
+        amountMinor: request.amountMinor,
         reference: request.reference,
         client: this.clientCheckout(sessionId),
       });
@@ -101,7 +101,7 @@ export class FakePaymentProvider implements PaymentProvider {
     return Promise.resolve({
       sessionId,
       status: session.status,
-      amountFils: session.amount,
+      amountMinor: session.amount,
       gatewayCode: code,
       gatewayMessage: `fake gateway: ${session.status}`,
     });
@@ -113,18 +113,18 @@ export class FakePaymentProvider implements PaymentProvider {
       const session = this.sessions.get(request.sessionId);
       if (session?.status !== 'SUCCEEDED') return Promise.reject(new PaymentError());
       if (
-        !Number.isSafeInteger(request.amountFils) ||
-        request.amountFils <= 0 ||
-        session.refunded + request.amountFils > session.amount
+        !Number.isSafeInteger(request.amountMinor) ||
+        request.amountMinor <= 0 ||
+        session.refunded + request.amountMinor > session.amount
       ) {
         return Promise.reject(new PaymentError());
       }
-      session.refunded += request.amountFils;
+      session.refunded += request.amountMinor;
       const result: RefundResult = {
         refundId: randomUUID(),
         sessionId: request.sessionId,
         status: 'REFUNDED',
-        amountFils: request.amountFils,
+        amountMinor: request.amountMinor,
         gatewayCode: FAKE_GATEWAY_CODES.success,
         gatewayMessage: 'fake gateway: refunded',
       };

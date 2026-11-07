@@ -31,8 +31,8 @@ const bodyOf = (res: { body: unknown }): Body => res.body as Body;
 type App = ReturnType<typeof createApp>;
 
 const logger = createLogger({ level: 'silent' });
-const PHONE = '+962791234567';
-const OTHER_PHONE = '+962781234567';
+const PHONE = '+991791234567';
+const OTHER_PHONE = '+991781234567';
 const NOW = new Date('2026-10-12T10:00:00.000Z');
 const CODE_KEY = (purpose: string, phone = PHONE): string => `otp:code:${purpose}:${phone}`;
 
@@ -205,7 +205,7 @@ describe('POST /auth/otp/request', () => {
 
   it.each([
     [{ phone: '0791234567', purpose: 'LOGIN' }, 'body.phone'],
-    [{ phone: '+962791234567' }, 'body.purpose'],
+    [{ phone: '+991791234567' }, 'body.purpose'],
     [{ phone: 'phone:key', purpose: 'LOGIN' }, 'body.phone'],
     [{ phone: PHONE, purpose: 'LOGIN', extra: 1 }, null],
   ])('validates %j', async (body, field) => {
@@ -385,7 +385,7 @@ describe('POST /auth/otp/verify', () => {
     const app = makeApp();
     for (let i = 0; i < OTP_ROUTE_RATE_LIMIT.max; i += 1) {
       const res = await post(app, 'verify', {
-        phone: `+9627912${String(10000 + i)}`,
+        phone: `+9917912${String(10000 + i)}`,
         purpose: 'LOGIN',
         code: '123456',
       });

@@ -27,7 +27,7 @@ internal data class RefreshTokensDto(
     @SerialName("refreshToken") val refreshToken: String,
 )
 
-/** Base success envelope of the backend (`WAB-Server/CLAUDE.md` §6): `{ success, message, data }`. */
+/** Base success envelope of the backend (`Acme-Server/CLAUDE.md` §6): `{ success, message, data }`. */
 @Serializable
 internal data class RefreshResponseDto(
     @SerialName("data") val data: RefreshTokensDto? = null,

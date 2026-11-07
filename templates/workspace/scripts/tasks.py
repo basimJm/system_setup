@@ -24,6 +24,7 @@ BOARD_START, BOARD_END = "<!-- BOARD:START -->", "<!-- BOARD:END -->"
 HEADER_PREFIX = "| ID |"
 DEP_HEADERS = ("needs", "server", "depends", "blocked by")
 EMPTY_CELLS = {"", "-", "—", "–", "none", "n/a"}
+CHARS_PER_TOKEN = 4
 
 
 def repo_root(start: Path | None = None) -> Path:
@@ -179,8 +180,23 @@ class Backlogs:
         path.write_text(f"{head}{BOARD_START}\n{self.board()}\n{BOARD_END}{tail}", encoding="utf-8")
         return path
 
+    def context_budget_problems(self) -> list[str]:
+        """Files loaded into every session must stay small; about four characters per token."""
+        budgets = self.registry.get("context_budgets", {})
+        checks = [(self.root / rel, rel, limit) for rel, limit in budgets.get("root", {}).items()]
+        for project in self.projects.values():
+            for rel, limit in budgets.get("per_project", {}).items():
+                checks.append((self.root / project["dir"] / rel, f"{project['dir']}/{rel}", limit))
+        problems = []
+        for path, rel, limit in checks:
+            if path.is_file():
+                tokens = len(path.read_text(encoding="utf-8")) // CHARS_PER_TOKEN
+                if tokens > limit:
+                    problems.append(f"{rel}: ~{tokens} tokens, budget {limit} (move details to docs/knowledge/)")
+        return problems
+
     def check(self) -> list[str]:
-        problems = list(self.duplicates)
+        problems = list(self.duplicates) + self.context_budget_problems()
         for name, project in self.projects.items():
             if not (self.root / project["backlog"]).is_file():
                 problems.append(f"{name}: backlog file missing ({project['backlog']})")

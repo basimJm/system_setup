@@ -2,7 +2,7 @@
 """Generate the Kotlin contract (DTOs + operation registry) from the server's OpenAPI snapshot (CUS-009).
 
 Usage: python3 scripts/api_sync.py [--check] [--spec PATH] [--out DIR]
-  default spec: ../WAB-Server/docs/api/openapi.customer.json (the contract, INTEGRATION.md §3)
+  default spec: ../Acme-Server/docs/api/openapi.customer.json (the contract, INTEGRATION.md §3)
   default out:  core/data/src/commonMain/kotlin/com/acme/shop/core/data/contract/generated
 --check exits 1 when any generated file differs from what the spec produces (CI and the local gate run it).
 Generated files are excluded from the 300-line and hardcoded-value policies (config/policy.json).
@@ -30,10 +30,10 @@ PACKAGE = "com.acme.shop.core.data.contract.generated"
 NAMESPACE_PREFIX = "/app/v1"
 METHODS = ("get", "post", "put", "patch", "delete")
 SUCCESS_CODES = ("200", "201")
-# Phone samples so the mock login flow validates like Jordan (PRD S11); no backslashes, they survive two escapings.
-SAMPLE_DIAL_CODE = "+962"
+# Phone samples so the mock login flow validates like a real market (PRD S11); no backslashes, they survive two escapings.
+SAMPLE_DIAL_CODE = "+991"
 SAMPLE_PHONE_REGEX = "^7[789][0-9]{7}$"
-SAMPLE_COUNTRY_CODES = ("JO", "SA", "AE")
+SAMPLE_COUNTRY_CODES = ("XA", "XB", "XC")
 # OTP policy samples match the backend defaults (PRD S13: 6 digits, 60 s resend) so the mock flow behaves like production.
 SAMPLE_INTEGER_HINTS = {"otplength": 6, "resendafterseconds": 60, "expiresinseconds": 300}
 # Flags that must be true for the mock flow to proceed (a pre-check that is never allowed would block every screen).
@@ -162,7 +162,7 @@ TEXT_FIELD_HINTS = ("name", "description", "title", "body", "message", "comment"
 TEXT_MARKER = "__TEXT__"
 SAMPLE_ITEMS = 3
 SAMPLE_DATE = "2026-10-18T10:00:00.000Z"
-SAMPLE_STRING_HINTS = {"open": "08:00", "close": "16:00", "actiontype": "NONE", "min": "5", "max": "100", "createdat": SAMPLE_DATE, "start": "09:00", "end": "17:00", "day": "SAT", "appointmentstart": SAMPLE_DATE, "appointmentend": SAMPLE_DATE, "respondby": SAMPLE_DATE, "referencenumber": "WAB-1001", "status": "APPROVED", "paymentstatus": "DEPOSIT_PAID", "paymentmethod": "DEPOSIT", "price": "15", "total": "30"}
+SAMPLE_STRING_HINTS = {"open": "08:00", "close": "16:00", "actiontype": "NONE", "min": "5", "max": "100", "createdat": SAMPLE_DATE, "start": "09:00", "end": "17:00", "day": "SAT", "appointmentstart": SAMPLE_DATE, "appointmentend": SAMPLE_DATE, "respondby": SAMPLE_DATE, "referencenumber": "REF-1001", "status": "APPROVED", "paymentstatus": "DEPOSIT_PAID", "paymentmethod": "DEPOSIT", "price": "15", "total": "30"}
 SAMPLE_URL = "https://example.invalid/sample.jpg"
 SAMPLE_ID_PREFIX = "id-"
 

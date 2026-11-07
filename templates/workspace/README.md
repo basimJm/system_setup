@@ -5,9 +5,11 @@
 ## 1. What is in the root
 | Path | Purpose |
 |---|---|
-| `CLAUDE.md` | The business in one paragraph, repo map, integration essentials, core rules, conventions, open owner decisions. Auto-loaded. |
-| `.claude/rules.md`, `roles.md`, `hooks.md` | Mandatory rules (token efficiency, delivery, batched verification, parallel agents), the four review roles, the hook table + task block template. Auto-loaded. |
-| `.claude/session.md`, `memory.md` | Index of every project's current task; cross-project durable facts. Auto-loaded. Project-level session/memory live in each project folder. |
+| `CLAUDE.md` | Hard rules and the task flow, short because every session loads it. The business, repo map, conventions and open decisions are in `system-overview.md` (with the lessons, below). |
+| `.claude/rules.md`, `roles.md`, `hooks.md` | Mandatory rules (token efficiency, delivery, batched verification, parallel agents), the four review roles, the hook table + task block template. Read on demand. |
+| `.claude/session.md`, `memory.md` | Open repo-level task blocks; what every session must know. Project-level session and memory live in each project. The map printed at session start shows every project's state. |
+| `scripts/map.py`, `recall.py` | The whole system in a few hundred tokens from the real state, and details on demand as `path:line`. |
+| `scripts/line.py`, `qa.py`, `usage.py`, `features/` | The feature line: a packet, thin workers per module, QA without a model, one reviewer, merge by script. `usage.py` measures tokens against the targets. |
 | `.claude/projects.json` | **The registry.** Every project/SDK: key, prefix, folder, master branch, backlog, session/memory/integration files. `scripts/tasks.py` and the hooks read it; nothing else lists projects. |
 | `.claude/settings.json` + `.claude/hooks/*.py` | Claude Code hooks: branch guard, hardcode scan, session start, prompt reminder, stop review. Tests: `python3 .claude/hooks/test_hooks.py`. |
 | `.claude/skills/` | Vendored Android performance skills (profiler, Compose performance, ANR audit, R8 analyzer) with their license; read a `SKILL.md` before use. |

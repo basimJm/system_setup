@@ -18,7 +18,7 @@ class RegistryTest(TempDirTest):
         self.assertEqual(["server", "admin", "customer", "merchant", "storage", "otp"], list(projects))
         self.assertEqual(["TODO", "IN PROGRESS", "IN REVIEW", "DONE", "PENDING", "BLOCKED", "CANCELLED"], registry["statuses"])
         self.assertEqual("INTEGRATION.md", registry["board_file"])
-        self.assertEqual({"title": "ACME-Server (backend API)", "prefix": "SRV", "dir": "ACME-Server", "master": "server",
+        self.assertEqual({"title": "ACME-Server (backend API)", "kind": "server", "prefix": "SRV", "dir": "ACME-Server", "master": "server",
                           "backlog": "ACME-Server/docs/ACME_Server_Tasks.md", "session": "ACME-Server/.claude/session.md",
                           "memory": "ACME-Server/.claude/memory.md", "integration": "ACME-Server/.claude/Integration.md"},
                          projects["server"])

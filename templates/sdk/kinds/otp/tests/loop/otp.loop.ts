@@ -22,7 +22,7 @@ const prng = (seed: number): (() => number) => {
   };
 };
 
-const phoneOf = (index: number): string => `+96279${String(index).padStart(7, '0')}`;
+const phoneOf = (index: number): string => `+99179${String(index).padStart(7, '0')}`;
 
 describe('otp loop', () => {
   it(`runs ${String(ITERATIONS)} flows, ${String(CONCURRENCY)} at a time, spending every token once`, async () => {

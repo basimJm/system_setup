@@ -26,7 +26,7 @@ export interface DateRangePickerProps {
 
 /**
  * Presets (Today ... This year) plus a custom range, optionally compared with the previous period.
- * Days are Asia/Amman calendar days. A custom range is only reported once it is valid (from <= to).
+ * Days are Etc/GMT-3 calendar days. A custom range is only reported once it is valid (from <= to).
  */
 export function DateRangePicker({
   value,

@@ -7,13 +7,15 @@ Two layers work together:
 ## 1. Automated Hooks
 | Event | Script | What it does |
 |---|---|---|
-| `SessionStart` | `session_start.py` | Prints branch, open tasks from every session file (root + projects, via `.claude/projects.json`) and the `tasks.py` reminder. |
+| `SessionStart` | `session_start.py` | Prints branch, the live map (`scripts/map.py`, with the module of the working folder) and open tasks from every session file. |
 | `UserPromptSubmit` | `prompt_reminder.py` | Adds a one-line reminder of the rules to every request. |
 | `PreToolUse` (Bash) | `guard_git.py` | **Blocks** commits on `main`/`master`, any push to `main`/`master`, force pushes, `--no-verify`, and pushing a branch whose task block (in any session file) lacks `Loops: 1/1` and `Review: PASSED`. Resolves the checkout from the command's `cwd` (worktrees). |
 | `PostToolUse` (Edit/Write) | `check_hardcoded.py` | **Flags** hardcoded secrets, URLs, IPs and ports in source files; move them to config/constants. |
 | `Stop` | `stop_review.py` | **Blocks** finishing while source code changed on the branch and either no test files changed or the task block is missing `Loops: 1/1` / `Review: PASSED`. Master branches (from `projects.json`) are exempt: they only hold merged PRs. |
 
 `Loops: 3/3` in old blocks stays valid; new blocks write `Loops: 1/1`. Hook tests: `python3 .claude/hooks/test_hooks.py`. The sandbox cannot write `.claude/hooks/`: patch hooks through the Terminal panel and ship the patch by PR into `main`.
+
+Line workers (`scripts/line.py`) run with only `guard_git.py` and `check_hardcoded.py`; the script replaces the rest (`rules.md`, "Feature line").
 
 ## 2. Review Hook — run after every task, before push
 Review the full branch diff (`git diff origin/<master>...HEAD` plus uncommitted changes) once per role from `.claude/roles.md`. List findings as **Blocking** or **Non-blocking**. Fix all blocking findings, re-run tests, then repeat the review for the changed parts.

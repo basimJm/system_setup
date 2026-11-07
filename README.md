@@ -1,6 +1,6 @@
 # SYSTEM_SETUP
 
-Creates a brand-new multi-project system with the same shape as WAB — backend server, admin web panel, one or more
+Creates a brand-new multi-project system with the shape of a production marketplace — backend server, admin web panel, one or more
 Kotlin Multiplatform apps, SDK packages — plus the AI-agent workspace that ties them together (root `CLAUDE.md`,
 `.claude/{rules,roles,hooks,session,memory}.md`, hooks, `scripts/tasks.py`, `.claude/projects.json`, `INTEGRATION.md`,
 per-project backlogs/session/memory files, knowledge playbooks). It also asks about the **business domain** (summary,
@@ -10,12 +10,13 @@ agent can write the PRDs and backlogs and work from them. Everything comes from 
 CLI + template engine. `PROMPT.md` is the prompt to give an AI agent that has to run the tool (§5).
 
 ```bash
-./SYSTEM_SETUP            # interactive
-./SYSTEM_SETUP --help     # flags for non-interactive use
+./SYSTEM_SETUP                    # interactive (run from a clone of this repository)
+./SYSTEM_SETUP --help             # flags for non-interactive use
 ./SYSTEM_SETUP --list-templates
+/path/to/system-setup/SYSTEM_SETUP --help   # the entry works from any folder
 ```
 
-Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s tests`
+Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s tests -p 'test_*.py'`
 (they run on `tests/fixtures/templates`, never on the real templates, so the core stays green while templates evolve).
 
 ## 1. What it creates
@@ -119,6 +120,10 @@ Business domain (from the answers, available to every kind; the workspace templa
 `__BUSINESS_ACTORS__`, `__BUSINESS_ENTITIES__`, `__BUSINESS_JOBS__`, `__BUSINESS_INTEGRATIONS__` (bullets),
 `__BUSINESS_RULES__` (numbered), `__OPEN_DECISIONS__` (the owner's open decisions + every answer left `TBD`, flagged
 `open — ask the owner`). An empty list renders as one `TBD (open — ask the owner)` item.
+Code-facing defaults, used by `targeted` edits of generated source: `__BUSINESS_TIME_ZONE_CODE__` (the business time zone when
+it is an IANA name, else the neutral fixed-offset zone `Etc/GMT-3`) and `__CURRENCY_CODE__` (the first three-letter code in
+the currency answer, else the ISO code for no currency, `XXX`). Template tests pin their own fixture zone, so after choosing
+another zone re-derive the offset assertions that name `Etc/GMT-3`.
 
 Per app, while the `kmp` template is instantiated for that app: `__APP_NAME__`, `__APP_NAME_AR__`, `__APP_SLUG__`,
 `__APP_DIR__`, `__APP_PACKAGE__` (`<package root>.<slug>`), `__APP_PACKAGE_PATH__` (`com/acme/customer`),
@@ -151,10 +156,10 @@ app/SDK with the per-app/per-SDK tokens filled in; the block disappears when the
   `neutral_literals`, `verified`, …) are ignored.
 - **Sentinels**: literal strings in the template that stand for a token (the kmp snapshot's identity `Acme Shop` /
   `com.acme.shop` / `com-acme-shop` / `com/acme/shop` / `AcmeShop`, the `example.com` URLs and bare hosts, `TEAMID0000`,
-  `/app/v1`, `WAB-Server`). Replaced longest literal first, plain string replacement, then tokens become values.
+  `/app/v1`, `Acme-Server`). Replaced longest literal first, plain string replacement, then tokens become values.
   The engine never substitutes inside `binary_globs`, files that are not UTF-8, or (workspace) `.claude/skills/**`.
 - **rename_paths**: the same idea on the relative path of every file (`com/acme/shop` → the package as a path spans
-  folders; `AcmeShop` → the project name); tokens in paths are rendered too (`WAB___APP_PROJECT___Tasks.md`); parents
+  folders; `AcmeShop` → the project name); tokens in paths are rendered too (`Acme___APP_PROJECT___Tasks.md`); parents
   are created; execute bits are preserved.
 - **layers**: sub-folders copied in order, later ones overlay earlier ones. Defaults: `sdk` = `common/` then the kind's
   overlay (`kinds.<name>.dir`, else `kinds/<name>/`); `kmp` = `project/` when present; otherwise the template root.
@@ -213,4 +218,5 @@ src/system_setup/workspace.py projects.json, per-project files, knowledge, tasks
 templates/<kind>/            built by the template owners (workspace, server, admin, sdk, kmp)
 knowledge/                   LESSONS.md, PLAYBOOKS.md (copied into every generated workspace)
 tests/                       unit + end-to-end tests on tests/fixtures/templates (+ tests/fixtures/knowledge)
+tests/test_no_private_data.py  privacy guard: secret shapes + hashed deny list over every tracked file and file name
 ```

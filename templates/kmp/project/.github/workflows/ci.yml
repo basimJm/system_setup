@@ -55,8 +55,8 @@ jobs:
           java-version: 21
       - uses: actions/cache@v4
         with:
-          path: ~/.cache/wab-customer-lint
-          key: wab-customer-lint-${{ hashFiles('scripts/ci/run_detekt.sh') }}
+          path: ~/.cache/kmp-app-lint
+          key: kmp-app-lint-${{ hashFiles('scripts/ci/run_detekt.sh') }}
       - name: detekt
         run: scripts/ci/run_detekt.sh
       - name: Upload report

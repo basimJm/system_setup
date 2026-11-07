@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-private const val JORDAN_MOBILE = "^7[789][0-9]{7}$"
+private const val SAMPLE_MOBILE = "^7[789][0-9]{7}$"
 
 class FormValidatorsTest {
 
@@ -20,12 +20,12 @@ class FormValidatorsTest {
 
     @Test
     fun phoneMatchesTheServerRegexAfterNormalization() {
-        assertTrue(FormValidators.isValidPhone("0791234567", JORDAN_MOBILE))
-        assertTrue(FormValidators.isValidPhone("79 123 4567", JORDAN_MOBILE))
-        assertFalse(FormValidators.isValidPhone("0691234567", JORDAN_MOBILE))
-        assertFalse(FormValidators.isValidPhone("79123", JORDAN_MOBILE))
-        assertFalse(FormValidators.isValidPhone("", JORDAN_MOBILE))
-        assertFalse(FormValidators.isValidPhone("79abc4567", JORDAN_MOBILE))
+        assertTrue(FormValidators.isValidPhone("0791234567", SAMPLE_MOBILE))
+        assertTrue(FormValidators.isValidPhone("79 123 4567", SAMPLE_MOBILE))
+        assertFalse(FormValidators.isValidPhone("0691234567", SAMPLE_MOBILE))
+        assertFalse(FormValidators.isValidPhone("79123", SAMPLE_MOBILE))
+        assertFalse(FormValidators.isValidPhone("", SAMPLE_MOBILE))
+        assertFalse(FormValidators.isValidPhone("79abc4567", SAMPLE_MOBILE))
     }
 
     @Test

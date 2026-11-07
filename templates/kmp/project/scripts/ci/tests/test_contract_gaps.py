@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import contract_gaps  # noqa: E402
 
-SALON = {
+SHOP = {
     "type": "object",
     "required": ["id", "rating", "staff"],
     "properties": {
@@ -23,14 +23,14 @@ SALON = {
     },
 }
 SPEC = {
-    "paths": {"/app/v1/salons/{salonId}": {"get": {"responses": {"200": {"content": {"application/json": {"schema": {
-        "type": "object", "properties": {"success": {"type": "boolean"}, "data": SALON}}}}}}}}},
+    "paths": {"/app/v1/shops/{shopId}": {"get": {"responses": {"200": {"content": {"application/json": {"schema": {
+        "type": "object", "properties": {"success": {"type": "boolean"}, "data": SHOP}}}}}}}}},
     "components": {"schemas": {"Member": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}}},
 }
 
 
 def gaps(data) -> list[tuple[str, str, str]]:
-    return contract_gaps.collapse(contract_gaps.diff(data, SALON, SPEC["components"]["schemas"], "data"))
+    return contract_gaps.collapse(contract_gaps.diff(data, SHOP, SPEC["components"]["schemas"], "data"))
 
 
 class ContractGapsTest(unittest.TestCase):
@@ -62,11 +62,11 @@ class ContractGapsTest(unittest.TestCase):
             spec.write_text(json.dumps(SPEC), encoding="utf-8")
             fixtures = root / "fixtures"
             fixtures.mkdir()
-            (fixtures / "GetSalonsBySalonId.json").write_text(json.dumps({"data": {"id": "s1", "rating": 1, "staff": [], "x": 1}}), encoding="utf-8")
+            (fixtures / "GetShopsByShopId.json").write_text(json.dumps({"data": {"id": "s1", "rating": 1, "staff": [], "x": 1}}), encoding="utf-8")
             (fixtures / "Unknown.json").write_text(json.dumps({"data": None}), encoding="utf-8")
-            self.assertEqual([("GetSalonsBySalonId", "undeclared", "data.x", "field not in the schema")], contract_gaps.report(SPEC, fixtures))
+            self.assertEqual([("GetShopsByShopId", "undeclared", "data.x", "field not in the schema")], contract_gaps.report(SPEC, fixtures))
             self.assertEqual(0, contract_gaps.main(["--spec", str(spec), "--fixtures", str(fixtures)]))
-            (fixtures / "GetSalonsBySalonId.json").write_text(json.dumps({"data": {"id": "s1", "staff": []}}), encoding="utf-8")
+            (fixtures / "GetShopsByShopId.json").write_text(json.dumps({"data": {"id": "s1", "staff": []}}), encoding="utf-8")
             self.assertEqual(1, contract_gaps.main(["--spec", str(spec), "--fixtures", str(fixtures)]))
 
 

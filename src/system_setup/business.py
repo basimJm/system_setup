@@ -13,6 +13,12 @@ from typing import Callable, Dict, List, Mapping, Optional
 TBD = "TBD"
 DEFAULT_LANGUAGE = "ar"
 DEFAULT_STORED_TIME_ZONE = "UTC"
+# Code-facing defaults: what generated source uses while the business answer is still TBD (or is not a code / IANA name).
+# A neutral fixed-offset zone and the ISO 4217 code for "no currency"; the business documents keep saying TBD.
+FALLBACK_CODE_TIME_ZONE = "Etc/GMT-3"
+FALLBACK_CODE_CURRENCY = "XXX"
+IANA_ZONE_RE = re.compile(r"^(?:UTC|Etc/[A-Za-z0-9+-]+|[A-Z][A-Za-z_]+(?:/[A-Za-z0-9_+-]+){1,2})$")
+CURRENCY_CODE_RE = re.compile(r"\b[A-Z]{3}\b")
 RTL_ON, RTL_OFF = "on", "off"
 LIST_SEPARATOR = ";"
 OPEN_MARK = "open — ask the owner"
@@ -213,8 +219,20 @@ def open_decisions(business: Business) -> List[str]:
     return items
 
 
+def code_time_zone(business: Business) -> str:
+    """The business time zone as source code needs it: an IANA name, else the neutral fallback."""
+    zone = business.business_time_zone.strip()
+    return zone if IANA_ZONE_RE.match(zone) else FALLBACK_CODE_TIME_ZONE
+
+
+def code_currency(business: Business) -> str:
+    """The first ISO 4217 style code in the currency answer (`<name> (ABC)` or `ABC`), else the neutral `XXX`."""
+    codes = [code for code in CURRENCY_CODE_RE.findall(business.currency) if code != TBD]
+    return codes[0] if codes else FALLBACK_CODE_CURRENCY
+
+
 def token_values(business: Business) -> Dict[str, str]:
-    """The 13 business tokens; lists as markdown bullets, rules numbered, empty lists flagged as open."""
+    """The 15 business tokens; lists as markdown bullets, rules numbered, empty lists flagged as open."""
     empty = f"{TBD} ({OPEN_MARK})"
     return {
         "__BUSINESS_SUMMARY__": business.summary or TBD,
@@ -224,6 +242,8 @@ def token_values(business: Business) -> Dict[str, str]:
         "__CURRENCY_MINOR_UNIT__": business.currency_minor_unit,
         "__STORED_TIME_ZONE__": business.stored_time_zone,
         "__BUSINESS_TIME_ZONE__": business.business_time_zone,
+        "__BUSINESS_TIME_ZONE_CODE__": code_time_zone(business),
+        "__CURRENCY_CODE__": code_currency(business),
         "__BUSINESS_ACTORS__": bullets(business.actors, empty),
         "__BUSINESS_RULES__": numbered(business.rules, empty),
         "__BUSINESS_ENTITIES__": bullets(business.entities, empty),

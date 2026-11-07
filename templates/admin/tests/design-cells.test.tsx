@@ -17,10 +17,10 @@ describe('design table cells', () => {
   });
 
   it('EntityCell shows the initial, the name, a second line and a badge', () => {
-    renderWithApp(<EntityCell name="Noor Studio" sub="+962790000301" badge={<em>new</em>} />);
+    renderWithApp(<EntityCell name="Noor Studio" sub="+991790000301" badge={<em>new</em>} />);
     expect(screen.getByText('N')).toHaveClass('app-entity__initial');
     expect(screen.getByText('Noor Studio')).toHaveClass('app-entity__name');
-    expect(screen.getByText('+962790000301')).toHaveClass('app-entity__sub');
+    expect(screen.getByText('+991790000301')).toHaveClass('app-entity__sub');
     expect(screen.getByText('new')).toBeInTheDocument();
   });
 

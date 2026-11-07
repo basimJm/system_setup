@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for the workspace hooks. Run: python3 .claude/hooks/test_hooks.py"""
+"""Unit tests for __SYSTEM_NAME__ hooks. Run: python3 .claude/hooks/test_hooks.py"""
 import os
 import sys
 import unittest
@@ -129,20 +129,20 @@ def fake_assignment(key):
 
 class Hardcoded(unittest.TestCase):
     def test_flags_url_and_secret_in_source(self):
-        found = findings("server/src/app.ts", 'const u = "https://api.example.com"; ' + fake_assignment("apiKey"))
+        found = findings("__SYSTEM_NAME__-Server/src/app.ts", 'const u = "https://api.example.com"; ' + fake_assignment("apiKey"))
         self.assertIn("URL", found)
         self.assertIn("secret/API key", found)
 
     def test_allows_url_in_config_but_not_secret(self):
-        self.assertEqual(findings("server/src/config/env.ts", 'url: "https://api.example.com"'), [])
-        self.assertIn("secret/API key", findings("server/src/config/env.ts", fake_assignment("pass" + "word")))
+        self.assertEqual(findings("__SYSTEM_NAME__-Server/src/config/env.ts", 'url: "https://api.example.com"'), [])
+        self.assertIn("secret/API key", findings("__SYSTEM_NAME__-Server/src/config/env.ts", fake_assignment("pass" + "word")))
 
     def test_ignores_docs_and_tests(self):
-        self.assertEqual(findings("server/docs/a.md", '"https://x.com"'), [])
-        self.assertEqual(findings("server/src/a.test.ts", '"https://x.com"'), [])
+        self.assertEqual(findings("__SYSTEM_NAME__-Server/docs/a.md", '"https://x.com"'), [])
+        self.assertEqual(findings("__SYSTEM_NAME__-Server/src/a.test.ts", '"https://x.com"'), [])
 
     def test_clean_source_passes(self):
-        self.assertEqual(findings("server/src/a.ts", "const limit = config.otp.maxAttempts;"), [])
+        self.assertEqual(findings("__SYSTEM_NAME__-Server/src/a.ts", "const limit = config.otp.maxAttempts;"), [])
 
 
 class StopReview(unittest.TestCase):
@@ -150,26 +150,44 @@ class StopReview(unittest.TestCase):
         self.assertIsNone(evaluate(["README.md", ".claude/session.md"], "feat/x", ""))
 
     def test_source_without_tests_blocks(self):
-        reason = evaluate(["server/src/a.ts"], "feat/done", lookup("feat/done"))
+        reason = evaluate(["__SYSTEM_NAME__-Server/src/a.ts"], "feat/done", lookup("feat/done"))
         self.assertIn("no unit test", reason)
 
     def test_unverified_task_blocks(self):
-        reason = evaluate(["server/src/a.ts", "server/src/a.test.ts"], "feat/open", lookup("feat/open"))
+        reason = evaluate(["__SYSTEM_NAME__-Server/src/a.ts", "__SYSTEM_NAME__-Server/src/a.test.ts"], "feat/open", lookup("feat/open"))
         self.assertIn("Loops: 1/1", reason)
 
     def test_master_branches_are_exempt_even_with_source_changes(self):
         masters = {"main", "master", "customer", "server", "admin", "merchant"}
-        self.assertIsNone(evaluate(["server/src/a.ts"], "customer", "", masters))
-        self.assertIsNotNone(evaluate(["server/src/a.ts"], "feat/x", "", masters))
+        self.assertIsNone(evaluate(["__SYSTEM_NAME__-Server/src/a.ts"], "customer", "", masters))
+        self.assertIsNotNone(evaluate(["__SYSTEM_NAME__-Server/src/a.ts"], "feat/x", "", masters))
 
     def test_verified_with_tests_passes(self):
-        self.assertIsNone(evaluate(["server/src/a.ts", "server/src/a.test.ts"], "feat/done", lookup("feat/done")))
+        self.assertIsNone(evaluate(["__SYSTEM_NAME__-Server/src/a.ts", "__SYSTEM_NAME__-Server/src/a.test.ts"], "feat/done", lookup("feat/done")))
 
     def test_file_classification(self):
-        self.assertTrue(is_source_file("app/feature/auth/Login.kt"))
-        self.assertFalse(is_source_file("app/feature/auth/LoginTest.kt"))
+        self.assertTrue(is_source_file("__SYSTEM_NAME__-Mobile-Customer/feature/auth/Login.kt"))
+        self.assertFalse(is_source_file("__SYSTEM_NAME__-Mobile-Customer/feature/auth/LoginTest.kt"))
         self.assertTrue(is_test_file("composeApp/src/commonTest/kotlin/A.kt"))
         self.assertFalse(is_source_file(".claude/hooks/guard_git.py"))
+
+
+class SessionStartTest(unittest.TestCase):
+    def test_prints_branch_map_and_open_tasks(self):
+        import session_start
+        text = session_start.build("feat/x", "## System map", "### T-1 Work\n- Status: IN PROGRESS\n### T-2 Old\n- Status: DONE\n")
+        self.assertIn("Branch: feat/x", text)
+        self.assertIn("## System map", text)
+        self.assertIn("T-1 Work [IN PROGRESS]", text)
+        self.assertNotIn("T-2", text)
+
+    def test_warns_on_a_protected_branch(self):
+        import session_start
+        self.assertIn("protected branch", session_start.build("main", "", ""))
+
+    def test_a_failed_map_still_gives_a_session_header(self):
+        import session_start
+        self.assertNotIn("System map", session_start.build("feat/x", "", ""))
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ private const val CURRENT_STEP = 3
 private val ActiveFilters = listOf(
     ActiveFilterChip("category:1", "الفئة الأولى"),
     ActiveFilterChip("category:2", "الفئة الثانية"),
-    ActiveFilterChip("price", "20 – 80 د.أ"),
+    ActiveFilterChip("price", "20 – 80 XXX"),
     ActiveFilterChip("general:nearest", "الأقرب"),
     ActiveFilterChip("rating:4", "4 نجوم فأكثر"),
 )

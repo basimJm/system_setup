@@ -3,5 +3,204 @@
   "board_file": "INTEGRATION.md",
   "statuses": ["TODO", "IN PROGRESS", "IN REVIEW", "DONE", "PENDING", "BLOCKED", "CANCELLED"],
   "owner_input_markers": ["user input", "owner input", "owner decision"],
+  "context_budgets": {
+    "root": { "CLAUDE.md": 750, ".claude/session.md": 900, ".claude/memory.md": 350 },
+    "per_project": { "CLAUDE.md": 3200, ".claude/session.md": 1500, ".claude/memory.md": 700 }
+  },
+  "kinds": {
+    "server": {
+      "setup": "npm ci --no-audit --no-fund",
+      "autofix": "npm run format",
+      "qa": [
+        {
+          "name": "verify",
+          "run": "npm run verify"
+        },
+        {
+          "name": "contract matches the code",
+          "run": "npm run docs && git diff --exit-code -- docs/api"
+        }
+      ]
+    },
+    "web": {
+      "setup": "npm ci --no-audit --no-fund",
+      "contract_sync": "npm run api:sync",
+      "autofix": "npm run format",
+      "qa": [
+        {
+          "name": "gate",
+          "run": "sh scripts/gate.sh"
+        }
+      ]
+    },
+    "kmp": {
+      "contract_sync": "python3 scripts/api_sync.py",
+      "qa": [
+        {
+          "name": "local checks (Android)",
+          "run": "scripts/ci/run_local_checks.sh",
+          "env": {
+            "SKIP_IOS": "1"
+          }
+        }
+      ]
+    },
+    "sdk": {
+      "setup": "npm ci --no-audit --no-fund",
+      "autofix": "npm run format",
+      "qa": [
+        {
+          "name": "verify",
+          "run": "npm run verify"
+        }
+      ]
+    }
+  },
+  "line": {
+    "_comment": "scripts/line.py, qa.py and usage.py. Roles: model, dollar cap passed to the CLI, token cap enforced by the script on whatever plan. Workers keep the enforcing hooks (worker_hooks); QA and the review replace the Stop hook. The allow and deny lists are guardrails, not a sandbox: a worker may run python3 and node, so packets must come from the owner.",
+    "contract_module": "server",
+    "contract_glob": "docs/api/openapi.*.json",
+    "scope_exempt": [
+      "__SERVER_DIR__/docs/api/openapi.*.json"
+    ],
+    "features_dir": "features",
+    "run_dir": "run",
+    "prompts_dir": "prompts",
+    "packet_file": "PACKET.md",
+    "packet_template": "PACKET_TEMPLATE.md",
+    "report_file": "REPORT.md",
+    "coordination_file": "coordination.json",
+    "worktrees_dir": ".claude/worktrees",
+    "hook_settings": ".claude/settings.json",
+    "worker_hooks": [
+      "PreToolUse",
+      "PostToolUse"
+    ],
+    "review_checklist": ".claude/hooks.md",
+    "session_archive": "docs/knowledge/session-archive.md",
+    "claude_bin": "claude",
+    "gh_bin": "gh",
+    "worker_env": {
+      "CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"
+    },
+    "permission_mode": "acceptEdits",
+    "parallel": 4,
+    "max_fix_rounds": 2,
+    "packet_max_tokens": 1500,
+    "fail_tail_lines": 40,
+    "po_diff_max_chars": 30000,
+    "po_diff_exclude": [
+      "**/docs/api/**",
+      "**/generated/**",
+      "**/package-lock.json",
+      "**/.claude/session.md"
+    ],
+    "timeouts_seconds": {
+      "agent": 2400,
+      "qa": 2700,
+      "setup": 900,
+      "git": 180
+    },
+    "roles": {
+      "contract": {
+        "model": "sonnet",
+        "budget_usd": 1.5,
+        "max_tokens": 1500000,
+        "tools": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash",
+          "Grep"
+        ]
+      },
+      "worker": {
+        "model": "sonnet",
+        "budget_usd": 4,
+        "max_tokens": 3000000,
+        "tools": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash",
+          "Grep"
+        ]
+      },
+      "fix": {
+        "model": "sonnet",
+        "budget_usd": 2,
+        "max_tokens": 1500000,
+        "tools": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash",
+          "Grep"
+        ]
+      },
+      "po": {
+        "model": "sonnet",
+        "budget_usd": 0.75,
+        "max_tokens": 300000,
+        "tools": [
+          "Read",
+          "Grep"
+        ]
+      },
+      "docs": {
+        "model": "sonnet",
+        "budget_usd": 1,
+        "max_tokens": 800000,
+        "tools": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash",
+          "Grep"
+        ]
+      }
+    },
+    "allowed_bash": [
+      "npm:*",
+      "npx:*",
+      "node:*",
+      "python3:*",
+      "./gradlew:*",
+      "ls:*",
+      "find:*",
+      "git status:*",
+      "git diff:*",
+      "git log:*",
+      "git show:*"
+    ],
+    "denied": [
+      "Bash(git push:*)",
+      "Bash(git merge:*)",
+      "Bash(git commit:*)",
+      "Bash(git rebase:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh:*)",
+      "Bash(npm publish:*)",
+      "Read(**/.env*)",
+      "Edit(**/.env*)",
+      "Write(**/.env*)"
+    ],
+    "smoke": [],
+    "not_covered_note": "the line opened no browser, emulator or simulator and ran no iOS build; rules 3.11 and 3.13 keep those for the owner's batch",
+    "not_covered_report": [
+      "Screens in a browser, emulator or simulator: no script opens them. Rules 3.11 and 3.13 keep them for the batch check.",
+      "iOS builds (`SKIP_IOS=1` in the app gates).",
+      "A cross-API smoke run: `line.smoke` lists no command yet."
+    ],
+    "commit_trailer": "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
+    "pr_footer": "🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+    "usage_targets": {
+      "loaded_files": 3000,
+      "worker_start": 10000,
+      "main_avg_context": 50000,
+      "worker_cache_read": 1000000
+    }
+  },
   "projects": __PROJECTS_JSON__
 }

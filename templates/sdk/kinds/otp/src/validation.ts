@@ -28,7 +28,7 @@ export const assertToken = (token: string): void => {
     throw validationError('otpToken has an invalid shape');
 };
 
-/** Masks a phone for logs: `+9627*****67`. */
+/** Masks a phone for logs: `+9917*****67`. */
 export const maskPhone = (phone: string): string =>
   phone.length < 7
     ? '***'

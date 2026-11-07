@@ -6,8 +6,8 @@ import { OtpService, randomDigits } from '../src/service';
 import { resolveConfig } from '../src/config/options';
 import { SdkError, type CodeStore, type Logger } from '../src';
 
-const PHONE = '+962791234567';
-const OTHER = '+962790000000';
+const PHONE = '+991791234567';
+const OTHER = '+991790000000';
 const login = { phone: PHONE, purpose: 'LOGIN', language: 'ar' };
 
 interface Harness {
@@ -154,7 +154,7 @@ describe('OtpService limits', () => {
     expect(h.logs).toContainEqual([
       'warn',
       'phone blocked',
-      { phone: '+9627******67', purpose: 'LOGIN' },
+      { phone: '+9917******67', purpose: 'LOGIN' },
     ]);
     await expect(h.otp.verify({ phone: PHONE, purpose: 'LOGIN', code: '000000' })).resolves.toEqual(
       {
@@ -240,7 +240,7 @@ describe('OtpService failures', () => {
     expect(h.logs).toContainEqual([
       'error',
       'code delivery failed',
-      { channel: 'fake', phone: '+9627******67' },
+      { channel: 'fake', phone: '+9917******67' },
     ]);
     h.channel.failWith = undefined;
     await expect(h.otp.request(login)).resolves.toMatchObject({ outcome: 'SENT' });

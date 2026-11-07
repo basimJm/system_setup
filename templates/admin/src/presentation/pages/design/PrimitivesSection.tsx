@@ -56,7 +56,7 @@ export function PrimitivesSection() {
       <KeyValue
         placeholder={k('empty')}
         items={[
-          { key: 'phone', label: k('phone'), value: '+962 79 123 4567', ltr: true },
+          { key: 'phone', label: k('phone'), value: '+991 79 123 4567', ltr: true },
           { key: 'created', label: k('created'), value: '' },
           { key: 'status', label: k('status'), value: <Badge tone="green">{k('text')}</Badge> },
         ]}

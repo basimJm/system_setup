@@ -10,10 +10,10 @@ test('filter kit (English): chips, presets, custom range validation, compare, ex
   const card = page.locator('.app-card[aria-label="Filter kit"]');
   await card.scrollIntoViewIfNeeded();
 
-  await card.getByLabel('City', { exact: true }).selectOption('irbid');
-  await expect(card.getByText('City: Irbid')).toBeVisible();
-  await card.getByRole('button', { name: 'Remove filter City: Irbid' }).click();
-  await expect(card.getByText('City: Irbid')).toHaveCount(0);
+  await card.getByLabel('City', { exact: true }).selectOption('eastford');
+  await expect(card.getByText('City: Eastford')).toBeVisible();
+  await card.getByRole('button', { name: 'Remove filter City: Eastford' }).click();
+  await expect(card.getByText('City: Eastford')).toHaveCount(0);
 
   await card.getByLabel('Period', { exact: true }).selectOption('lastMonth');
   await expect(card.getByText('2026-09-01 – 2026-09-30')).toBeVisible();

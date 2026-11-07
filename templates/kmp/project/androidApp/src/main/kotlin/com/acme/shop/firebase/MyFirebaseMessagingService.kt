@@ -68,6 +68,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     private fun PushNotification.requestCode(): Int = (data[PushKeys.NOTIFICATION_ID] ?: "$title$message").hashCode()
 
     private companion object {
-        const val CHANNEL_ID = "wab_notifications"
+        const val CHANNEL_ID = "app_notifications"
     }
 }

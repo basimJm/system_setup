@@ -16,7 +16,7 @@ export const PAYMENTS_DISABLED_MESSAGE = 'payments are disabled: no payment gate
 export const OTP_PURPOSES = ['LOGIN', 'REGISTER', 'CHANGE_PHONE'] as const;
 export type OtpPurpose = (typeof OTP_PURPOSES)[number];
 
-/** Phone numbers cross the provider boundary in E.164 (`+9627…`). */
+/** Phone numbers cross the provider boundary in E.164 (`+9917…`). */
 export const E164_PATTERN = /^\+[1-9][0-9]{6,14}$/;
 
 /** Outcomes of checking an `otpToken`; provider failures are thrown, not returned. */
@@ -72,7 +72,7 @@ export const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9:_.-]{8,128}$/;
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const EMAIL_MAX_RECIPIENTS = 50;
 
-/** Payments. Amounts are integer minor units (fils, cents...) of the platform currency. */
+/** Payments. Amounts are integer minor units (cents and similar) of the platform currency. */
 export const PAYMENT_STATUSES = ['PENDING', 'SUCCEEDED', 'FAILED', 'CANCELLED'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export const REFUND_STATUSES = ['REFUND_PENDING', 'REFUNDED', 'REFUND_FAILED'] as const;

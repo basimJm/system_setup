@@ -31,14 +31,14 @@ describe('parseListState', () => {
   });
 
   it('reads page, size, search, sort and repeated filters', () => {
-    const s = parse('page=3&pageSize=50&q=%20noor%20&sort=name:asc&status=b&status=a&city=amman');
+    const s = parse('page=3&pageSize=50&q=%20noor%20&sort=name:asc&status=b&status=a&city=northville');
     expect(s).toMatchObject({
       page: 3,
       pageSize: 50,
       search: 'noor',
       sort: { key: 'name', direction: 'asc' },
     });
-    expect(s.filters).toEqual({ status: ['a', 'b'], city: ['amman'] });
+    expect(s.filters).toEqual({ status: ['a', 'b'], city: ['northville'] });
   });
 
   it.each(['page=0', 'page=-2', 'page=1.5', 'page=abc', 'page=99999999999999999999'])(

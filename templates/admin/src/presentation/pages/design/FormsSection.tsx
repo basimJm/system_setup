@@ -18,7 +18,7 @@ import { GALLERY_UPDATED_AT } from '@/constants/ui';
 import { VALIDATION_KEYS, endAfterStart, localDateString, moneyAmount, requiredText } from '@/domain/shared/validation';
 import { errorText, messageOf } from '../../utils/formErrors';
 
-const OPTION_KEYS = ['amman', 'irbid', 'zarqa', 'aqaba'] as const;
+const OPTION_KEYS = ['northville', 'eastford', 'southport', 'westbury'] as const;
 
 const schema = endAfterStart(
   z.object({

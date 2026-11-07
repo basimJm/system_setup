@@ -32,6 +32,7 @@ const LATIN_BY_DESIGN = new Set([
   'export.chip.CSV',
   'export.chip.PDF',
   'common.none',
+  'common.currency', // an ISO 4217 code, filled from the business answer
 ]);
 
 describe('locale area files', () => {

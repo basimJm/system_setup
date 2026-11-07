@@ -4,7 +4,7 @@ export interface CreateSessionRequest {
   /** One checkout = one key; repeating it returns the same session. */
   readonly idempotencyKey: string;
   /** Integer minor units, greater than zero. */
-  readonly amountFils: number;
+  readonly amountMinor: number;
   /** Our own reference for the attempt (e.g. the order id). */
   readonly reference: string;
 }
@@ -25,7 +25,7 @@ export interface PaymentClientCheckout {
 export interface PaymentSession {
   readonly sessionId: string;
   readonly status: PaymentStatus;
-  readonly amountFils: number;
+  readonly amountMinor: number;
   readonly reference: string;
   readonly client?: PaymentClientCheckout;
 }
@@ -34,25 +34,25 @@ export interface PaymentSession {
 export interface PaymentVerification {
   readonly sessionId: string;
   readonly status: PaymentStatus;
-  readonly amountFils: number;
+  readonly amountMinor: number;
   readonly gatewayCode: string;
   readonly gatewayMessage: string;
   /** Gateway fee in minor units when the gateway reports one. */
-  readonly feeFils?: number;
+  readonly feeMinor?: number;
 }
 
 export interface RefundRequest {
   readonly idempotencyKey: string;
   readonly sessionId: string;
   /** Integer minor units; partial refunds add up to at most the captured amount. */
-  readonly amountFils: number;
+  readonly amountMinor: number;
 }
 
 export interface RefundResult {
   readonly refundId: string;
   readonly sessionId: string;
   readonly status: RefundStatus;
-  readonly amountFils: number;
+  readonly amountMinor: number;
   readonly gatewayCode: string;
   readonly gatewayMessage: string;
 }

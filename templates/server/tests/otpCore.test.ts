@@ -8,7 +8,7 @@ import {
   createProofs,
 } from '../src/providers/otp';
 
-const PHONE = '+962791234567';
+const PHONE = '+991791234567';
 const RULES = { codeLength: 6, codeTtlSec: 300, proofTtlSec: 600 };
 const SECRET_A = 'a'.repeat(40);
 const SECRET_B = 'b'.repeat(40);
@@ -154,7 +154,7 @@ describe('proofs', () => {
   it('checks phone, purpose, expiry, signature and single use', async () => {
     const { otpToken } = proofs.issue({ phone: PHONE, purpose: 'REGISTER' });
     await expect(
-      proofs.verify({ proof: otpToken, expectedPhone: '+962781234567', purpose: 'REGISTER' }),
+      proofs.verify({ proof: otpToken, expectedPhone: '+991781234567', purpose: 'REGISTER' }),
     ).resolves.toEqual({ outcome: 'PHONE_MISMATCH' });
     await expect(
       proofs.verify({ proof: otpToken, expectedPhone: PHONE, purpose: 'LOGIN' }),

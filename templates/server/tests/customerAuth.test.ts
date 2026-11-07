@@ -16,8 +16,8 @@ import { proofFor, testOtp } from './helpers/otp';
 import { SECRET, fakeSettings } from './helpers/rig';
 
 const logger = createLogger({ level: 'silent' });
-const PHONE = '+962791234567';
-const OTHER = '+962781234567';
+const PHONE = '+991791234567';
+const OTHER = '+991781234567';
 
 interface Rig {
   service: ReturnType<typeof createCustomerAuthService>;
@@ -179,7 +179,7 @@ describe('customer auth: login, refresh, logout, change phone', () => {
         otpToken: proofFor(OTHER, 'CHANGE_PHONE'),
       }),
     ).rejects.toMatchObject({ code: 'PHONE_ALREADY_REGISTERED' });
-    const third = '+962771234567';
+    const third = '+991771234567';
     const updated = await rig.service.changePhone({
       customerId: session.customer.id,
       phone: third,

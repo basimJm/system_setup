@@ -1,7 +1,7 @@
 import type { Language } from './i18n';
 
 /** Business time zone of the platform: every admin date and hour is shown in it (PRD §2). Change per deployment. */
-export const BUSINESS_TIME_ZONE = 'Asia/Amman';
+export const BUSINESS_TIME_ZONE = 'Etc/GMT-3';
 
 /** Money: the API sends decimal strings; the panel computes in integer minor units (never floats). */
 export const MINOR_UNITS_PER_MAJOR = 1_000;
@@ -15,7 +15,7 @@ export const MONEY_STRING_PATTERN = new RegExp(
 
 /** Intl locales: Arabic UI uses Arabic-Indic digits, English uses Latin digits ("numerals follow the language"). */
 export const INTL_LOCALES: Readonly<Record<Language, string>> = {
-  ar: 'ar-JO-u-nu-arab-ca-gregory',
+  ar: 'ar-u-nu-arab-ca-gregory',
   en: 'en-GB-u-nu-latn-ca-gregory',
 };
 

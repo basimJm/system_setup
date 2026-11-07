@@ -30,7 +30,7 @@ class TimeFormatTest {
     }
 
     @Test
-    fun formatsInstantsInAmman() {
+    fun formatsInstantsInTheBusinessZone() {
         assertEquals(DateTimeText("18/10/2026", "1:00 PM"), TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM"))
         assertNull(TimeFormat.instantText("soon", "AM", "PM"))
     }
@@ -41,7 +41,7 @@ class TimeFormatTest {
         assertSame(BusinessTime.zone, BusinessTime.zone)
         assertEquals(
             TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM"),
-            TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM", zoneId = "Asia/Amman"),
+            TimeFormat.instantText("2026-10-18T10:00:00.000Z", "AM", "PM", zoneId = "Etc/GMT-3"),
         )
     }
 

@@ -29,7 +29,7 @@ import {
 } from '../src/utils/time';
 import { createRandom, randomBetween, randomUpTo } from './helpers/random';
 
-const AMMAN = 'Asia/Amman';
+const BUSINESS_ZONE = 'Etc/GMT-3';
 const NEW_YORK = 'America/New_York';
 const LORD_HOWE = 'Australia/Lord_Howe';
 const HAVANA = 'America/Havana';
@@ -206,11 +206,11 @@ describe('calendar dates', () => {
 });
 
 describe('time zones', () => {
-  it.each(['Asia/Amman', 'UTC', NEW_YORK, LORD_HOWE])('knows %p', (zone) => {
+  it.each(['Etc/GMT-3', 'UTC', NEW_YORK, LORD_HOWE])('knows %p', (zone) => {
     expect(isValidTimeZone(zone)).toBe(true);
   });
 
-  it.each(['', 'Mars/Base', 'Asia/Amman ', 'asia amman', 123, null, undefined])(
+  it.each(['', 'Mars/Base', 'Etc/GMT-3 ', 'asia northville', 123, null, undefined])(
     'does not know %p',
     (zone) => {
       expect(isValidTimeZone(zone)).toBe(false);
@@ -231,13 +231,13 @@ describe('time zones', () => {
   });
 
   it('rejects an invalid Date', () => {
-    expect(() => localDateOf(new Date(NaN), AMMAN)).toThrow(TypeError);
-    expect(() => localMinutesOf('2026-10-12' as unknown as Date, AMMAN)).toThrow(TypeError);
-    expect(() => utcOffsetMinutes(new Date(NaN), AMMAN)).toThrow(TypeError);
+    expect(() => localDateOf(new Date(NaN), BUSINESS_ZONE)).toThrow(TypeError);
+    expect(() => localMinutesOf('2026-10-12' as unknown as Date, BUSINESS_ZONE)).toThrow(TypeError);
+    expect(() => utcOffsetMinutes(new Date(NaN), BUSINESS_ZONE)).toThrow(TypeError);
   });
 });
 
-describe('Asia/Amman: the business day changes at 21:00 UTC', () => {
+describe('Etc/GMT-3: the business day changes at 21:00 UTC', () => {
   it.each([
     ['2026-10-12T20:59:59.999Z', '2026-10-12', 1_439],
     ['2026-10-12T21:00:00.000Z', '2026-10-13', 0],
@@ -252,37 +252,37 @@ describe('Asia/Amman: the business day changes at 21:00 UTC', () => {
     ['2028-02-28T21:00:00.000Z', '2028-02-29', 0], // leap day
     ['2028-02-29T21:00:00.000Z', '2028-03-01', 0],
   ])('%s is %s at minute %p', (instant, date, minutes) => {
-    expect(localDateOf(at(instant), AMMAN)).toBe(date);
-    expect(localMinutesOf(at(instant), AMMAN)).toBe(minutes);
+    expect(localDateOf(at(instant), BUSINESS_ZONE)).toBe(date);
+    expect(localMinutesOf(at(instant), BUSINESS_ZONE)).toBe(minutes);
   });
 
-  it('is UTC+3 all year (Jordan abolished daylight saving in 2022)', () => {
-    expect(utcOffsetMinutes(at('2026-01-15T12:00:00Z'), AMMAN)).toBe(180);
-    expect(utcOffsetMinutes(at('2026-07-15T12:00:00Z'), AMMAN)).toBe(180);
+  it('is UTC+3 all year (a fixed-offset zone has no daylight saving)', () => {
+    expect(utcOffsetMinutes(at('2026-01-15T12:00:00Z'), BUSINESS_ZONE)).toBe(180);
+    expect(utcOffsetMinutes(at('2026-07-15T12:00:00Z'), BUSINESS_ZONE)).toBe(180);
   });
 
   it('turns local times into instants', () => {
-    expect(iso(zonedTimeToUtc('2026-10-13', 0, AMMAN))).toBe('2026-10-12T21:00:00.000Z');
-    expect(iso(zonedTimeToUtc('2026-10-12', 8 * 60 + 30, AMMAN))).toBe('2026-10-12T05:30:00.000Z');
-    expect(iso(zonedTimeToUtc('2026-10-12', 1_439, AMMAN))).toBe('2026-10-12T20:59:00.000Z');
+    expect(iso(zonedTimeToUtc('2026-10-13', 0, BUSINESS_ZONE))).toBe('2026-10-12T21:00:00.000Z');
+    expect(iso(zonedTimeToUtc('2026-10-12', 8 * 60 + 30, BUSINESS_ZONE))).toBe('2026-10-12T05:30:00.000Z');
+    expect(iso(zonedTimeToUtc('2026-10-12', 1_439, BUSINESS_ZONE))).toBe('2026-10-12T20:59:00.000Z');
   });
 
   it('has a 24-hour business day', () => {
-    const day = localDayRange('2026-10-12', AMMAN);
+    const day = localDayRange('2026-10-12', BUSINESS_ZONE);
     expect(iso(day.start)).toBe('2026-10-11T21:00:00.000Z');
     expect(iso(day.end)).toBe('2026-10-12T21:00:00.000Z');
   });
 
   it('lets a range run past local midnight into the next business day', () => {
-    const start = zonedTimeToUtc('2026-10-12', 23 * 60 + 30, AMMAN);
+    const start = zonedTimeToUtc('2026-10-12', 23 * 60 + 30, BUSINESS_ZONE);
     const end = addMinutes(start, 90);
-    expect(localDateOf(start, AMMAN)).toBe('2026-10-12');
-    expect(localDateOf(end, AMMAN)).toBe('2026-10-13');
-    expect(localMinutesOf(end, AMMAN)).toBe(60);
+    expect(localDateOf(start, BUSINESS_ZONE)).toBe('2026-10-12');
+    expect(localDateOf(end, BUSINESS_ZONE)).toBe('2026-10-13');
+    expect(localMinutesOf(end, BUSINESS_ZONE)).toBe(60);
   });
 
   it('moves the "today + 90 days" window exactly at local midnight', () => {
-    const lastDay = (now: string): string => addDays(localDateOf(at(now), AMMAN), 90);
+    const lastDay = (now: string): string => addDays(localDateOf(at(now), BUSINESS_ZONE), 90);
     expect(lastDay('2026-10-12T20:59:59.999Z')).toBe('2027-01-10');
     expect(lastDay('2026-10-12T21:00:00.000Z')).toBe('2027-01-11');
   });
@@ -342,11 +342,11 @@ describe('daylight saving', () => {
   });
 
   it.each([-1, 1_440, 1.5, NaN])('refuses the minute %p', (minutes) => {
-    expect(() => zonedTimeToUtc('2026-10-12', minutes, AMMAN)).toThrow(RangeError);
+    expect(() => zonedTimeToUtc('2026-10-12', minutes, BUSINESS_ZONE)).toThrow(RangeError);
   });
 
   it('refuses an impossible date', () => {
-    expect(() => zonedTimeToUtc('2026-02-30', 0, AMMAN)).toThrow(ValidationError);
+    expect(() => zonedTimeToUtc('2026-02-30', 0, BUSINESS_ZONE)).toThrow(ValidationError);
     expect(() => localDayRange('9999-12-31', 'UTC')).toThrow(RangeError);
   });
 });
@@ -395,8 +395,8 @@ describe('ranges', () => {
 
   it('decide "is the place open now" with [open, close)', () => {
     const open = {
-      start: zonedTimeToUtc('2026-10-12', parseHHmm('10:00'), AMMAN),
-      end: zonedTimeToUtc('2026-10-12', parseHHmm('22:00'), AMMAN),
+      start: zonedTimeToUtc('2026-10-12', parseHHmm('10:00'), BUSINESS_ZONE),
+      end: zonedTimeToUtc('2026-10-12', parseHHmm('22:00'), BUSINESS_ZONE),
     };
     expect(containsInstant(open, at('2026-10-12T07:00:00Z'))).toBe(true); // 10:00 local
     expect(containsInstant(open, at('2026-10-12T06:59:59Z'))).toBe(false);
@@ -422,7 +422,7 @@ describe('ranges', () => {
 
 const SEED = 20_261_013;
 const ZONES = [
-  AMMAN,
+  BUSINESS_ZONE,
   'UTC',
   NEW_YORK,
   'Europe/London',
@@ -507,15 +507,15 @@ const toLocalParts = (wallMs: number): { date: string; minutes: number } => {
 };
 
 describe('properties of local time', () => {
-  it('Asia/Amman equals plain UTC+3 arithmetic since the 2022 law change', () => {
+  it('Etc/GMT-3 equals plain UTC+3 arithmetic', () => {
     const rand = createRandom(SEED);
     for (let i = 0; i < 3_000; i += 1) {
       const instant = new Date(
         Date.UTC(2023, 0, 1) + randomUpTo(rand, Date.UTC(2031, 0, 1) - Date.UTC(2023, 0, 1)),
       );
       const shifted = new Date(instant.getTime() + 3 * HOUR_MS);
-      expect(localDateOf(instant, AMMAN)).toBe(shifted.toISOString().slice(0, 10));
-      expect(localMinutesOf(instant, AMMAN)).toBe(
+      expect(localDateOf(instant, BUSINESS_ZONE)).toBe(shifted.toISOString().slice(0, 10));
+      expect(localMinutesOf(instant, BUSINESS_ZONE)).toBe(
         shifted.getUTCHours() * 60 + shifted.getUTCMinutes(),
       );
     }
