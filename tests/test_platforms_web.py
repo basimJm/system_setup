@@ -338,7 +338,7 @@ class DocumentTargetsTest(TempDirTest):
         spec = make_spec(self.root / "sys", webs=[WebSpec("Parents", "parents")], apps=[AppSpec("Customer", "customer")])
         registry = projects_registry(spec)
         targets = {t.module.id: t for t in make_targets(plan, registry, self.root)}
-        self.assertEqual(("parents", "ACME-Web-Parents/docs"), (targets["parents"].key, targets["parents"].docs_dir))
+        self.assertEqual(("parents", "ACME-Web-Parents/docs"), (targets["parents"].project, targets["parents"].docs_dir))
         self.assertEqual("Parents", targets["parents"].stem)
-        self.assertEqual(("customer", "ACME-Mobile-Customer/docs"), (targets["customer"].key, targets["customer"].docs_dir))
-        self.assertEqual(("", "docs/modules/admin-two"), (targets["admin-two"].key, targets["admin-two"].docs_dir))
+        self.assertEqual(("customer", "ACME-Mobile-Customer/docs"), (targets["customer"].project, targets["customer"].docs_dir))
+        self.assertEqual(("", "docs/modules/admin-two"), (targets["admin-two"].project, targets["admin-two"].docs_dir))
