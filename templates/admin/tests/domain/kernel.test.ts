@@ -27,6 +27,7 @@ import {
   parseInstant,
   zonedTimeToUtc,
 } from '@/domain/shared/time';
+import { localInstant } from '../helpers/zone';
 
 describe('ids', () => {
   it('accepts non-empty strings and rejects blank ones', () => {
@@ -133,18 +134,17 @@ describe('time', () => {
     expect(isLocalDate('2026-1-1')).toBe(false);
   });
 
-  it('rolls the business-zone day over at exactly 21:00:00.000Z', () => {
-    expect(localDateOf(new Date('2026-10-14T20:59:59.999Z'))).toBe('2026-10-14');
-    expect(localDateOf(new Date('2026-10-14T21:00:00.000Z'))).toBe('2026-10-15');
-    expect(localMinutesOf(new Date('2026-10-14T21:30:00Z'))).toBe(30);
-    expect(localDateOf(new Date('2026-12-31T21:00:00Z'))).toBe('2027-01-01');
+  it('rolls the business-zone day over at exactly local midnight', () => {
+    const midnight = localInstant('2026-10-15').getTime();
+    expect(localDateOf(new Date(midnight - 1))).toBe('2026-10-14');
+    expect(localDateOf(new Date(midnight))).toBe('2026-10-15');
+    expect(localMinutesOf(localInstant('2026-10-15', 0, 30))).toBe(30);
+    expect(localDateOf(localInstant('2027-01-01'))).toBe('2027-01-01');
   });
 
   it('converts wall time back to UTC and tiles days half-open', () => {
-    expect(zonedTimeToUtc('2026-10-15', 0).toISOString()).toBe('2026-10-14T21:00:00.000Z');
-    expect(zonedTimeToUtc('2026-10-15', 13 * 60 + 5).toISOString()).toBe(
-      '2026-10-15T10:05:00.000Z',
-    );
+    expect(zonedTimeToUtc('2026-10-15', 0)).toEqual(localInstant('2026-10-15'));
+    expect(zonedTimeToUtc('2026-10-15', 13 * 60 + 5)).toEqual(localInstant('2026-10-15', 13, 5));
     const day = localDayRange('2026-10-15');
     expect(day.end).toEqual(localDayRange('2026-10-16').start);
     expect(localDateOf(addMinutes(day.end, -1))).toBe('2026-10-15');
@@ -187,13 +187,13 @@ describe('formatters', () => {
   });
 
   it('shows instants in the business zone with a 12-hour clock', () => {
-    const iso = '2026-10-14T21:30:00Z';
+    const iso = localInstant('2026-10-15', 0, 30).toISOString();
     expect(formatInstant(iso, 'en', 'time')).toMatch(/^12:30\s?am$/i);
     expect(formatInstant(iso, 'en', 'date')).toBe('15 Oct 2026');
-    expect(formatInstant(new Date('2026-10-14T10:05:00Z'), 'en', 'time')).toMatch(/^1:05\s?pm$/i);
+    expect(formatInstant(localInstant('2026-10-14', 13, 5), 'en', 'time')).toMatch(/^1:05\s?pm$/i);
     const ar = formatInstant(iso, 'ar', 'time');
     expect(ar).toMatch(/[٠-٩]/);
     expect(ar).toMatch(/ص/);
-    expect(formatInstant(iso, 'en', 'dateTime', 'UTC')).toMatch(/9:30/);
+    expect(formatInstant('2026-10-14T21:30:00Z', 'en', 'dateTime', 'UTC')).toMatch(/9:30/);
   });
 });

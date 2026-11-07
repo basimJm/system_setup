@@ -8,10 +8,11 @@ import {
   rangeToInstants,
   resolvePreset,
 } from '@/domain/shared/dateRange';
+import { localInstant } from './helpers/zone';
 
 const at = (iso: string) => new Date(iso);
-/** Wednesday 2026-10-14 12:00 in the business zone (UTC+3). */
-const NOW = at('2026-10-14T09:00:00Z');
+/** Wednesday 2026-10-14 12:00 in the business zone. */
+const NOW = localInstant('2026-10-14', 12);
 
 describe('resolvePreset', () => {
   it.each([
@@ -26,12 +27,13 @@ describe('resolvePreset', () => {
     expect(resolvePreset(preset, NOW)).toEqual({ from, to });
   });
 
-  it('uses the business-zone day, which starts at 21:00Z the evening before', () => {
-    expect(resolvePreset('today', at('2026-10-13T20:59:59Z'))).toEqual({
+  it('uses the business-zone day, which starts at local midnight', () => {
+    const midnight = localInstant('2026-10-14');
+    expect(resolvePreset('today', new Date(midnight.getTime() - 1000))).toEqual({
       from: '2026-10-13',
       to: '2026-10-13',
     });
-    expect(resolvePreset('today', at('2026-10-13T21:00:00Z'))).toEqual({
+    expect(resolvePreset('today', midnight)).toEqual({
       from: '2026-10-14',
       to: '2026-10-14',
     });
@@ -108,8 +110,8 @@ describe('isValidRange', () => {
 describe('rangeToInstants', () => {
   it('is the half-open UTC span of whole business-zone days', () => {
     const { start, end } = rangeToInstants({ from: '2026-10-13', to: '2026-10-14' });
-    expect(start.toISOString()).toBe('2026-10-12T21:00:00.000Z');
-    expect(end.toISOString()).toBe('2026-10-14T21:00:00.000Z');
+    expect(start).toEqual(localInstant('2026-10-13'));
+    expect(end).toEqual(localInstant('2026-10-15'));
   });
 });
 

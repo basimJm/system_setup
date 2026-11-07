@@ -103,6 +103,7 @@
       "ar": "values-ar"
     },
     "stringFile": "strings.xml",
+    "sameAsDefault": ["string:app_name"],
     "resourceRoots": [
       "androidApp/src",
       "composeApp/src",

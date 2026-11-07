@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -15,7 +16,7 @@ from _support import FIXTURE_PLANS, TOOL_ROOT, TempDirTest
 import cli
 from catalog import load_catalog
 from manifest import templates_root
-from plan import load_plan
+from plan import Plan, load_plan
 from planspec import plan_to_spec
 
 KNOWLEDGE = TOOL_ROOT / "knowledge"
@@ -80,3 +81,23 @@ class RealGenerationTest(TempDirTest):
         for rel in ("dto.ts", "operations.ts"):
             self.assertEqual(re.findall(r"source-sha256: ([0-9a-f]{64})", (web / "src/data/contract/generated" / rel).read_text(encoding="utf-8")), [sha], rel)
         self.assertIn("/parent-web/v1", (web / "contract" / "openapi.admin.json").read_text(encoding="utf-8"))
+
+    def test_an_android_only_app_without_an_arabic_name_passes_its_own_policy_checks(self):
+        spec, _ = self.generate("grocery-android-only.json", "grocery")
+        for app in spec.apps:
+            checked = subprocess.run([sys.executable, "scripts/ci/policy_checks.py", "all"], cwd=spec.target / spec.app_dir(app), capture_output=True, text=True)
+            self.assertEqual((checked.returncode, checked.stdout.strip().splitlines()[-1:]), (0, ["all: ok"]), checked.stdout)
+
+    def test_a_configured_zone_reaches_the_clients_and_their_tests_do_not_pin_an_offset(self):
+        catalog = load_catalog()
+        data = json.loads((FIXTURE_PLANS / "school-fee-portal-web.json").read_text(encoding="utf-8"))
+        data["time_zones"]["business"] = "America/New_York"
+        spec = plan_to_spec(Plan.from_dict(data, catalog), self.root / "ny", catalog).spec
+        cli.generate(spec, templates_root(), run_post=False, git=False, tool=TOOL_ROOT, knowledge=KNOWLEDGE)
+        web = spec.target / spec.web_dir(spec.webs[0])
+        self.assertIn("BUSINESS_TIME_ZONE = 'America/New_York'", (web / "src" / "constants" / "kernel.ts").read_text(encoding="utf-8"))
+        self.assertTrue((web / "tests" / "helpers" / "zone.ts").is_file())
+        for test_file in (TOOL_ROOT / "templates" / "admin" / "tests").rglob("*.ts*"):
+            text = test_file.read_text(encoding="utf-8")
+            self.assertNotIn("Etc/GMT", text, test_file.name)
+            self.assertNotIn("T21:00:00", text, test_file.name)

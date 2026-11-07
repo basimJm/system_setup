@@ -51,14 +51,14 @@
     {
       "file": "src/constants/kernel.ts",
       "placeholder": "__BUSINESS_TIME_ZONE_CODE__",
-      "find": "BUSINESS_TIME_ZONE = 'Etc/GMT-3'",
+      "find": "BUSINESS_TIME_ZONE = 'UTC'",
       "replace_with": "BUSINESS_TIME_ZONE = '__BUSINESS_TIME_ZONE_CODE__'",
-      "why": "the business time zone default comes from the business answer; the neutral fixed-offset zone Etc/GMT-3 is used while it is TBD"
+      "why": "the business time zone default comes from the business answer; UTC is used while it is TBD"
     },
     {
       "file": "src/data/mock/settingsFixture.ts",
       "placeholder": "__BUSINESS_TIME_ZONE_CODE__",
-      "find": "timezone: 'Etc/GMT-3'",
+      "find": "timezone: 'UTC'",
       "replace_with": "timezone: '__BUSINESS_TIME_ZONE_CODE__'",
       "why": "mock settings follow the business answer"
     },

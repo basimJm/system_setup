@@ -158,9 +158,9 @@
     {
       "file": "core/common/src/commonMain/kotlin/com/acme/shop/core/common/TimeFormat.kt",
       "placeholder": "__BUSINESS_TIME_ZONE_CODE__",
-      "find": "const val ZONE_ID = \"Etc/GMT-3\"",
+      "find": "const val ZONE_ID = \"UTC\"",
       "replace_with": "const val ZONE_ID = \"__BUSINESS_TIME_ZONE_CODE__\"",
-      "why": "the business time zone default comes from the business answer; the neutral fixed-offset zone Etc/GMT-3 is used while it is TBD"
+      "why": "the business time zone default comes from the business answer; UTC is used while it is TBD"
     }
   ],
   "not_in_snapshot": {

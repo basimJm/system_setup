@@ -127,9 +127,9 @@ Business domain (from the answers, available to every kind; the workspace templa
 `__BUSINESS_RULES__` (numbered), `__OPEN_DECISIONS__` (the owner's open decisions + every answer left `TBD`, flagged
 `open — ask the owner`). An empty list renders as one `TBD (open — ask the owner)` item.
 Code-facing defaults, used by `targeted` edits of generated source: `__BUSINESS_TIME_ZONE_CODE__` (the business time zone when
-it is an IANA name, else the neutral fixed-offset zone `Etc/GMT-3`) and `__CURRENCY_CODE__` (the first three-letter code in
-the currency answer, else the ISO code for no currency, `XXX`). Template tests pin their own fixture zone, so after choosing
-another zone re-derive the offset assertions that name `Etc/GMT-3`.
+it is an IANA name, else `UTC`) and `__CURRENCY_CODE__` (the first three-letter code in
+the currency answer, else the ISO code for no currency, `XXX`). Template tests build their instants from the configured zone and currency, so any zone and
+currency work with no edit to a test.
 
 Per app, while the `kmp` template is instantiated for that app: `__APP_NAME__`, `__APP_NAME_AR__`, `__APP_SLUG__`,
 `__APP_DIR__`, `__APP_PACKAGE__` (`<package root>.<slug>`), `__APP_PACKAGE_PATH__` (`com/acme/customer`),
