@@ -33,7 +33,7 @@ class CatalogTest(TempDirTest):
         for sdk in ("otp", "notifications", "payments", "storage", "maps", "analytics"):
             self.assertTrue(catalog.providers_for(sdk), sdk)
         self.assertEqual({"push", "email"}, {p.channel for p in catalog.providers_for("notifications")} & {"push", "email"})
-        self.assertEqual({"render", "docker-server", "aws", "fly", "railway", "cloudflare", "vercel", "custom"}, {h.id for h in catalog.hosts})
+        self.assertEqual({"render", "docker-server", "aws", "fly", "railway", "cloudflare", "vercel", "netlify", "custom"}, {h.id for h in catalog.hosts})
 
     def test_the_sdks_the_engine_builds_are_exactly_the_ones_marked_generated(self):
         catalog = load_catalog()

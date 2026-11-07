@@ -1,0 +1,36 @@
+{
+  "family": "__SERVICE_NAME__",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<account-id>:role/<task-execution-role>",
+  "containerDefinitions": [
+    {
+      "name": "__SERVICE_NAME__",
+      "image": "<account-id>.dkr.ecr.<region>.amazonaws.com/__SERVICE_NAME__:<tag>",
+      "essential": true,
+      "portMappings": [{ "containerPort": __PART_PORT__, "protocol": "tcp" }],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:__PART_PORT____PART_HEALTH__').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 15
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/__SERVICE_NAME__",
+          "awslogs-region": "<region>",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [
+__EACH_ENV_JOINED__
+        { "name": "__ENV_KEY__", "valueFrom": "arn:aws:ssm:<region>:<account-id>:parameter/__SERVICE_NAME__/__ENV_KEY__" }
+__END_EACH__
+      ]
+    }
+  ]
+}

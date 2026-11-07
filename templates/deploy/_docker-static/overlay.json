@@ -1,0 +1,1 @@
+{"note": "Shared by the hosts that run a container for a static part (a Dockerfile that builds the site and serves it with nginx). Not a host: it is never chosen, only extended.", "kinds": {"web": "admin"}}

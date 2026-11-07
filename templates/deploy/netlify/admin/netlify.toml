@@ -1,0 +1,18 @@
+# Netlify: set "Base directory" to __PART_DIR__ in the site settings.
+# Production needs the public values (__ENV_KEYS__) in the site's environment variables.
+# Previews and branch deploys build the dev variant.
+
+[build]
+  command = "__PART_BUILD__"
+  publish = "__PART_OUTPUT__"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[context.deploy-preview]
+  command = "__PART_BUILD_DEV__"
+  publish = "__PART_OUTPUT_DEV__"
+
+[context.branch-deploy]
+  command = "__PART_BUILD_DEV__"
+  publish = "__PART_OUTPUT_DEV__"

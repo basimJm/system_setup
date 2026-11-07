@@ -1,0 +1,4 @@
+# __SERVICE_NAME__ on Cloudflare Pages: `npx wrangler pages deploy` publishes the build output named here.
+name = "__SERVICE_NAME__"
+pages_build_output_dir = "__PART_OUTPUT__"
+compatibility_date = "2025-01-01"

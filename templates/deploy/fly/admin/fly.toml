@@ -1,0 +1,16 @@
+# __SERVICE_NAME__ on Fly.io. The app name must be unique on Fly: change it if it is taken. Region: chosen by `fly launch`.
+app = "__SERVICE_NAME__"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = __PART_PORT__
+  force_https = true
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "__PART_HEALTH__"

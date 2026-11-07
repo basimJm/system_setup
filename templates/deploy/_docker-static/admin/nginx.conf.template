@@ -1,0 +1,13 @@
+# Serves the built site and answers every unknown path with index.html (single-page routing).
+# The Content-Security-Policy is not set here: see docs/HOSTING.md.
+server {
+  listen ${PORT};
+  root /usr/share/nginx/html;
+  index index.html;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  location / {
+    try_files $uri /index.html;
+  }
+}

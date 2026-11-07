@@ -1,26 +1,182 @@
 {
-  "version": 1,
-  "note": "Proposals only. Any other host name is allowed in a plan; it is then marked known: false.",
+  "version": 2,
+  "note": "Proposals only. Any other host name is allowed in a plan; it is then deployed as `custom` (Docker plus a guide) and a PENDING task is added. `deploy` names the overlay folder templates/deploy/<deploy>/<part kind>/ that is written for a part on that host: a new host is a folder and a line here, never code. `supported` says whether the generated server template runs on that database or cache; `none` means nothing was chosen (the template still needs MongoDB and Redis). Choosing something else works, prints a warning and adds a PENDING task: the server's data layer must be changed by hand.",
   "hosts": [
-    {"id": "render", "title": "Render", "parts": ["server", "admin", "web"]},
-    {"id": "docker-server", "title": "Docker on a server you rent", "parts": ["server", "admin", "web"]},
-    {"id": "aws", "title": "AWS", "parts": ["server", "admin", "web"]},
-    {"id": "fly", "title": "Fly.io", "parts": ["server", "admin", "web"]},
-    {"id": "railway", "title": "Railway", "parts": ["server", "admin", "web"]},
-    {"id": "cloudflare", "title": "Cloudflare", "parts": ["admin", "web"]},
-    {"id": "vercel", "title": "Vercel", "parts": ["admin", "web"]},
-    {"id": "custom", "title": "Something else (custom)", "parts": ["server", "admin", "web"]}
+    {
+      "id": "render",
+      "title": "Render",
+      "parts": [
+        "server",
+        "admin",
+        "web"
+      ],
+      "deploy": "render"
+    },
+    {
+      "id": "docker-server",
+      "title": "Docker on a server you rent",
+      "parts": [
+        "server",
+        "admin",
+        "web"
+      ],
+      "deploy": "docker-server"
+    },
+    {
+      "id": "aws",
+      "title": "AWS",
+      "parts": [
+        "server",
+        "admin",
+        "web"
+      ],
+      "deploy": "aws"
+    },
+    {
+      "id": "fly",
+      "title": "Fly.io",
+      "parts": [
+        "server",
+        "admin",
+        "web"
+      ],
+      "deploy": "fly"
+    },
+    {
+      "id": "railway",
+      "title": "Railway",
+      "parts": [
+        "server",
+        "admin",
+        "web"
+      ],
+      "deploy": "railway"
+    },
+    {
+      "id": "cloudflare",
+      "title": "Cloudflare Pages",
+      "parts": [
+        "admin",
+        "web"
+      ],
+      "deploy": "cloudflare"
+    },
+    {
+      "id": "vercel",
+      "title": "Vercel",
+      "parts": [
+        "admin",
+        "web"
+      ],
+      "deploy": "vercel"
+    },
+    {
+      "id": "netlify",
+      "title": "Netlify",
+      "parts": [
+        "admin",
+        "web"
+      ],
+      "deploy": "netlify"
+    },
+    {
+      "id": "custom",
+      "title": "Something else (custom)",
+      "parts": [
+        "server",
+        "admin",
+        "web"
+      ],
+      "deploy": "custom"
+    }
   ],
   "databases": [
-    {"id": "postgres", "title": "PostgreSQL"},
-    {"id": "mysql", "title": "MySQL"},
-    {"id": "mongodb", "title": "MongoDB"},
-    {"id": "sqlite", "title": "SQLite (small systems)"},
-    {"id": "none", "title": "No database"}
+    {
+      "id": "mongodb",
+      "title": "MongoDB",
+      "supported": true
+    },
+    {
+      "id": "postgres",
+      "title": "PostgreSQL",
+      "supported": false
+    },
+    {
+      "id": "mysql",
+      "title": "MySQL",
+      "supported": false
+    },
+    {
+      "id": "sqlite",
+      "title": "SQLite (small systems)",
+      "supported": false
+    },
+    {
+      "id": "none",
+      "title": "No database",
+      "supported": true
+    }
   ],
   "caches": [
-    {"id": "redis", "title": "Redis"},
-    {"id": "memcached", "title": "Memcached"},
-    {"id": "none", "title": "No cache"}
-  ]
+    {
+      "id": "redis",
+      "title": "Redis",
+      "supported": true
+    },
+    {
+      "id": "memcached",
+      "title": "Memcached",
+      "supported": false
+    },
+    {
+      "id": "none",
+      "title": "No cache",
+      "supported": true
+    }
+  ],
+  "parts": {
+    "server": {
+      "title": "server",
+      "static": false,
+      "port": "3000",
+      "health": "/health",
+      "build": "npm ci --include=dev && npm run build",
+      "start": "node dist/server.js",
+      "output": "",
+      "env_file": "docker/env.prod.example",
+      "data_layer": true,
+      "build_dev": "npm ci --include=dev && npm run build",
+      "output_dev": ""
+    },
+    "admin": {
+      "title": "admin panel",
+      "static": true,
+      "port": "8080",
+      "health": "/",
+      "build": "npm ci && npm run build:prod-release && node scripts/write-hosting.ts prod-release",
+      "start": "",
+      "output": "dist/prod-release",
+      "env": [
+        "VITE_API_BASE_URL",
+        "VITE_SOCKET_URL",
+        "CSP_CONNECT_EXTRA"
+      ],
+      "build_dev": "npm ci && npm run build:dev-release && node scripts/write-hosting.ts dev-release",
+      "output_dev": "dist/dev-release"
+    },
+    "web": {
+      "title": "web app",
+      "static": true,
+      "port": "8080",
+      "health": "/",
+      "build": "npm ci && npm run build",
+      "start": "",
+      "output": "dist",
+      "env": [
+        "VITE_API_BASE_URL"
+      ],
+      "build_dev": "npm ci && npm run build",
+      "output_dev": "dist"
+    }
+  }
 }

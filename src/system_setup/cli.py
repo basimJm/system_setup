@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from business import (FIELDS, PROMPT_FILE, REVIEW_PROMPT_NAME, Business, ask_business, business_from, load_business_file,  # noqa: E402
                       prompt_placeholders, write_agent_prompt, write_business_input)
+from deploy import write_deployment  # noqa: E402
 from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
@@ -48,6 +49,8 @@ class Report:
     documents: Any = None  # the Outcome of the document step (documents.py), when it ran
     identity_left: Dict[str, List[str]] = field(default_factory=dict)
     steps: List[str] = field(default_factory=list)
+    deploy_files: List[str] = field(default_factory=list)   # the chosen hosts' config and guides (deploy.py)
+    warnings: List[str] = field(default_factory=list)       # things that work but need the person's attention (printed after the report)
 
     @property
     def unresolved(self) -> Dict[str, List[str]]:
@@ -270,6 +273,8 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
             if result.kind == "server":
                 result.post_generate = ["npm install" if command == "npm ci" else command for command in result.post_generate]
     record_published(spec)
+    deployed = write_deployment(spec, templates, registry)   # only the chosen host's config + guide per part, docs/DEPLOYMENT.md, PENDING rows
+    report.deploy_files, report.warnings = deployed.files, deployed.warnings
     report.created.append(write_business_input(spec.target, spec.business, spec.system_name, spec.today.isoformat()))
     for rel, text in (extra_files or {}).items():  # e.g. system.plan.json and the business document, part of the first commit
         path = spec.target / rel
@@ -313,6 +318,8 @@ def print_report(report: Report, run_post: bool) -> None:
         print(f"  {result.kind:9} -> {result.dest}  ({len(result.files)} files, {len(result.binaries)} binary)")
         if result.overwritten:
             print(f"            overwrote {len(result.overwritten)} file(s) written by an earlier template")
+    if report.deploy_files:
+        print(f"  deployment: {len(report.deploy_files)} file(s) for the chosen host(s): " + ", ".join(report.deploy_files))
     if report.created:
         print(f"  per-project files created ({len(report.created)}): " + ", ".join(report.created))
     if report.knowledge:
@@ -333,6 +340,10 @@ def print_report(report: Report, run_post: bool) -> None:
             print(f"  {rel}: {', '.join(literals)}")
     for app_dir, rest in report.identity_left.items():
         print(f"\n{app_dir} still mentions the kmp sentinel identity in {len(rest)} file(s): " + ", ".join(rest[:10]))
+    if report.warnings:
+        print(f"\nWarnings ({len(report.warnings)}):")
+        for warning in report.warnings:
+            print(f"  ! {warning}")
     commands = [(r.kind, c) for r in report.results for c in r.post_generate]
     if commands:
         print("\nPost-generate commands" + (" (run):" if run_post else " (not run; pass --run-post or run them yourself):"))
