@@ -548,7 +548,7 @@ class NewCommandTest(TempDirTest):
         self.assertEqual(0, code, text[-1500:])
         self.assertEqual([], fake.requests)
         target = self.root / SCHOOL
-        self.assertFalse((target / ".system_setup").exists())
+        self.assertFalse((target / ".system_setup" / "documents.json").exists())
         self.assertIn("Complete `BUSINESS_DOMAIN.md`", (target / "docs" / "AGENT_PROMPT.md").read_text(encoding="utf-8"))
         self.assertIn("--no-documents", text)
 

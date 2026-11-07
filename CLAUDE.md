@@ -5,7 +5,7 @@ skeletons, SDKs, deployment files, rules, lessons). Standard-library Python 3.9,
 
 ## Start here
 1. Read `docs/ROADMAP.md` once: the goal, the design rules and the phase you are working on. Do not read `templates/` to get
-   the picture; search, then read only the matched lines. `README.md` has the questions, tokens and template contract.
+   the picture; search, then read only the matched lines. `docs/REFERENCE.md` has the questions, tokens and template contract.
 2. Work on a branch from `main` and open a pull request into `main`. Never commit or push to `main`, never force-push, never
    skip hooks or CI.
 3. Tests with every change: `python3 -m unittest discover -s tests -p 'test_*.py'` must pass (about a minute).
