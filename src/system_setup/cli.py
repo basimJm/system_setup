@@ -16,7 +16,7 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -24,7 +24,7 @@ from business import (FIELDS, PROMPT_FILE, REVIEW_PROMPT_NAME, Business, ask_bus
                       prompt_placeholders, write_agent_prompt, write_business_input)
 from deploy import write_deployment  # noqa: E402
 from audiences import AudiencePlan  # noqa: E402
-from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
+from engine import EngineError, Result, check_target, instantiate, resync_contract_sha, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
 from lessons import module_tags  # noqa: E402
@@ -244,13 +244,15 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
     registry = projects_registry(spec)
     if "server" in manifests:
         audiences = spec.audience_plan()
-        report.audience_notes = audience_notes(audiences)
+        report.audience_notes = audience_notes(audiences, kept_roles(audiences, manifests["server"]))
         report.results.append(instantiate(manifests["server"], spec.target, values, parts, drop=[r for r in audiences.dropped if r in manifests["server"].prune],
                                           audiences={role: a.slug for role, a in audiences.chosen.items()}))
     if "admin" in manifests:
         report.results.append(instantiate(manifests["admin"], spec.target, values, parts))
     for web in spec.webs:
-        report.results.append(instantiate(manifests["web"], spec.target, dict(values, **spec.web_values(web)), parts))
+        web_result = instantiate(manifests["web"], spec.target, dict(values, **spec.web_values(web)), parts)
+        resync_contract_sha(web_result.dest)
+        report.results.append(web_result)
     sdk_rows: Dict[str, List[Any]] = {}
     for sdk in spec.sdks:
         sdk_values = dict(values, **spec.sdk_values(sdk))
@@ -275,8 +277,9 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         write_registry(spec.target, registry)
     report.created = ensure_project_files(spec.target, registry)
     projects = registry["projects"]
-    if "server" in manifests and spec.audience_plan().extra:
-        append_backlog_rows(spec.target / projects["server"]["backlog"], projects["server"]["prefix"], audience_rows(spec.audience_plan()))
+    if "server" in manifests and (spec.audience_plan().extra or kept_roles(spec.audience_plan(), manifests["server"])):
+        append_backlog_rows(spec.target / projects["server"]["backlog"], projects["server"]["prefix"],
+                            audience_rows(spec.audience_plan(), kept_roles(spec.audience_plan(), manifests["server"])))
     for sdk, rows in sdk_rows.items():   # one backlog row per skeleton adapter / unproven adapter / new SDK port, after the starter rows
         append_backlog_rows(spec.target / projects[sdk]["backlog"], projects[sdk]["prefix"], rows)
     if add_published_dependencies(spec):   # the server depends on the published SDKs; its lock is stale until `npm install`
@@ -313,17 +316,28 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
     return report
 
 
-def audience_notes(plan: AudiencePlan) -> List[str]:
+def kept_roles(plan: AudiencePlan, server: Manifest) -> List[str]:
+    """Roles the plan has no module for whose code the server template cannot remove (no `prune` group): they stay, under the role's own name."""
+    return [role for role in plan.dropped if role not in server.prune]
+
+
+def audience_notes(plan: AudiencePlan, kept: Sequence[str] = ()) -> List[str]:
     """What the server got: one line per role generated, dropped, or left for later (printed after the report)."""
     notes = [f"{role}: audience '{a.slug}' (REST prefix /{a.slug}/v1)" for role, a in plan.chosen.items()]
-    notes += [f"{role}: no module of this role, so the server has none of its code" for role in plan.dropped]
+    notes += [f"{role}: no module of this role, so the server has none of its code" for role in plan.dropped if role not in kept]
+    notes += [f"{role}: no module of this role, but the server template cannot remove its code yet: it stays as the namespace '/{role.replace('_', '-')}/v1'. "
+              f"A PENDING row in the server backlog asks to remove it" for role in kept]
     notes += [f"'{a.slug}' ({a.role}): not generated; the server template has one module per role, so '{a.slug}' shares the "
               f"role of '{plan.chosen[a.role].slug}'. A PENDING row in the server backlog asks to copy it" for a in plan.extra]
     return notes
 
 
-def audience_rows(plan: AudiencePlan) -> List[Tuple[str, str, str, str]]:
-    return [(f"Server audience '{a.slug}' ({a.role}): copy the '{plan.chosen[a.role].slug}' module for it", f"audience-{a.slug}", "PENDING",
+def audience_rows(plan: AudiencePlan, kept: Sequence[str] = ()) -> List[Tuple[str, str, str, str]]:
+    unused = [(f"Server role '{role}': remove the unused '{role.replace('_', '-')}' namespace", f"audience-remove-{role.replace('_', '-')}", "PENDING",
+               f"No module of the plan has this role, so nothing calls /{role.replace('_', '-')}/v1 or the socket /{role.replace('_', '-')}. Delete src/modules/{role.replace('_', '-')}, "
+               f"its auth service, repository, model, token scope, seeds, docs and tests, then run `npm run verify`")
+              for role in kept]
+    return unused + [(f"Server audience '{a.slug}' ({a.role}): copy the '{plan.chosen[a.role].slug}' module for it", f"audience-{a.slug}", "PENDING",
              f"Routes /{a.slug}/v1 and socket /{a.slug} do not exist yet; the client calls them. Copy src/modules/{plan.chosen[a.role].slug}, its auth service, "
              f"constants, docs and tests under the new name, then mount it in src/routes/index.ts and src/docs/index.ts")
             for a in plan.extra]

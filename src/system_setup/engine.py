@@ -9,6 +9,7 @@ written files. Every sentinel literal still present in a rendered text file is r
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import re
 import shutil
 import subprocess
@@ -258,6 +259,25 @@ def instantiate(manifest: Manifest, repo_root: Path, values: Mapping[str, str],
     removed_commands = {cmd for group in drop for cmd in manifest.prune[group]["post_generate"]}
     result.post_generate = [render_text(cmd, manifest, values) for cmd in manifest.post_generate if cmd not in removed_commands]
     return result
+
+
+CONTRACT_SNAPSHOT = "contract/openapi.admin.json"
+CONTRACT_GENERATED = ("src/data/contract/generated/dto.ts", "src/data/contract/generated/operations.ts")
+SOURCE_SHA = re.compile(r"(source-sha256: )[0-9a-f]{64}")
+
+
+def resync_contract_sha(dest: Path) -> bool:
+    """The generated contract files of a web app carry the sha256 of the snapshot they came from. Renaming the snapshot's REST prefix
+    to the app's own changes its text, so the sha is recomputed here (the checks of the app compare it); False when there is no snapshot."""
+    snapshot = dest / CONTRACT_SNAPSHOT
+    if not snapshot.is_file():
+        return False
+    sha = hashlib.sha256(snapshot.read_bytes()).hexdigest()
+    for rel in CONTRACT_GENERATED:
+        path = dest / rel
+        if path.is_file():
+            path.write_text(SOURCE_SHA.sub(lambda match: match.group(1) + sha, path.read_text(encoding="utf-8")), encoding="utf-8")
+    return True
 
 
 def audience_leftovers(manifest: Manifest, dest: Path, dropped: Sequence[str]) -> Dict[str, List[str]]:

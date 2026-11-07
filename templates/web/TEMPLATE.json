@@ -9,7 +9,8 @@
     "__WEB_DIR__",
     "__WEB_PREFIX__",
     "__WEB_DOC_PREFIX__",
-    "__API_PREFIX__"
+    "__API_PREFIX__",
+    "__API_DOC_NAME__"
   ],
   "sentinels": {
     "__SYSTEM_PREFIX__-Admin-Dashboard": "__WEB_DIR__",
@@ -28,5 +29,21 @@
   },
   "rename_paths": {
     "Admin_": "__WEB_DOC_PREFIX__"
-  }
+  },
+  "targeted": [
+    {
+      "file": "scripts/lib/contractFiles.ts",
+      "placeholder": "__API_DOC_NAME__",
+      "find": "docs/api/openapi.admin.json'",
+      "replace_with": "docs/api/openapi.__API_DOC_NAME__.json'",
+      "why": "the contract of record of a web app is the server's document of its own audience"
+    },
+    {
+      "file": "scripts/lib/contractFiles.ts",
+      "placeholder": "__API_DOC_NAME__",
+      "find": "CONTRACT_IS_SAMPLE = false;",
+      "replace_with": "CONTRACT_IS_SAMPLE = true;",
+      "why": "the contract/ files are the admin sample under this app's prefix until the first api:sync adopts the audience contract"
+    }
+  ]
 }

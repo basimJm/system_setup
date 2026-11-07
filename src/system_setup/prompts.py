@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlsplit
 
-from audiences import Audience, AudiencePlan, infer_role, load_audience_catalog, plan_audiences
+from audiences import Audience, AudiencePlan, doc_name, infer_role, load_audience_catalog, plan_audiences
 from business import Business, token_values as business_token_values
 
 SDK_CATALOG = ("storage", "otp", "notifications", "payments", "analytics")
@@ -469,6 +469,7 @@ class Spec:
             "__APP_PREFIX__": self.app_prefixes()[app.slug],
             "__APP_MASTER__": app.slug,
             "__API_PREFIX__": self.app_api_prefix(app),
+            "__API_SPEC_FILE__": f"openapi.{doc_name(app.slug)}.json",   # the server's contract file of this app's audience
             "__REALTIME_NAMESPACE__": self.app_realtime_namespace(app),
         }
 
@@ -480,6 +481,7 @@ class Spec:
             "__WEB_SLUG__": web.slug,
             "__API_PREFIX__": self.web_api_prefix(web),
             "__API_SLUG__": web.api_slug or web.slug,
+            "__API_DOC_NAME__": doc_name(web.api_slug or web.slug),
             "__WEB_DIR__": self.web_dir(web),
             "__WEB_PREFIX__": self.web_prefixes()[web.slug],
             "__WEB_MASTER__": web.slug,

@@ -4,7 +4,7 @@ import { toZod, type JsonSchema, type ZodContext } from './jsonSchemaToZod.ts';
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
 export type HttpMethod = (typeof HTTP_METHODS)[number];
 const JSON_CONTENT = 'application/json';
-const API_PREFIX = /^\/admin\/v1\//;
+const API_PREFIX = /^\/[^/]+\/v1\//; // the namespace of this app (`/admin/v1`, `/parent-web/v1`, ...)
 const PATH_PARAM = /^\{(.+)\}$/;
 const SUCCESS_STATUS = /^2\d\d$/;
 export const SHA_MARKER = 'source-sha256:';

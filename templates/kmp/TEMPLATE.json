@@ -17,6 +17,7 @@
     "__PROD_WEB_URL__",
     "__APPLE_TEAM_ID__",
     "__API_PREFIX__",
+    "__API_SPEC_FILE__",
     "__REALTIME_NAMESPACE__",
     "__SYSTEM_NAME__",
     "__SYSTEM_PREFIX__",
@@ -48,7 +49,8 @@
     "app.example.com": "__PROD_WEB_HOST__",
     "TEAMID0000": "__APPLE_TEAM_ID__",
     "/app/v1": "__API_PREFIX__",
-    "Acme-Server": "__SERVER_DIR__"
+    "Acme-Server": "__SERVER_DIR__",
+    "openapi.customer.json": "__API_SPEC_FILE__"
   },
   "sentinel_order": "replace the longest literal first (full URLs before bare hosts, com.acme.shop before AcmeShop); plain string replacement, no regex",
   "sentinel_locations": {

@@ -6,6 +6,8 @@ import { AppError } from '@/infrastructure/errors/AppError';
 import { HttpClient, type FetchFn } from '@/infrastructure/http/HttpClient';
 
 const BASE = 'https://api.example.test';
+// The namespace of this app; kept in one constant so the formatting of the lines below does not depend on its length.
+const API = '/admin/v1';
 const json = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 const ok = (data: unknown, meta?: unknown) =>
@@ -31,7 +33,7 @@ describe('HttpClient', () => {
     const fetchFn = vi
       .fn<FetchFn>()
       .mockResolvedValue(ok({ id: '1' }, { page: 2, pageSize: 25, total: 60 }));
-    const res = await client(fetchFn, { token: 'tkn', language: 'en' }).get('/admin/v1/things', {
+    const res = await client(fetchFn, { token: 'tkn', language: 'en' }).get(`${API}/things`, {
       schema,
       query: { page: 2, search: undefined, flag: false },
     });
@@ -41,7 +43,7 @@ describe('HttpClient', () => {
       meta: { page: 2, pageSize: 25, total: 60 },
     });
     const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(`${BASE}/admin/v1/things?page=2&flag=false`);
+    expect(url).toBe(`${BASE}${API}/things?page=2&flag=false`);
     expect(init.headers).toMatchObject({ 'Accept-Language': 'en', Authorization: 'Bearer tkn' });
   });
 

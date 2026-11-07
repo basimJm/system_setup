@@ -98,6 +98,11 @@ def upper(words: Sequence[str]) -> str:
     return "_".join(w.upper() for w in words)
 
 
+def doc_name(slug: str) -> str:
+    """The name of the audience in the server's contract file: `docs/api/openapi.<doc_name>.json` (`customer-app` -> `customerApp`)."""
+    return camel(words_of(slug))
+
+
 def plural_words(words: Sequence[str]) -> List[str]:
     return [*words[:-1], pluralize(words[-1])] if words else []
 
