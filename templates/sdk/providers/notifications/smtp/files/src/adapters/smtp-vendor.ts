@@ -1,8 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { SmtpTransportLike } from './smtp';
 
-/* istanbul ignore file -- thin glue over nodemailer; proven by a real send, not by unit tests. */
-
 export interface SmtpConnection {
   readonly host: string;
   readonly port?: number;
@@ -11,6 +9,7 @@ export interface SmtpConnection {
   readonly timeoutMs?: number;
 }
 
+/* istanbul ignore file -- thin glue over nodemailer; proven by a real send, not by unit tests. */
 const DEFAULT_PORT = 587;
 const IMPLICIT_TLS_PORT = 465;
 const DEFAULT_TIMEOUT_MS = 10_000;

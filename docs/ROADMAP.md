@@ -59,9 +59,9 @@ Each phase is one branch and one PR into `main`.
 - [ ] Platform choice removes unused folders, Gradle targets and CI jobs. A web-only and an Android-only system both build.
 
 ### 5. SDKs and providers
-- [ ] SDK and provider lists as data. Real adapters ported from the source system where they exist.
-- [ ] A new SDK or unknown provider gets a skeleton: port, fake adapter, contract test, failing adapter test, backlog row.
-- [ ] A published SDK records package and version, creates no folder, and the server depends on it.
+- [x] SDK and provider lists as data. Real adapters ported from the source system where they exist. (fcm, smtp, http-sms; s3 family builtin; payments and analytics adapters of the source were not ported)
+- [x] A new SDK or unknown provider gets a skeleton: port, fake adapter, contract test, failing adapter test, backlog row.
+- [x] A published SDK records package and version, creates no folder, and the server depends on it.
 
 ### 6. Deployment
 - [ ] A host per part from `deploy.json` (Render, Docker on a server, AWS, Fly, Railway, Cloudflare, Vercel) or `custom`.
