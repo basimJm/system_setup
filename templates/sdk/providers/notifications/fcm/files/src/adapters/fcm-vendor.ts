@@ -18,7 +18,7 @@ export const createFirebaseMessaging = (
         const { getMessaging } = await import('firebase-admin/messaging');
         appSequence += 1;
         app = initializeApp(
-          { credential: cert(serviceAccount as never) },
+          { credential: cert(serviceAccount) },
           `__SDK_DIR__-fcm-${String(appSequence)}`,
         );
         return getMessaging(app);

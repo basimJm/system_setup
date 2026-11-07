@@ -1,8 +1,9 @@
 import { ERROR_CODES, resolveConfig } from '../src';
 import { Fake__SDK_TITLE__Port } from '../src/adapters/fake';
 
-const refused = (fn: () => unknown): unknown =>
+const refused = (fn: () => unknown): void => {
   expect(fn).toThrow(expect.objectContaining({ code: ERROR_CODES.CONFIG_INVALID }) as Error);
+};
 
 describe('resolveConfig', () => {
   it('accepts the fake provider in dev with defaults', () => {

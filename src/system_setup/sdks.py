@@ -234,7 +234,7 @@ def apply_providers(spec: Spec, sdk: str, template_root: Path, catalog_missing: 
                          + (f"\n  ```ts\n  {usage.replace(chr(10), chr(10) + '  ')}\n  ```" if usage else "")
                          + (f"\n  {meta['notes']}" if meta.get("notes") else ""))
             applied.rows.append((f"{use.title} adapter: real proof with a live account (unit tests use a stub)", f"{use.id}-proof", "PENDING",
-                                 f"owner input: {use.title} account and credentials (environment or secret store only)"))
+                                 f"**owner input**: {use.title} account and credentials (environment or secret store only)"))
         elif use.mode == MODE_BUILTIN:
             env_lines.append(f"# {use.title} ({use.channel}): built into this SDK")
             notes.append(f"- **{use.title}** (`{use.id}`, {use.channel}): built into this SDK; configure it through the options and the keys above.")
@@ -252,10 +252,10 @@ def apply_providers(spec: Spec, sdk: str, template_root: Path, catalog_missing: 
                          + f"skeleton `src/adapters/{use.id}.ts` implements `{tokens['__PORT_INTERFACE__']}` and rejects every call. "
                          f"The expected-failure test `tests/{use.id}.test.ts` lists what is missing: " + "; ".join(catalog_missing) + ".")
             applied.rows.append((f"{use.title} adapter for {sdk}: implement the skeleton ({'; '.join(catalog_missing)})", f"{use.id}-adapter", "TODO",
-                                 f"owner input: {use.title} account and credentials; skeleton src/adapters/{use.id}.ts, test tests/{use.id}.test.ts" + ("" if use.known else "; provider not in the catalog")))
+                                 f"**owner input**: {use.title} account and credentials; skeleton src/adapters/{use.id}.ts, test tests/{use.id}.test.ts" + ("" if use.known else "; provider not in the catalog")))
     if not item.dedicated:
         applied.rows.insert(0, (f"Write the BRD of {sdk} and shape its port (operations, request and result) from the real need", "port", "TODO",
-                                "owner input: which operations the business needs; generic skeleton in src/types.ts"))
+                                "**owner input**: which operations the business needs; generic skeleton in src/types.ts"))
     if not item.providers:
         return applied
     write_text(dest / PROVIDERS_MODULE, providers_module(item, item.providers))

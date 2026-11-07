@@ -49,12 +49,12 @@ class PlanToSpecTest(TempDirTest):
 
     def test_everything_not_generated_is_listed(self):
         text = "\n".join(self.convert(plan_of()).deferred)
-        for part in ("SDK 'otp' (One-time codes): provider twilio", "SDK 'payments' (Payments): provider stripe",
-                     "deployment of 'server': host render, database postgres, cache redis", "deployment of 'admin': host vercel",
+        for part in ("deployment of 'server': host render, database postgres, cache redis", "deployment of 'admin': host vercel",
                      "other languages ar", "language of the generated documents: en", "countries IE"):
             self.assertIn(part, text)
+        self.assertNotIn("SDK '", text)   # phase 5: every SDK and provider of the plan is generated, so none is listed as later
 
-    def test_web_modules_single_platform_apps_published_and_new_sdks_are_recorded_not_dropped(self):
+    def test_web_modules_and_single_platform_apps_are_recorded_and_sdks_are_generated(self):
         data = valid_plan_data()
         data["modules"] += [
             {"id": "portal", "kind": "web", "name": "Portal", "audience": "parents", "why": "pay", "platforms": ["web"]},
@@ -69,11 +69,13 @@ class PlanToSpecTest(TempDirTest):
         conversion = self.convert(Plan.from_dict(data, CATALOG))
         spec, text = conversion.spec, "\n".join(conversion.deferred)
         self.assertEqual(["customer", "driver"], [a.slug for a in spec.apps])
-        self.assertEqual(["otp", "payments"], spec.sdks)
+        self.assertEqual(["otp", "payments", "maps", "loyalty"], spec.sdks)   # internal ones, new SDKs included
+        self.assertEqual(["storage"], [item.id for item in spec.published_sdks])
+        self.assertEqual({"maps", "loyalty"}, set(spec.sdk_overrides))
         for part in ("web module 'portal'", "'driver' (Driver): platform android only was chosen", "app module 'kiosk' (Kiosk): only web was chosen",
-                     "admin module 'admin-two'", "SDK 'maps' (Maps): an SDK the engine cannot build yet", "SDK 'loyalty' (Loyalty): new SDK",
-                     "already published as @acme/storage 3.1.0", "SDK 'analytics' (Analytics): chosen as no code"):
+                     "admin module 'admin-two'"):
             self.assertIn(part, text)
+        self.assertNotIn("SDK '", text)
 
     def test_answers_become_rules_and_an_unusual_name_keeps_the_slug_for_folders(self):
         data = valid_plan_data()
@@ -125,7 +127,6 @@ class NewCommandTest(TempDirTest):
         self.assertIn("tasks.py check: OK", text)
         self.assertIn("Recorded in the plan, generated in a later phase", text)
         self.assertIn("deployment of 'server': host render", text)
-        self.assertIn("provider stripe", text)
         business_input = (target / "docs" / "BUSINESS_INPUT.md").read_text(encoding="utf-8")
         self.assertIn("Order: PLACED -> DELIVERED", business_input)
         self.assertIn("How is alcohol handled?", business_input)

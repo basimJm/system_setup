@@ -7,7 +7,7 @@ describe('Fake__SDK_TITLE__Port', () => {
   });
 
   it('the contract rejects an adapter without a name, an id or a known status', async () => {
-    const make = (name: string, id: string, status: string) =>
+    const make = (name: string, id: string, status: string): Fake__SDK_TITLE__Port =>
       ({
         name,
         execute: () => Promise.resolve({ id, status }),
