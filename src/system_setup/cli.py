@@ -365,7 +365,7 @@ def print_report(report: Report, run_post: bool) -> None:
 
 
 def main(argv: List[str]) -> int:
-    if argv and argv[0] in ("intake", "new", "documents", "lessons"):  # the plan-driven flow (commands.py); the flat command below is unchanged
+    if argv and argv[0] in ("intake", "new", "documents", "lessons", "update"):  # the plan-driven flow (commands.py); the flat command below is unchanged
         from commands import run
         return run(argv, generate, print_report)
     args = parse_args(argv)
