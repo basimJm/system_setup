@@ -12,5 +12,6 @@
 - Loops: 0/1
 - Review: PENDING
 - Notes: <deviations stated plainly; contract changes name the affected tasks>
+- Lesson: <one line or none>
 
 ## Previous (2)

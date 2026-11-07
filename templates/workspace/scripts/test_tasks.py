@@ -123,5 +123,81 @@ class TasksTest(unittest.TestCase):
             os.chdir(cwd)
 
 
+SESSION = """# Server session
+## Current
+### SRV-002 — Auth
+- Branch: `feat/srv-002`
+- Loops: 1/1
+- Lesson: Retry the token sync only when the token changed; otherwise it loops.
+### SRV-004a — Sub task
+- Branch: `feat/srv-004a`
+- Lesson: none
+"""
+
+
+class LessonsTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / ".claude").mkdir()
+        (self.root / ".claude" / "projects.json").write_text(json.dumps(REGISTRY), encoding="utf-8")
+        for rel, text in (("srv/TASKS.md", SERVER), ("adm/TASKS.md", ADMIN), ("INTEGRATION.md", BOARD), ("srv/.claude/session.md", SESSION)):
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text, encoding="utf-8")
+        self.b = tasks.Backlogs(self.root)
+        self.local = self.root / "docs" / "knowledge" / "LESSONS.local.md"
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_lesson_line_of_the_block_is_read(self) -> None:
+        self.assertEqual("Retry the token sync only when the token changed; otherwise it loops.", self.b.lesson_of("SRV-002"))
+
+    def test_none_empty_placeholder_and_missing_block_or_file_give_no_lesson(self) -> None:
+        self.assertEqual("", self.b.lesson_of("SRV-004a"))      # "none"
+        self.assertEqual("", self.b.lesson_of("SRV-001"))       # no block
+        self.assertEqual("", self.b.lesson_of("ADM-002"))       # the project has no session file
+        (self.root / "srv/.claude/session.md").write_text("### SRV-001 — x\n- Lesson: <one line or none>\n### SRV-003 — y\n- Lesson:\n", encoding="utf-8")
+        self.assertEqual(("", ""), (self.b.lesson_of("SRV-001"), self.b.lesson_of("SRV-003")))
+
+    def test_done_copies_the_lesson_with_the_task_id_once(self) -> None:
+        self.b.set_status("SRV-002", "DONE")
+        self.assertIn("recorded in docs/knowledge/LESSONS.local.md", self.b.collect_lesson("SRV-002"))
+        text = self.local.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("# Lessons learned in this project"))
+        self.assertIn("- [SRV-002] Retry the token sync only when the token changed; otherwise it loops.\n", text)
+        self.assertIn("already in", self.b.collect_lesson("SRV-002"))
+        self.assertEqual(1, self.local.read_text(encoding="utf-8").count("- [SRV-002]"))
+
+    def test_same_lesson_under_another_task_is_not_added_again_and_a_new_one_is(self) -> None:
+        self.b.collect_lesson("SRV-002")
+        (self.root / "srv/.claude/session.md").write_text(
+            SESSION + "### SRV-003 — z\n- Lesson: retry the TOKEN sync only when the token changed otherwise it loops\n"
+            "### SRV-001 — a\n- Lesson: Pin the toolchain version.\n", encoding="utf-8")
+        b = tasks.Backlogs(self.root)
+        self.assertIn("already in", b.collect_lesson("SRV-003"))
+        self.assertIn("recorded", b.collect_lesson("SRV-001"))
+        self.assertEqual(["SRV-002", "SRV-001"], [m.group(1) for m in (tasks.LOCAL_LESSON.match(l) for l in self.local.read_text(encoding="utf-8").splitlines()) if m])
+
+    def test_cli_set_done_collects_the_lesson_and_other_statuses_do_not(self) -> None:
+        import contextlib
+        import io
+        import os
+        cwd = os.getcwd()
+        os.chdir(self.root)
+        try:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                tasks.main(["tasks.py", "set", "SRV-002", "IN REVIEW"])
+                self.assertFalse(self.local.exists())
+                tasks.main(["tasks.py", "set", "SRV-002", "DONE"])
+                tasks.main(["tasks.py", "set", "SRV-004a", "DONE"])
+            self.assertIn("lesson of SRV-002 recorded", out.getvalue())
+            self.assertIn("no lesson recorded", out.getvalue())
+            self.assertEqual(1, self.local.read_text(encoding="utf-8").count("- ["))
+        finally:
+            os.chdir(cwd)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,8 @@ default (Enter keeps it). `--yes` accepts the proposal untouched. Questions go t
 
 It asks, in order: names and identifiers, then per module keep / remove / add and its platforms, then per SDK keep / remove / add,
 where it comes from (build it here, already published as package + version, or none) and its provider, then per deployable
-module the host (and database and cache for the server), then each open question (left open when not answered), then the language
+module the host (and database and cache for the server), then the delivery rules (all on; a safety rule needs a second confirmation to
+turn off), then each open question (left open when not answered), then the language
 of the generated documents. It never asks for a secret value and refuses one that is typed anyway."""
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from typing import Callable, List, Optional
 from audiences import ROLES, infer_role, load_audience_catalog
 from catalog import Catalog, OTHER
 from plan import LANGUAGE_RE, PACKAGE_NAME_RE, SOURCES, VERSION_RE, Deployment, Module, Plan, Sdk
+from rules import RuleSetting, find_def, load_rule_defs, rules_map
 from prompts import ask, slug_from, validate_npm_scope, validate_package, validate_prefix, validate_required, validate_slug
 
 Reader = Callable[[str], str]
@@ -100,6 +102,11 @@ def describe(plan: Plan, catalog: Catalog) -> str:
             extra = ", ".join(part for part in (f"database {item.database}" if item.database != "none" else "",
                                                 f"cache {item.cache}" if item.cache != "none" else "") if part)
             lines.append(f"    - {item.part}: {item.host}" + (f" ({extra})" if extra else "") + ("" if item.known else " [not in the catalog]"))
+    defs = load_rule_defs()
+    off = [rule_id for rule_id, on in rules_map(defs, plan.rules).items() if not on]
+    edited = [setting.id for setting in plan.rules if setting.text and setting.id not in off]
+    lines.append(f"\n  Delivery rules: {len(defs)}, " + (f"off: {', '.join(off)}" if off else "all on")
+                 + (f"; edited: {', '.join(edited)}" if edited else ""))
     open_ones = plan.open_questions_unanswered()
     lines.append(f"\n  Open questions: {len(open_ones)} of {len(plan.open_questions)} unanswered")
     return "\n".join(lines)
@@ -131,6 +138,7 @@ class Review:
         self.modules()
         self.sdks()
         self.deployment()
+        self.rules()
         self.questions()
         self.documents_language()
         self.roles()
@@ -254,6 +262,33 @@ class Review:
                 current = Deployment(part=module.id)
                 self.plan.deployment.append(current)
             current.host, current.database, current.cache = host, database, cache
+
+    # -- delivery rules --
+    def rules(self) -> None:
+        """Every rule of the workspace is on; the person may turn one off or edit its wording. A safety rule needs a second answer."""
+        defs = load_rule_defs()
+        chosen = {setting.id: setting for setting in self.plan.rules}
+        self.say(f"\nDelivery rules ({len(defs)}); the generated hooks follow them. All are on unless you change one. Rules marked * are safety rules.")
+        for rule in defs:
+            state = chosen[rule.id].state if rule.id in chosen else "on"
+            self.say(f"  {rule.id:26}{'*' if rule.safety else ' '} {state:3}  {rule.title}" + (f"  [{', '.join(rule.enforced_by)}]" if rule.enforced_by else ""))
+        while is_yes(self.ask("Change a rule? (yes/no)", "no", yes_no)):
+            rule = find_def(defs, self.ask("  Rule id (from the list above)", "", lambda v: None if find_def(defs, v) else "not a rule id"))
+            action = self.ask(f"  '{rule.title}': on, off or edit?", "on", one_of(["on", "off", "edit"])).lower()
+            setting = chosen.pop(rule.id, RuleSetting(rule.id))
+            if action == "on":
+                setting.state, setting.text, setting.confirmed = "on", "", False
+            elif action == "off":
+                setting.state = "off"
+                if rule.safety:
+                    again = self.ask(f"  '{rule.title}' is a safety rule: without it the hooks stop protecting you. Type the rule id again to confirm "
+                                     "turning it off (Enter keeps it on)", "")
+                    setting.state, setting.confirmed = ("off", True) if again == rule.id else ("on", False)
+            else:
+                setting.text = self.ask("  New wording of the rule (one line)", setting.text)
+            if setting.state == "off" or setting.text:
+                chosen[rule.id] = setting
+        self.plan.rules = [chosen[rule.id] for rule in defs if rule.id in chosen]
 
     # -- open questions and the document language --
     def questions(self) -> None:

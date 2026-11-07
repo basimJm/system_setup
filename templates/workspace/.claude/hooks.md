@@ -13,6 +13,8 @@ Two layers work together:
 | `PostToolUse` (Edit/Write) | `check_hardcoded.py` | **Flags** hardcoded secrets, URLs, IPs and ports in source files; move them to config/constants. |
 | `Stop` | `stop_review.py` | **Blocks** finishing while source code changed on the branch and either no test files changed or the task block is missing `Loops: 1/1` / `Review: PASSED`. Master branches (from `projects.json`) are exempt: they only hold merged PRs. |
 
+Every check above is a rule with an id (`.claude/rules.md`). The hooks read the `rules` map of `.claude/projects.json`: a rule the system plan turned off is not enforced, and a missing entry means on.
+
 `Loops: 3/3` in old blocks stays valid; new blocks write `Loops: 1/1`. Hook tests: `python3 .claude/hooks/test_hooks.py`. The sandbox cannot write `.claude/hooks/`: patch hooks through the Terminal panel and ship the patch by PR into `main`.
 
 Line workers (`scripts/line.py`) run with only `guard_git.py` and `check_hardcoded.py`; the script replaces the rest (`rules.md`, "Feature line").
@@ -38,7 +40,7 @@ Record in the task block of the **project's** `.claude/session.md`:
 4. Implement + unit tests. Run the project's gate.
 5. One verification loop → `Loops: 1/1`.
 6. Four-role review (§2) → `Review: PASSED`.
-7. Commit (including the backlog/board changes), push, open the PR into the master, merge when the gate is green (rules §3.10), `tasks.py set <ID> DONE`, commit the status change on the master through the PR flow of the next task or a `docs/` branch.
+7. Commit (including the backlog/board changes), push, open the PR into the master, merge when the gate is green (rules §3.10), `tasks.py set <ID> DONE` (it copies a real `Lesson:` line to `docs/knowledge/LESSONS.local.md`), commit the status change on the master through the PR flow of the next task or a `docs/` branch.
 8. Durable facts → the project's `.claude/memory.md` (short); cross-project facts → root `memory.md`; one-line update of the project's row in root `session.md`.
 
 ### Task block template (project `.claude/session.md`)
@@ -52,5 +54,7 @@ Record in the task block of the **project's** `.claude/session.md`:
 - Loops: 0/1
 - Review: PENDING
 - Notes: <short; deviations from the rules stated plainly>
+- Lesson: <one line or none>
 ```
+`Lesson:` is one line that would help the next system (a pitfall, a fix, a check), written without names, URLs or secrets; `none` when the task taught nothing new. `SYSTEM_SETUP lessons import` reviews the collected ones.
 The `Branch:` line must hold exactly the branch name (optionally in backticks) and nothing else: the hooks match it literally.

@@ -54,6 +54,7 @@ FAKE_VALUES = {
     "__APPS_TABLE__": "| `Acme-App/` | Customer app (KMP) | scaffold |",
     "__SDKS_TABLE__": "| `acme-otp/` | SDK: one-time codes (ports + adapters) | backlog only |",
     "__PROJECTS_JSON__": json.dumps(FAKE_PROJECTS, indent=2, ensure_ascii=False),
+    "__RULES_JSON__": "{}",
     "__MASTERS_LIST__": "`server`, `admin`, `app`",
     "__OWNER_GITHUB__": "acme-org",
     "__REPO_NAME__": "acme-system",
@@ -172,7 +173,7 @@ class TemplateContract(unittest.TestCase):
 
     def test_loaded_files_fit_the_budgets_they_ship_with(self):
         text = (TEMPLATE_DIR / ".claude" / "projects.json").read_text(encoding="utf-8")
-        budgets = json.loads(text.replace("__PROJECTS_JSON__", "{}"))["context_budgets"]["root"]
+        budgets = json.loads(text.replace("__PROJECTS_JSON__", "{}").replace("__RULES_JSON__", "{}"))["context_budgets"]["root"]
         for rel, limit in budgets.items():
             self.assertLessEqual(len((TEMPLATE_DIR / rel).read_text(encoding="utf-8")) // 4, limit, rel)
 
