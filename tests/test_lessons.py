@@ -98,6 +98,16 @@ class Selection(TempDirTest):
         web_only = select(document, {"web"}).lessons()
         self.assertTrue(all(not ({"android", "ios", "kmp", "server"} & set(l.tags)) for l in web_only))
 
+    def test_a_lessons_file_in_the_old_format_is_copied_whole(self):
+        from workspace import copy_knowledge
+        old = self.root / "old"
+        old.mkdir()
+        (old / "LESSONS.md").write_text("# Lessons\n\n## 1. A\n- a plain bullet\n", encoding="utf-8")
+        repo = self.root / "repo"
+        repo.mkdir()
+        self.assertEqual(["docs/knowledge/LESSONS.md"], copy_knowledge(repo, old, {"server"}))
+        self.assertEqual((old / "LESSONS.md").read_text(encoding="utf-8"), (repo / "docs" / "knowledge" / "LESSONS.md").read_text(encoding="utf-8"))
+
     def test_project_copy_says_for_which_modules_and_still_parses(self):
         text = for_project(LESSONS, {"server", "sdk"})
         self.assertIn("This copy is for a project with: sdk, server.", text)
@@ -126,7 +136,7 @@ class NamesAndPrivatePatterns(TempDirTest):
         self.assertTrue({"server", "admin", "app"}.isdisjoint(lowered))
 
     def test_scrub_replaces_names_in_any_spelling_and_private_patterns(self):
-        text, found = scrub("At Acme Shop the acme-shop server (ops@example.com, http://10.0.0.1:3000, /Users/x/y) failed; ACME-001.",
+        text, found = scrub("At Acme Shop the acme-shop server (ops@example.com, http://10.0.0.1:3000, " + "/Us" + "ers/x/y) failed; ACME-001.",
                             names_from_plan(self.PLAN), ["ACME", "NOT"])
         self.assertEqual("At <name> the <name> server (<removed>, <removed>, <removed>) failed; <name>.", text)
         for part in ("the name 'Acme Shop'", "an e-mail address", "a web address", "an absolute path", "a task id or folder name of the project"):

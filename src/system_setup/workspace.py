@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from lessons import LESSONS_FILE, for_project
+from lessons import LESSONS_FILE, LessonsError, for_project
 from prompts import FIXED_PREFIXES, Spec
 from rules import load_rule_defs, rules_map
 
@@ -219,9 +219,11 @@ def copy_knowledge(repo_root: Path, knowledge_dir: Optional[Path], lesson_tags: 
     target = repo_root / KNOWLEDGE_REL
     for source in sorted(knowledge_dir.glob("*.md")):
         target.mkdir(parents=True, exist_ok=True)
-        if lesson_tags is not None and source.name == LESSONS_FILE:
+        try:
+            if lesson_tags is None or source.name != LESSONS_FILE:
+                raise LessonsError("copied as it is")
             (target / source.name).write_text(for_project(source.read_text(encoding="utf-8"), lesson_tags), encoding="utf-8")
-        else:
+        except LessonsError:   # not the lessons file, or an older file without IDs and tags: copied whole
             shutil.copyfile(source, target / source.name)
         copied.append(f"{KNOWLEDGE_REL.as_posix()}/{source.name}")
     readme = repo_root / "README.md"

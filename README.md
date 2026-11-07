@@ -316,7 +316,7 @@ problems come back together, each naming its field, for example `modules[1].plat
 | `modules` | `id`, `kind` (from the catalog: `server`, `admin`, `app`, `web`), `name`, `audience`, `why`, `platforms` (`server`, `web`, `android`, `ios`; limited per kind) |
 | `sdks` | `id`, `title`, `why`, `source` (`internal`, `published`, `none`), `package` + `version` (only when published), `provider` (one name or several separated by commas), `known`, `provider_known` |
 | `deployment` | per deployable module (`part` = module id): `host`, `database`, `cache`, `known` |
-| `rules` | empty in version 1 (rules arrive in a later phase) |
+| `rules` | overrides per delivery rule: `id` (from `catalog/rules.json`), `state` (`on`/`off`), `text` (edited wording), `confirmed` (required to turn a safety rule off); empty = every rule on |
 | `open_questions` | `id`, `question`, `why`, `proposed_default`, `answer` (null while open) |
 
 `known` and `provider_known` are computed from the catalog when a plan is read (never trusted from the input): an SDK, provider or host
@@ -325,8 +325,32 @@ that is not in the catalog is allowed and marked `known: false`.
 ### The catalog (`catalog/*.json`, `src/system_setup/catalog.py`)
 Lists are data: `modules.json` (platforms and module kinds with their allowed and default platforms), `sdks.json` (a `generated` flag
 that must match the SDKs with a dedicated overlay, and `ports`: what a provider adapter implements), `providers.json` (common vendors per SDK; OTP, push and e-mail notifications, payments,
-storage, maps, analytics; `adapter` or `builtin` where a ready adapter exists), `deploy.json` (hosts per part kind, databases, caches), `analyzer.json`. They are proposals: any other name
+storage, maps, analytics; `adapter` or `builtin` where a ready adapter exists), `deploy.json` (hosts per part kind, databases, caches), `rules.json` (the delivery rules), `analyzer.json`. They are proposals: any other name
 is allowed. Adding a choice is a JSON edit; no code changes.
+
+### Delivery rules and lessons (`rules.py`, `lessons.py`, `lessons_cmd.py`)
+**Rules.** `catalog/rules.json` lists every rule of `templates/workspace/.claude/rules.md`: `id`, `title`, `section` (a pointer to its text, `3.2.1` is a clause under item 2 of
+section 3), `safety` and `enforced_by` (the generated hooks that follow it). Safety rules: `tests-with-code`, `no-protected-commits`, `no-force-push`, `no-hook-bypass`, `no-secrets`.
+The plan's `rules` block overrides per rule (`{"id": "no-hardcoded", "state": "off"}`, `{"id": "verify-loop", "text": "..."}`); the review lists every rule (all on) and lets
+the person change one; turning off a safety rule asks for the rule id again, and a plan file needs `"confirmed": true` for it. `--yes` keeps the defaults (a plan that
+already carries a confirmed override is taken as written). Generation renders `.claude/rules.md` (every rule tagged with its id, an off rule struck through, an edited rule
+replaced) and writes a `rules` map (`id -> true/false`) into `.claude/projects.json`; `guard_git.py`, `check_hardcoded.py`, `stop_review.py` and `prompt_reminder.py` read it, so a
+rule that is off is not enforced and a missing entry means on. Adding a rule = a line in `rules.json` and a line in the template (a test checks that they match).
+
+**Lessons.** `knowledge/LESSONS.md` is Markdown with one line per lesson: ``- **L-012** · `server` `sdk` · `rule` — text``. The ID is stable; tags are *module tags* (`server`,
+`web`, `kmp`, `android`, `ios`, `sdk`: the lesson is for projects that have such a module; `android`/`ios` need that platform) or topic tags (`workflow`, `git`, `qa`, `hosting`,
+`push`, ...: all projects); enforcement is `rule`, `policy-check`, `template` or `note`. A generated project gets only the matching lessons in `docs/knowledge/LESSONS.md` (so
+`recall.py` finds them) and a pointer in `CLAUDE.md`. The task block gains `- Lesson: <one line or none>`; `scripts/tasks.py set <ID> DONE` copies a real one to
+`docs/knowledge/LESSONS.local.md` (`- [ID] text`, de-duplicated). Back in the tool:
+
+```
+SYSTEM_SETUP lessons list [--tag X]
+SYSTEM_SETUP lessons import <project path> [--yes] [--knowledge DIR]
+```
+`import` drops duplicates (the same normalized text, then a close match with `difflib`, ratio 0.85), flags the business names of that project's `system.plan.json` (name, slug,
+modules, actors, package, scope, task prefixes) and private patterns (e-mail, web address, absolute path, IP), never adds a lesson that holds a secret, shows a diff of
+`knowledge/LESSONS.md` and adds only what the person approves, with new IDs (a flagged lesson is added with the names replaced by `<name>`). `--yes` approves the clean ones and
+skips everything flagged. Tests use a temporary copy through `--knowledge`.
 
 ### SDKs and providers (`src/system_setup/sdks.py`)
 The plan's `sdks` decide what is generated; nothing is hard-coded per SDK or provider.
@@ -363,7 +387,9 @@ src/system_setup/catalog.py  loads catalog/*.json (module kinds, SDKs, providers
 src/system_setup/analyzer.py the Analyzer seam: ClaudeAnalyzer (claude -p), FakeAnalyzer, propose() with one repair retry
 src/system_setup/documents.py the document step: jobs, slices, budget, state file, resume, writing
 src/system_setup/docrender.py markdown checks, backlog schema + rendering, OpenAPI draft, CLAUDE.md facts (pure functions)
-src/system_setup/review.py   the review questions, secret refusal
+src/system_setup/review.py   the review questions (including the delivery rules), secret refusal
+src/system_setup/rules.py    catalog/rules.json, rules.md rendering, the rules map the hooks read
+src/system_setup/lessons.py  LESSONS.md parsing, selection by module, duplicates, name scrubbing; lessons_cmd.py = `lessons list|import`
 src/system_setup/planspec.py plan -> Spec for generate(), and the list of what is recorded but not generated yet
 src/system_setup/sdks.py     plan SDKs by source, providers: ready adapters, builtin, skeletons, published SDKs, backlog rows
 catalog/                     modules.json, sdks.json, providers.json, deploy.json, analyzer.json, documents.json (data only)
