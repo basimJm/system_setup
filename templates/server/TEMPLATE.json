@@ -74,11 +74,6 @@
           "replace_with": "['customer', 'admin'] as const"
         },
         {
-          "file": "src/routes/index.ts",
-          "find": "Readonly<Record<ApiNamespace, Router>>",
-          "replace_with": "Readonly<Record<Exclude<ApiNamespace, 'merchant'>, Router>>"
-        },
-        {
           "file": "tests/devSeed.test.ts",
           "find": "DEV_SEED.items.length * 2",
           "replace_with": "DEV_SEED.items.length"
@@ -87,6 +82,16 @@
           "file": "tests/phoneOtp.test.ts",
           "find": "['customer', 'merchant']",
           "replace_with": "['customer']"
+        },
+        {
+          "file": "docs/SECURITY_CHECKLIST.md",
+          "find": ", `tests/merchantAuth.test.ts`",
+          "replace_with": ""
+        },
+        {
+          "file": "tests/phoneOtp.test.ts",
+          "find": ".post('/merchant/v1/auth/otp/request')",
+          "replace_with": ".post('/customer/v1/auth/otp/request')"
         }
       ],
       "drop_blocks": [
@@ -179,6 +184,11 @@
           "file": "tests/uploads.test.ts",
           "start": "const addMember",
           "end": "};"
+        },
+        {
+          "file": "tests/phoneOtp.test.ts",
+          "start": "it('a merchant REGISTER code verifies",
+          "end": "  });"
         }
       ],
       "drop_lines": [
@@ -290,6 +300,19 @@
           "file": "tests/uploads.test.ts",
           "contains": [
             "import { Types }"
+          ]
+        },
+        {
+          "file": "src/constants/server.ts",
+          "contains": [
+            "merchant: '/merchant/v1'"
+          ]
+        },
+        {
+          "file": "tests/phoneOtp.test.ts",
+          "contains": [
+            "['merchant', 'CHANGE_PHONE', 400]",
+            "['merchant', 'REGISTER', 200]"
           ]
         }
       ]
