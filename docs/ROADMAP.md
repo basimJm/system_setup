@@ -64,9 +64,9 @@ Each phase is one branch and one PR into `main`.
 - [x] A published SDK records package and version, creates no folder, and the server depends on it.
 
 ### 6. Deployment
-- [ ] A host per part from `deploy.json` (Render, Docker on a server, AWS, Fly, Railway, Cloudflare, Vercel) or `custom`.
-- [ ] Config and a guide for the chosen host only; no host name left in anything else. Configs are validated; a real deploy
-      happens only where an account exists, and the report says which.
+- [x] A host per part from `deploy.json` (Render, Docker on a server, AWS, Fly, Railway, Cloudflare, Vercel; Netlify added) or `custom`. (server and admin generated; a web module's files are written once the web template gives the Spec a `web_dir`)
+- [x] Config and a guide for the chosen host only; no host name left in anything else. Configs are validated; a real deploy
+      happens only where an account exists, and the report says which. (configs parsed in tests; no deploy was run: no account; `docker compose config` not run: no Docker; the admin build script `scripts/write-hosting.ts` still names its three header-file targets: code, not a document)
 
 ### 7. Rules and lessons
 - [ ] Each rule has an ID and can be on, off or edited in the plan; hooks follow it; turning off a safety rule asks to confirm.

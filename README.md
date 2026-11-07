@@ -241,7 +241,7 @@ save the result as `BUSINESS.md`, then run `new --business-doc BUSINESS.md`.
 3. *Generate*: `system.plan.json` (the reviewed plan) and `docs/BUSINESS.md` (the document) are written into the new repository and
    committed with it. What the engine builds today is generated through `generate()`: the server, the admin panel, KMP apps (Android and
    iOS together) and every SDK set to build internally, with its providers (see *SDKs and providers* below). Everything else in the plan is printed at the end under **Recorded in the plan,
-   generated in a later phase** (web modules, single-platform apps, hosts, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
+   generated in a later phase** (web modules, single-platform apps, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
    `system.plan.json` in the current folder so nothing paid for is lost.
 
 `new --plan FILE` skips the model for the plan: the plan is validated, reviewed (or accepted with `--yes`) and generated.
@@ -298,7 +298,7 @@ that is not in the catalog is allowed and marked `known: false`.
 ### The catalog (`catalog/*.json`, `src/system_setup/catalog.py`)
 Lists are data: `modules.json` (platforms and module kinds with their allowed and default platforms), `sdks.json` (a `generated` flag
 that must match the SDKs with a dedicated overlay, and `ports`: what a provider adapter implements), `providers.json` (common vendors per SDK; OTP, push and e-mail notifications, payments,
-storage, maps, analytics; `adapter` or `builtin` where a ready adapter exists), `deploy.json` (hosts per part kind, databases, caches), `analyzer.json`. They are proposals: any other name
+storage, maps, analytics; `adapter` or `builtin` where a ready adapter exists), `deploy.json` (hosts per part kind, each naming its `deploy` overlay; databases and caches, each with `supported`; the build, start, port, health path and environment key names of each part kind), `analyzer.json`. They are proposals: any other name
 is allowed. Adding a choice is a JSON edit; no code changes.
 
 ### SDKs and providers (`src/system_setup/sdks.py`)
@@ -323,6 +323,35 @@ The first chosen provider is named the default in `src/config/providers.ts` (`CH
 Ready adapters, ported and generalized (no business names, URLs or keys) from a production system: `fcm` (push, firebase-admin loaded lazily), `smtp` (e-mail, nodemailer), `http-sms` (SMS through any JSON HTTP gateway), and `s3`, `cloudflare-r2`, `backblaze-b2` (built into the storage SDK). To add one: put `adapter.json` (packages, environment keys, exports, usage) and `files/` under `templates/sdk/providers/<sdk>/<adapter>/` and add `"adapter": "<adapter>"` to the provider in `providers.json`; no code changes. Adapter unit tests use stubbed vendors, so only a real push, e-mail or SMS proves the vendor side.
 
 
+### Deployment (`src/system_setup/deploy.py`, `templates/deploy/`, `catalog/deploy.json`)
+The plan's `deployment` says where each part runs. For every part the engine generates, only the **chosen host's** configuration and a short
+guide are written into the part's folder, copied from a data-driven overlay `templates/deploy/<overlay>/<part kind>/` with tokens
+(`__SERVICE_NAME__`, `__PART_DIR__`, `__PART_BUILD__`, `__PART_PORT__`, `__PART_HEALTH__`, `__ENV_KEYS__` and a `__EACH_ENV__` block that repeats
+once per environment key name; the key names come from the server's `docker/env.prod.example` or from `deploy.json`). Every host names its overlay
+in `catalog/deploy.json` (`deploy`), so a new host is a folder and a line of JSON, never code. An overlay may `extends` others and alias a part kind
+to another (`overlay.json`: `web` -> `admin`).
+
+| Host | server | admin / web | Files written |
+|---|---|---|---|
+| Render | yes | yes | `render.yaml` (Node web service; static site with a rewrite), `docs/HOSTING.md` |
+| Docker on a server | yes | yes | server: guide only (the template's `Dockerfile` and `docker-compose.deploy.yml` are used); static: `Dockerfile`, `nginx.conf.template`, `docker-compose.deploy.yml`, `.dockerignore` |
+| AWS | yes | yes | server: `ecs-task-definition.json` (Fargate; secrets are Parameter Store references); static: a guide for S3 + CloudFront |
+| Fly.io | yes | yes | `fly.toml` (+ the static Docker files for a static part) |
+| Railway | yes | yes | `railway.json` (+ the static Docker files for a static part) |
+| Cloudflare Pages | no | yes | `wrangler.toml` |
+| Vercel | no | yes | `vercel.json` |
+| Netlify | no | yes | `netlify.toml` (moved here from the admin template) |
+| custom, or any host not in the catalog | yes | yes | Docker files, a guide, and a `PENDING` backlog row asking for the real host |
+
+A host that cannot run a part (a server on Cloudflare Pages) is refused when the plan is read, with the hosts that can. Generic files name no
+host: `docs/DEPLOYMENT.md` at the root lists the plan's choices (the only place), and `docs/DEPLOYMENT.md` of the server and `docs/DEPLOY.md` of the admin
+panel are host-neutral. Only environment **key names** are written, never a value.
+
+**Databases are honest.** The server template uses MongoDB and Redis. If the plan picks another database or cache, generation still works, prints a
+warning, and adds a `PENDING` backlog row to the server saying its data layer must change; `catalog/deploy.json` marks which choices the template
+supports. Nothing switches automatically. `none` means nothing was chosen (the template still needs both). Configs are checked by tests that parse them;
+no deploy is ever run by the tool, and a real deploy needs an account with that host.
+
 ## 8. Layout
 
 ```
@@ -339,6 +368,7 @@ src/system_setup/docrender.py markdown checks, backlog schema + rendering, OpenA
 src/system_setup/review.py   the review questions, secret refusal
 src/system_setup/planspec.py plan -> Spec for generate(), and the list of what is recorded but not generated yet
 src/system_setup/sdks.py     plan SDKs by source, providers: ready adapters, builtin, skeletons, published SDKs, backlog rows
+src/system_setup/deploy.py   deployment of the plan: host overlays per part, database warning, docs/DEPLOYMENT.md, backlog rows
 catalog/                     modules.json, sdks.json, providers.json, deploy.json, analyzer.json, documents.json (data only)
 catalog/prompts/             the document prompts and the required headings (data)
 INTAKE_PROMPT.md             the interview prompt (used by `intake`, or pasted into claude.ai)
@@ -349,6 +379,7 @@ src/system_setup/engine.py   copy, substitute, rename, layers, targeted edits, v
 src/system_setup/kmp.py      kmp snapshot identity check + fail-loud verification per app
 src/system_setup/workspace.py projects.json, per-project files, knowledge, tasks.py check, git init + masters, next steps
 templates/<kind>/            built by the template owners (workspace, server, admin, sdk, kmp)
+templates/deploy/<host>/     per-host config and guide, per part kind (data; see Deployment); not a template kind
 knowledge/                   LESSONS.md, PLAYBOOKS.md (copied into every generated workspace)
 tests/                       unit + end-to-end tests on tests/fixtures/templates (+ tests/fixtures/knowledge)
 tests/test_no_private_data.py  privacy guard: secret shapes + hashed deny list over every tracked file and file name
