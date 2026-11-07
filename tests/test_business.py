@@ -143,13 +143,13 @@ class RenderingTest(TempDirTest):
 
     def test_code_facing_defaults_fall_back_to_neutral_values_until_the_owner_answers(self):
         defaults = token_values(Business())
-        self.assertEqual(("Etc/GMT-3", "XXX"), (defaults["__BUSINESS_TIME_ZONE_CODE__"], defaults["__CURRENCY_CODE__"]))
+        self.assertEqual(("UTC", "XXX"), (defaults["__BUSINESS_TIME_ZONE_CODE__"], defaults["__CURRENCY_CODE__"]))
         answered = token_values(Business(business_time_zone="Europe/Paris", currency="Euro (EUR)"))
         self.assertEqual(("Europe/Paris", "EUR"), (answered["__BUSINESS_TIME_ZONE_CODE__"], answered["__CURRENCY_CODE__"]))
         for zone in ("UTC", "Etc/GMT+5", "America/Argentina/Buenos_Aires"):
             self.assertEqual(zone, token_values(Business(business_time_zone=zone))["__BUSINESS_TIME_ZONE_CODE__"])
         for bad in ("soon", "paris time", "Mars/Base/X/Y", ""):
-            self.assertEqual("Etc/GMT-3", token_values(Business(business_time_zone=bad))["__BUSINESS_TIME_ZONE_CODE__"], bad)
+            self.assertEqual("UTC", token_values(Business(business_time_zone=bad))["__BUSINESS_TIME_ZONE_CODE__"], bad)
         self.assertEqual("XXX", token_values(Business(currency="dollars"))["__CURRENCY_CODE__"])
 
     def test_business_input_round_trips_through_the_markdown_loader(self):

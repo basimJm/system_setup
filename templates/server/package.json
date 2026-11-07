@@ -20,6 +20,7 @@
     "seed:dev": "node dist/seeds/runDev.js",
     "docs": "npm run build && node dist/docs/generate.js",
     "contract:bump": "npm run build && node dist/docs/contractBump.js",
+    "contract:init": "npm run build && node dist/docs/contractInit.js",
     "loadtest": "node dist/utils/loadtest/cli.js",
     "env:check": "node dist/config/checkEnvCli.js"
   },

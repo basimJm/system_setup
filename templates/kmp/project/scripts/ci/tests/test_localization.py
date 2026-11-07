@@ -40,6 +40,11 @@ class LocalizationTest(TempProject):
         self.assertTrue(any("untranslated copy" in m for m in self.run_check(res(("a", "Retry now")), res(("a", "Retry now")))))
         self.assertEqual(self.run_check(res(("a", "ZED"), ("b", "OK")), res(("a", "ZED"), ("b", "OK"))), [])
 
+    def test_a_system_without_an_arabic_name_keeps_its_brand_name_but_other_texts_must_be_translated(self):
+        self.config.data["localization"]["sameAsDefault"] = ["string:app_name", "string:brand_name"]
+        self.assertEqual(self.run_check(res(("app_name", "Hillview Parent Portal")), res(("app_name", "Hillview Parent Portal"))), [])
+        self.assertTrue(any("untranslated copy" in m for m in self.run_check(res(("greeting", "Welcome back")), res(("greeting", "Welcome back")))))
+
     def test_translatable_false_is_skipped(self):
         en = '<resources><string name="x" translatable="false">Brand Name</string></resources>'
         self.assertEqual(self.run_check(en, "<resources></resources>"), [])

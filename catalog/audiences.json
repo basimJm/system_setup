@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "roles": [
+    {"id": "end_user", "title": "End user", "description": "People who use the product for themselves: phone sign-in, guests, their own data."},
+    {"id": "staff", "title": "Staff", "description": "People who work for an organization that is a customer of the product: members, teams, permissions."}
+  ],
+  "default_role": "end_user",
+  "staff_words": [
+    "staff", "merchant", "vendor", "seller", "provider", "partner", "business", "owner", "manager", "employee", "operator",
+    "driver", "courier", "rider", "agent", "facility", "clinic", "shop", "store", "branch", "team", "teacher", "pharmacist",
+    "cashier", "kitchen", "restaurant", "studio", "organization", "organisation", "company", "back-office"
+  ],
+  "client_words": ["app", "web", "site", "portal", "mobile", "client", "panel"]
+}

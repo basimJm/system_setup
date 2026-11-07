@@ -192,7 +192,7 @@ describe('requireAuth middleware', () => {
     ['a malformed token', 'Bearer not.a-jwt'],
     ['two tokens', `Bearer ${fresh()} ${fresh()}`],
   ])('answers 401 UNAUTHORIZED for %s', async (_label, header) => {
-    const call = request(app).get('/customer');
+    const call = request(app).get(`/${SCOPE_OF.CUSTOMER}`);
     const response = await (header === undefined ? call : call.set('Authorization', header));
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({ success: false, error: { code: 'UNAUTHORIZED' } });
@@ -214,7 +214,9 @@ describe('requireAuth middleware', () => {
       now: new Date(real),
     }).token;
     for (const token of [expired, foreign]) {
-      const response = await request(app).get('/customer').set('Authorization', `Bearer ${token}`);
+      const response = await request(app)
+        .get(`/${SCOPE_OF.CUSTOMER}`)
+        .set('Authorization', `Bearer ${token}`);
       expect(response.status).toBe(401);
     }
   });

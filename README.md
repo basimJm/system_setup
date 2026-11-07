@@ -82,6 +82,8 @@ business names removed, after you approve it.
 - Generated code is a strong start, not a finished product. The web app starts from the admin shell.
 - Adapters were tested against stubs, not live vendors. Hosting configs were checked for structure, not deployed. Each gives you a backlog task for the real proof.
 - The server uses MongoDB and Redis. Choosing another database gives a warning and a backlog task, not an automatic switch.
+- A system with only staff apps keeps the end-user server code under a neutral name, with a backlog task to remove it. A second app of the same
+  role gets a backlog task, not its own server module. The web app's API contract starts as a sample until its first sync.
 - No iOS build of a generated app has been run yet.
 
 ## Contributing

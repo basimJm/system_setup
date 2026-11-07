@@ -17,6 +17,6 @@ export const MOCK_SETTING_DEFAULTS: Readonly<Record<string, unknown>> = {
   'alerts.crashesPerHour': 10,
   'alerts.jobFailures': { count: 5, windowMin: 60 },
   'alerts.escalationMinutes': [60, 15],
-  timezone: 'Etc/GMT-3',
+  timezone: 'UTC',
   currency: 'XXX',
 };

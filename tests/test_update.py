@@ -41,6 +41,11 @@ def with_driver_and_storage(data: dict) -> None:
     data["sdks"].append(dict(STORAGE))
 
 
+def modules_without_role(plan: dict) -> list:
+    """A saved plan always writes `role`, empty when the rule decides; the test data leaves it out."""
+    return [{k: v for k, v in module.items() if k != "role"} for module in plan["modules"]]
+
+
 class UpdateTest(TempDirTest):
     def setUp(self):
         super().setUp()
@@ -184,7 +189,7 @@ class RemovalsTest(UpdateTest):
         self.assertRegex(self.backlog("storage"), r"\| PENDING \| Owner decision: nothing was deleted")
         self.assertIn("nothing is deleted", text)
         self.assertIn("Not removed", text)
-        self.assertEqual(valid_plan_data()["modules"], self.saved_plan()["modules"])
+        self.assertEqual(valid_plan_data()["modules"], modules_without_role(self.saved_plan()))
         self.tasks_check()
 
     def test_a_changed_platform_is_listed_with_a_pending_row_and_the_folder_is_untouched(self):
@@ -245,7 +250,7 @@ class DirtyTreeTest(UpdateTest):
         self.assertIn("uncommitted changes", text)
         self.assertEqual([], fake.requests)
         self.assertFalse((self.system / "ACME-Mobile-Driver").exists())
-        self.assertEqual(valid_plan_data()["modules"], self.saved_plan()["modules"])
+        self.assertEqual(valid_plan_data()["modules"], modules_without_role(self.saved_plan()))
 
     def test_allow_dirty_goes_on(self):
         (self.system / "ACME-Server" / "CLAUDE.md").write_text("changed, not committed\n", encoding="utf-8")
@@ -268,7 +273,7 @@ class PlanIsWrittenOnlyOnSuccessTest(UpdateTest):
         code, text = self.update(changed(with_driver_and_storage))
         self.assertEqual(1, code, text)
         self.assertIn("is NOT updated", text)
-        self.assertEqual(valid_plan_data()["modules"], self.saved_plan()["modules"])
+        self.assertEqual(valid_plan_data()["modules"], modules_without_role(self.saved_plan()))
         self.assertTrue((self.system / "ACME-Mobile-Driver").is_dir())   # the additions are applied; the rerun is safe
         session.write_text("# Session\n", encoding="utf-8")
         self.commit("fixed")
@@ -283,7 +288,7 @@ class PlanIsWrittenOnlyOnSuccessTest(UpdateTest):
         self.assertEqual(1, code, text)
         self.assertIn("nothing was changed", text)
         self.assertFalse((self.system / "ACME-Mobile-Driver").exists())
-        self.assertEqual(valid_plan_data()["modules"], self.saved_plan()["modules"])
+        self.assertEqual(valid_plan_data()["modules"], modules_without_role(self.saved_plan()))
 
     def test_declining_the_confirmation_changes_nothing(self):
         self.commit("start")
@@ -297,7 +302,7 @@ class PlanIsWrittenOnlyOnSuccessTest(UpdateTest):
         self.assertEqual(1, code, text)
         self.assertIn("Cancelled. Nothing was changed.", text)
         self.assertFalse((self.system / "ACME-Mobile-Driver").exists())
-        self.assertEqual(valid_plan_data()["modules"], self.saved_plan()["modules"])
+        self.assertEqual(valid_plan_data()["modules"], modules_without_role(self.saved_plan()))
 
 
 class AnalysisTest(UpdateTest):

@@ -41,7 +41,7 @@ Everything thrown becomes an `AppError` (`src/infrastructure/errors/AppError.ts`
 
 ## 5. Shared kernel (`src/domain/shared`)
 
-`Page`, `Result`, branded ids, money (money decimal strings and integer minor units, never floats), time (UTC instants, Etc/GMT-3 display, 12-hour) and formatters whose digits follow the language (ADR-0003).
+`Page`, `Result`, branded ids, money (money decimal strings and integer minor units, never floats), time (UTC instants, business-zone display, 12-hour) and formatters whose digits follow the language (ADR-0003).
 
 ## 6. Environments and variants
 

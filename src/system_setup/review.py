@@ -12,6 +12,7 @@ import copy
 import re
 from typing import Callable, List, Optional
 
+from audiences import ROLES, infer_role, load_audience_catalog
 from catalog import Catalog, OTHER
 from plan import LANGUAGE_RE, PACKAGE_NAME_RE, SOURCES, VERSION_RE, Deployment, Module, Plan, Sdk
 from rules import RuleSetting, find_def, load_rule_defs, rules_map
@@ -89,7 +90,7 @@ def describe(plan: Plan, catalog: Catalog) -> str:
     for number, module in enumerate(plan.modules, start=1):
         kind = catalog.kinds.get(module.kind)
         lines.append(f"    {number}. {module.name} - {kind.title if kind else module.kind} for {module.audience} "
-                     f"[{', '.join(module.platforms)}]\n       why: {module.why}")
+                     f"[{', '.join(module.platforms)}]" + (f" role: {module.role}" if module.role else "") + f"\n       why: {module.why}")
     lines.append(f"\n  Building blocks (SDKs) ({len(plan.sdks)}):" if plan.sdks else "\n  Building blocks (SDKs): none")
     for sdk in plan.sdks:
         origin = {"internal": "built here", "published": f"already published ({sdk.package} {sdk.version})", "none": "no code"}[sdk.source]
@@ -140,6 +141,7 @@ class Review:
         self.rules()
         self.questions()
         self.documents_language()
+        self.roles()
 
     # -- names --
     def identity(self) -> None:
@@ -193,6 +195,17 @@ class Review:
         platforms = self.platforms(name, kind.allowed_platforms, kind.default_platforms) if len(kind.allowed_platforms) > 1 else list(kind.default_platforms)
         self.plan.modules.append(Module(module_id, kind_id, name, self.ask("  Who uses it", "", validate_required),
                                         self.ask("  Why it is needed", "added during the review"), platforms))
+
+    def roles(self) -> None:
+        """Last question: which kind of server audience each app or web module is (end user or staff)."""
+        audiences = load_audience_catalog()
+        for module in self.plan.modules:
+            if module.kind not in ("app", "web"):
+                continue
+            proposed = module.role or infer_role(module.id, module.name, audiences)
+            answer = self.ask(f"Who is '{module.name}' for on the server: end_user (people using it for themselves) or staff (an organization's team)? ({', '.join(ROLES)})",
+                               proposed, lambda v: None if v in ROLES else f"choose from {', '.join(ROLES)}")
+            module.role = module.role if answer == proposed else answer   # keeping the proposal keeps the plan as it was
 
     # -- SDKs --
     def sdks(self) -> None:

@@ -51,6 +51,7 @@ def _find_default_files(config: Config) -> list[Path]:
 
 def check(config: Config) -> list[Violation]:
     section = config.section("localization")
+    same_as_default = set(section.get("sameAsDefault", []))   # proper nouns (the brand name) that stay as written when a system has no Arabic name
     found: list[Violation] = []
     for default_file in _find_default_files(config):
         default = _entries(default_file)
@@ -73,6 +74,6 @@ def check(config: Config) -> list[Violation]:
                     found.append(Violation(target_rel, 1, RULE, f"placeholders of {key} differ between languages"))
                 if not translated[key].strip():
                     found.append(Violation(target_rel, 1, RULE, f"{key} is empty in {language}"))
-                elif language == "ar" and translated[key] == default[key] and _WORD.search(translated[key]) and not _ARABIC.search(translated[key]):
+                elif language == "ar" and key not in same_as_default and translated[key] == default[key] and _WORD.search(translated[key]) and not _ARABIC.search(translated[key]):
                     found.append(Violation(target_rel, 1, RULE, f"{key} in ar is an untranslated copy of the English text"))
     return found
