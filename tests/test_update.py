@@ -3,7 +3,6 @@ diff in words, a dirty git tree refused, an edited document kept with `<name>.pr
 No model, no network."""
 from __future__ import annotations
 
-import copy
 import io
 import json
 import subprocess
