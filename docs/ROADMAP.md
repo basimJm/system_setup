@@ -79,7 +79,9 @@ Each phase is one branch and one PR into `main`.
 - [ ] The source system's recent lessons are harvested, generalized and added.
 
 ### 8. Update and full proof
-- [ ] Server audiences come from the plan: no `merchant` or `customer` module, route or contract unless the plan has that audience.
+- [~] Server audiences come from the plan: role per client module, rename by data, prune of the `staff` shape, second audience as a PENDING
+      row. Proven for the school portal (no staff app: zero `merchant` in the server). Not done: pruning the `end_user` shape (a staff-only
+      system keeps the customer code under a generic name), and the staff domain layer (members, team, permissions) stays as unwired code.
 - [ ] `update` adds a module or SDK and refreshes documents without overwriting work.
 - [ ] The fallback time zone is `UTC` and any zone or currency works without editing template tests (today the fallback is
       `Etc/GMT-3` and template tests pin it).

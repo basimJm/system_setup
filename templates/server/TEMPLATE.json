@@ -82,6 +82,11 @@
           "file": "tests/devSeed.test.ts",
           "find": "DEV_SEED.items.length * 2",
           "replace_with": "DEV_SEED.items.length"
+        },
+        {
+          "file": "tests/phoneOtp.test.ts",
+          "find": "['customer', 'merchant']",
+          "replace_with": "['customer']"
         }
       ],
       "drop_blocks": [
@@ -267,6 +272,24 @@
           "file": "tests/uploads.test.ts",
           "contains": [
             "const tenantId"
+          ]
+        },
+        {
+          "file": "tests/app.test.ts",
+          "contains": [
+            "pingRouter('merchant')"
+          ]
+        },
+        {
+          "file": "tests/items.test.ts",
+          "contains": [
+            "import { Types }"
+          ]
+        },
+        {
+          "file": "tests/uploads.test.ts",
+          "contains": [
+            "import { Types }"
           ]
         }
       ]

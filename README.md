@@ -350,6 +350,22 @@ The first chosen provider is named the default in `src/config/providers.ts` (`CH
 Ready adapters, ported and generalized (no business names, URLs or keys) from a production system: `fcm` (push, firebase-admin loaded lazily), `smtp` (e-mail, nodemailer), `http-sms` (SMS through any JSON HTTP gateway), and `s3`, `cloudflare-r2`, `backblaze-b2` (built into the storage SDK). To add one: put `adapter.json` (packages, environment keys, exports, usage) and `files/` under `templates/sdk/providers/<sdk>/<adapter>/` and add `"adapter": "<adapter>"` to the provider in `providers.json`; no code changes. Adapter unit tests use stubbed vendors, so only a real push, e-mail or SMS proves the vendor side.
 
 
+### Server audiences (`src/system_setup/audiences.py`, `catalog/audiences.json`)
+The server template has two reusable shapes: `end_user` (phone sign-in, guests, own data; the template calls it `customer`) and `staff`
+(members, teams, permissions; called `merchant`). Each plan module of kind `app` or `web` is one audience, and its **role** is the
+optional plan field `role` (`end_user` or `staff`; the analyzer schema has it and the review asks it last). When it is empty the tool
+infers it: `staff` when a whole word of the module id or name is one of `staff_words` in `catalog/audiences.json` (merchant, driver,
+facility, ...), else `end_user`. The audience name is the module id, so the REST prefix `/<id>/v1` and socket namespace `/<id>` are the ones
+the generated client already uses (kmp `__API_PREFIX__`; the web template renames its `/admin/v1` the same way).
+
+`templates/server/TEMPLATE.json` declares `audiences` (`role -> {word, plural}`); the engine renames those words in files and paths in one
+pass (plural forms, then the kebab id for a URL or folder segment such as `/customer/v1`, then camelCase, PascalCase and UPPER_SNAKE for
+identifiers, files and constants). A role no module uses is pruned by its `prune.<role>` group: `skip` globs, `edits`, `drop_lines`
+(a line containing a text) and `drop_blocks` (from a line to the next line that begins with `end`); a missing text is an error, never skipped.
+A second module of the same role is **not** generated (the template has one module per role): the first is, and a PENDING row in the server
+backlog plus a printed "Server audiences" note say so. `npm run contract:init` (in the server's `post_generate`) records the fingerprints
+of the renamed contracts.
+
 ### Deployment (`src/system_setup/deploy.py`, `templates/deploy/`, `catalog/deploy.json`)
 The plan's `deployment` says where each part runs. For every part the engine generates, only the **chosen host's** configuration and a short
 guide are written into the part's folder, copied from a data-driven overlay `templates/deploy/<overlay>/<part kind>/` with tokens

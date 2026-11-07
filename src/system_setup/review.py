@@ -194,9 +194,10 @@ class Review:
         for module in self.plan.modules:
             if module.kind not in ("app", "web"):
                 continue
-            module.role = self.ask(f"Who is '{module.name}' for on the server: end_user (people using it for themselves) or staff (an organization's team)? ({', '.join(ROLES)})",
-                                   module.role or infer_role(module.id, module.name, audiences),
-                                   lambda v: None if v in ROLES else f"choose from {', '.join(ROLES)}")
+            proposed = module.role or infer_role(module.id, module.name, audiences)
+            answer = self.ask(f"Who is '{module.name}' for on the server: end_user (people using it for themselves) or staff (an organization's team)? ({', '.join(ROLES)})",
+                               proposed, lambda v: None if v in ROLES else f"choose from {', '.join(ROLES)}")
+            module.role = module.role if answer == proposed else answer   # keeping the proposal keeps the plan as it was
 
     # -- SDKs --
     def sdks(self) -> None:
