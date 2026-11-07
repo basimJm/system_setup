@@ -241,6 +241,7 @@ The flat command above asks for every value. The plan-driven flow starts from th
 ./SYSTEM_SETUP new [--business-doc FILE | --plan FILE] [--yes] [--target DIR] [--templates DIR] [--knowledge DIR] [--no-git] [--run-post]
                    [--no-documents] [--documents-budget USD]
 ./SYSTEM_SETUP documents [--target DIR] [--business-doc FILE] [--budget USD]
+./SYSTEM_SETUP update [--target DIR] [--business-doc FILE | --plan FILE] [--yes] [--no-documents] [--allow-dirty]
 ```
 
 **`intake`** starts an interactive `claude` session with `INTAKE_PROMPT.md` as its instructions (`claude <start message> --tools Write
@@ -302,6 +303,32 @@ documents --target DIR` (also what to run after a stop or a kill) skips what is 
 document someone edited, and keeps a backlog whose statuses changed. A Markdown document is checked for its headings and for leftover
 `TBD` or template tokens; a failure gets one repair call, then it is written, marked `invalid` in the state file and reported, and the
 rest of the run finishes. A backlog or contract that stays invalid is not written.
+
+### Update: the business changes later (`update.py`)
+```bash
+./SYSTEM_SETUP update --target DIR --business-doc NEW_BUSINESS.md      # analyzed again (one model call), reviewed, applied
+./SYSTEM_SETUP update --target DIR --plan changed.system.plan.json     # no model for the plan
+```
+The system follows with **additions only**; nothing is overwritten, deleted or committed.
+1. *Compare.* The saved `system.plan.json` and the new plan are compared in plain language: modules, platforms, SDKs (source, provider,
+   package), hosts, open questions and the rest. The new plan goes through the same review as in `new` (`--yes` accepts it). A new analysis
+   keeps the saved system identity (name, slug, prefix, package, scope: folders are named from them) and the answers already given; with
+   `--plan`, a changed identity is refused. A business document identical to `docs/BUSINESS.md` needs no analysis.
+2. *Additions.* The tool renders the old plan and the new plan into scratch folders with the normal generator; the difference between
+   the two renderings is what the change causes, whatever you edited since. A new module, web app or SDK gets its folder, backlog and entry in
+   `.claude/projects.json`, and a row in the parts table of `INTEGRATION.md` (its live board is refreshed when it already holds one); a new
+   backlog row of an existing part (a deployment's PENDING task) is appended with a fresh id; a new file is copied only when it is absent.
+3. *Never overwritten.* An existing file whose generated version differs is **kept and listed**; a new part whose folder (or task prefix)
+   already exists is left alone, not registered, and gets a PENDING row; a file you deleted is not brought back.
+4. *Removals and changes are yours.* A removed module, SDK or deployment, and a changed platform, provider, source or host on an existing
+   part, are listed and get a PENDING row in that part's backlog (`Owner decision: ...`). Nothing is deleted.
+5. *Documents.* Unless `--no-documents`, the document step runs with its hash-based resume: only documents whose inputs changed are
+   rewritten. A document you edited (its hash differs from `.system_setup/documents.json`) is kept and the new text is written next to it as
+   `<name>.proposed.md` (a backlog or contract: `<name>.proposed.<ext>`), and the run says so.
+6. *Safe by construction.* It refuses a dirty git tree (before any model call) unless `--allow-dirty`, commits nothing, and prints what
+   changed with the commands to review and commit (`git status`, `git diff`, the new masters). It ends with `tasks.py check`; the new
+   plan and the changed business document are written to `system.plan.json` and `docs/BUSINESS.md` **only after everything succeeded**,
+   so a failure can be fixed and the same command run again without repeating anything (the PENDING rows are not added twice).
 
 ### The plan file (`system.plan.json`, `src/system_setup/plan.py`)
 Versioned (`schema_version`: 1) and validated with the standard library only. Model output is untrusted: every field is checked and all
