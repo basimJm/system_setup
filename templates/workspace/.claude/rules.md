@@ -21,7 +21,10 @@
 
 ## 3. Delivery Rules
 1. **Unit tests for every task.** Every code change ships with unit tests covering the acceptance criteria, edge cases and the regression it fixes. All must pass. No tests → task not done.
-2. **Branch per task from the project's master, checked before the first edit.** Masters: __MASTERS_LIST__ (`INTEGRATION.md` §1). `git fetch origin && git branch --no-track feat/<prefix>-NNN-<key> origin/<master> && git checkout feat/...`; `git branch --show-current` must show the task branch before editing. PRs target the master, never `main`. Never commit or push to `main` or a master; never force-push; never `--no-verify`. The owner merges masters into `main`; if a master is behind `main`, merge `main` into it by PR first.
+2. **Branch per task from the project's master, checked before the first edit.** Masters: __MASTERS_LIST__ (`INTEGRATION.md` §1). `git fetch origin && git branch --no-track feat/<prefix>-NNN-<key> origin/<master> && git checkout feat/...`; `git branch --show-current` must show the task branch before editing. PRs target the master, never `main`. The owner merges masters into `main`; if a master is behind `main`, merge `main` into it by PR first. Its three clauses are rules of their own:
+   - **Never commit or push to `main` or a master.** The task branch is the only place work happens.
+   - **Never force-push.**
+   - **Never skip git hooks** (`--no-verify`) and never disable them (line workers: rule 15).
 3. **No hardcoded values anywhere.** No URLs, hosts, ports, keys, secrets, IDs, user-visible strings, colors, sizes, limits, timeouts or magic numbers in code. Use config/env, constants, localization resources, design tokens or server-driven settings.
 4. **One verification loop before push** (`Loops: 1/1`): re-check every acceptance criterion once, covering requirements coverage, edge cases/errors/security/no-hardcode, and tests/build/lint green + PRD/BRD consistency. Record it in the project's `session.md`.
 5. **Four-role review before push** (`.claude/hooks.md` §2). Record `Review: PASSED`. Fix every blocking finding first.

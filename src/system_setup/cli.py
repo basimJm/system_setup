@@ -25,6 +25,7 @@ from business import (FIELDS, PROMPT_FILE, REVIEW_PROMPT_NAME, Business, ask_bus
 from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
+from rules import load_rule_defs, write_rules  # noqa: E402
 from sdks import add_published_dependencies, append_backlog_rows, apply_providers, record_published  # noqa: E402
 from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, parse_webs, slug_from, split_list, system_prefix_from,  # noqa: E402
                      validate_app_specs, validate_github_name, validate_npm_scope, validate_package, validate_prefix,
@@ -259,6 +260,7 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
             if left:
                 report.identity_left[spec.app_dir(app)] = left
     report.results.append(instantiate(manifests["workspace"], spec.target, dict(values, **workspace_values(spec, registry)), parts))
+    write_rules(spec.target, load_rule_defs(), spec.rule_settings)   # .claude/rules.md: ids, rules turned off or edited in the plan
     if not registry_shipped(spec.target, registry):
         write_registry(spec.target, registry)
     report.created = ensure_project_files(spec.target, registry)

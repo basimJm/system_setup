@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from prompts import FIXED_PREFIXES, Spec
+from rules import load_rule_defs, rules_map
 
 REGISTRY_REL = Path(".claude") / "projects.json"
 DOC_TEMPLATES_REL = Path("docs") / "templates"
@@ -83,6 +84,7 @@ def projects_registry(spec: Spec) -> Dict[str, object]:
         "board_file": BOARD_FILE,
         "statuses": STATUSES,
         "owner_input_markers": OWNER_INPUT_MARKERS,
+        "rules": rules_map(load_rule_defs(), spec.rule_settings),
         "projects": projects,
     }
 
@@ -97,7 +99,9 @@ def workspace_values(spec: Spec, registry: Dict[str, object]) -> Dict[str, str]:
     sdk_rows = [f"| `{spec.sdk_dir(sdk)}/` | SDK `{spec.sdk_package(sdk)}` (ports + adapters, tasks `{projects[sdk]['prefix']}`, "
                 f"master `server`) | {SCAFFOLD_STATUS} |" for sdk in spec.sdks]
     projects_json = json.dumps(projects, indent=2, ensure_ascii=False).replace("\n", "\n" + PROJECTS_JSON_INDENT)
-    return {"__APPS_TABLE__": "\n".join(app_rows), "__SDKS_TABLE__": "\n".join(sdk_rows), "__PROJECTS_JSON__": projects_json}
+    rules_json = json.dumps(registry["rules"], indent=2).replace("\n", "\n" + PROJECTS_JSON_INDENT)   # the rules map the generated hooks read
+    return {"__APPS_TABLE__": "\n".join(app_rows), "__SDKS_TABLE__": "\n".join(sdk_rows), "__PROJECTS_JSON__": projects_json,
+            "__RULES_JSON__": rules_json}
 
 
 def projects_table(registry: Dict[str, object]) -> str:

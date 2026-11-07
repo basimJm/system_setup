@@ -70,6 +70,8 @@ class ReviewTest(TempDirTest):
             "maps", "", "none", "other", "LocalMaps", "",  # maps added with no code and an unknown provider, then done
             "fly", "", "",                                 # server host, database and cache kept
             "cloudflare",                                  # parent portal host
+            "yes", "tests-with-code", "off", "tests-with-code",   # rules: a safety rule off, confirmed by typing its id
+            "yes", "no-hardcoded", "edit", "Config values only.", "",   # another rule edited, then done
             "=",                                           # question: take the proposed answer
             "ar"]                                          # document language
         result, reader, _ = run_review(plan, answers)
@@ -89,6 +91,8 @@ class ReviewTest(TempDirTest):
                          [(d.part, d.host, d.database, d.cache) for d in result.deployment])
         self.assertEqual("ID check at the door", result.open_questions[0].answer)
         self.assertEqual("ar", result.languages.documents)
+        self.assertEqual([("tests-with-code", "off", "", True), ("no-hardcoded", "on", "Config values only.", False)],
+                         [(r.id, r.state, r.text, r.confirmed) for r in result.rules])
 
     def test_unanswered_questions_stay_open_and_answers_are_kept(self):
         data = valid_plan_data()

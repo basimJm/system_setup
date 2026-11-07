@@ -290,6 +290,7 @@ class Spec:
     sdk_plans: Dict[str, Any] = field(default_factory=dict)
     published_sdks: List[Any] = field(default_factory=list)
     skeleton_missing: List[str] = field(default_factory=list)   # what a generated adapter skeleton still lacks (catalog/providers.json)
+    rule_settings: List[Any] = field(default_factory=list)      # the plan's rule overrides (rules.RuleSetting); none = every rule on
 
     # --- derived names (one place, used by every template kind) ---
     @property

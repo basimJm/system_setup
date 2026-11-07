@@ -14,6 +14,9 @@ from _common import task_block, task_verified, is_source_file, is_test_file, wor
 from guard_git import violation  # noqa: E402
 from check_hardcoded import findings  # noqa: E402
 from stop_review import evaluate  # noqa: E402
+from prompt_reminder import reminder  # noqa: E402
+
+_common._RULES_OVERRIDE = {}   # every rule on: the tests do not depend on the rules map of the checkout they run in
 
 SESSION = """# Log
 ### T-001 — done task
@@ -170,6 +173,84 @@ class StopReview(unittest.TestCase):
         self.assertFalse(is_source_file("__SYSTEM_NAME__-Mobile-Customer/feature/auth/LoginTest.kt"))
         self.assertTrue(is_test_file("composeApp/src/commonTest/kotlin/A.kt"))
         self.assertFalse(is_source_file(".claude/hooks/guard_git.py"))
+
+
+class RulesMap(unittest.TestCase):
+    """A rule the plan turned off in .claude/projects.json (`rules`: id -> false) is not enforced; the others still are."""
+
+    def tearDown(self):
+        _common._RULES_OVERRIDE = {}
+
+    def test_missing_map_or_id_means_on(self):
+        self.assertTrue(_common.rule_on("no-force-push", {}))
+        self.assertTrue(_common.rule_on("no-force-push", {"other": False}))
+        self.assertFalse(_common.rule_on("no-force-push", {"no-force-push": False}))
+
+    def test_registry_map_is_read_when_no_override(self):
+        _common._RULES_OVERRIDE = None
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, ".claude"))
+            with open(os.path.join(tmp, ".claude", "projects.json"), "w", encoding="utf-8") as fh:
+                json.dump({"projects": {}, "rules": {"no-hardcoded": False, "tests-with-code": True}}, fh)
+            _common._ROOT_OVERRIDE = tmp
+            try:
+                self.assertEqual(_common.load_rules(), {"no-hardcoded": False, "tests-with-code": True})
+                self.assertFalse(_common.rule_on("no-hardcoded"))
+                self.assertTrue(_common.rule_on("no-force-push"))
+            finally:
+                _common._ROOT_OVERRIDE = None
+
+    def test_force_push_allowed_only_when_its_rule_is_off(self):
+        cmd = "git push --force origin feat/done"
+        self.assertIsNotNone(violation(cmd, "feat/done", lookup))
+        self.assertIsNone(violation(cmd, "feat/done", lookup, {"no-force-push": False}))
+        self.assertIsNotNone(violation("git push origin main", "feat/done", lookup, {"no-force-push": False}))
+
+    def test_protected_branch_commit_and_push_follow_their_rule(self):
+        off = {"no-protected-commits": False}
+        self.assertIsNone(violation("git commit -m x", "main", lookup, off))
+        self.assertNotIn("Pushing to main", violation("git push origin main", "main", lookup, off))  # the task block rule still applies
+        self.assertIsNotNone(violation("git push origin main", "main", lookup))
+        self.assertIsNotNone(violation("git commit --no-verify -m x", "main", lookup, off))
+
+    def test_hook_bypass_follows_its_rule(self):
+        self.assertIsNone(violation("git commit --no-verify -m x", "feat/done", lookup, {"no-hook-bypass": False}))
+
+    def test_push_checks_follow_the_loop_and_review_rules(self):
+        cmd = "git push -u origin feat/open"
+        self.assertIsNotNone(violation(cmd, "feat/open", lookup))
+        self.assertIsNotNone(violation(cmd, "feat/open", lookup, {"verify-loop": False}))   # the review is still required
+        self.assertIsNone(violation(cmd, "feat/open", lookup, {"verify-loop": False, "four-role-review": False}))
+        self.assertIsNone(violation("git push -u origin feat/missing", "feat/missing", lookup, {"verify-loop": False, "four-role-review": False}))
+
+    def test_secret_and_hardcode_checks_follow_their_rules(self):
+        path, text = "__SYSTEM_NAME__-Server/src/app.ts", 'const u = "https://api.example.com"; ' + fake_assignment("apiKey")
+        self.assertEqual(findings(path, text, {"no-hardcoded": False}), ["secret/API key"])
+        self.assertEqual(findings(path, text, {"no-secrets": False}), ["URL"])
+        self.assertEqual(findings(path, text, {"no-secrets": False, "no-hardcoded": False}), [])
+        config = "__SYSTEM_NAME__-Server/src/config/env.ts"
+        self.assertIn("secret/API key", findings(config, fake_assignment("pass" + "word"), {}))
+        self.assertEqual(findings(config, fake_assignment("pass" + "word"), {"no-secrets": False}), [])
+
+    def test_stop_hook_follows_tests_loop_and_review_rules(self):
+        source = ["__SYSTEM_NAME__-Server/src/a.ts"]
+        self.assertIn("no unit test", evaluate(source, "feat/done", lookup("feat/done")))
+        self.assertIsNone(evaluate(source, "feat/done", lookup("feat/done"), rules={"tests-with-code": False}))
+        both = {"verify-loop": False, "four-role-review": False}
+        self.assertIsNotNone(evaluate(source + ["x/a.test.ts"], "feat/open", lookup("feat/open")))
+        self.assertIsNone(evaluate(source + ["x/a.test.ts"], "feat/open", lookup("feat/open"), rules=both))
+        self.assertIsNone(evaluate(source + ["x/a.test.ts"], "feat/none", "", rules=both))
+        self.assertIn("no unit test", evaluate(source, "feat/none", "", rules=both))
+
+    def test_prompt_reminder_drops_the_rules_that_are_off(self):
+        full = reminder({})
+        self.assertIn("one verification loop (Loops: 1/1)", full)
+        self.assertIn("unit tests", full)
+        short = reminder({"verify-loop": False, "tests-with-code": False})
+        self.assertNotIn("Loops: 1/1", short)
+        self.assertNotIn("unit tests", short)
+        self.assertIn("4-role review", short)
+        self.assertTrue(short.startswith("Reminder: ") and short.endswith("."))
 
 
 class SessionStartTest(unittest.TestCase):

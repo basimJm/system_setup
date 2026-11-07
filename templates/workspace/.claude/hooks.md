@@ -13,6 +13,8 @@ Two layers work together:
 | `PostToolUse` (Edit/Write) | `check_hardcoded.py` | **Flags** hardcoded secrets, URLs, IPs and ports in source files; move them to config/constants. |
 | `Stop` | `stop_review.py` | **Blocks** finishing while source code changed on the branch and either no test files changed or the task block is missing `Loops: 1/1` / `Review: PASSED`. Master branches (from `projects.json`) are exempt: they only hold merged PRs. |
 
+Every check above is a rule with an id (`.claude/rules.md`). The hooks read the `rules` map of `.claude/projects.json`: a rule the system plan turned off is not enforced, and a missing entry means on.
+
 `Loops: 3/3` in old blocks stays valid; new blocks write `Loops: 1/1`. Hook tests: `python3 .claude/hooks/test_hooks.py`. The sandbox cannot write `.claude/hooks/`: patch hooks through the Terminal panel and ship the patch by PR into `main`.
 
 Line workers (`scripts/line.py`) run with only `guard_git.py` and `check_hardcoded.py`; the script replaces the rest (`rules.md`, "Feature line").

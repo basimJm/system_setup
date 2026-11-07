@@ -19,6 +19,7 @@ IGNORED_PREFIXES = (".claude/", "docs/")
 
 
 _ROOT_OVERRIDE = None
+_RULES_OVERRIDE = None  # tests set a dict (id -> bool); None reads the registry
 
 
 def project_dir():
@@ -129,5 +130,29 @@ def task_block(branch, session_text=None):
     return ""
 
 
-def task_verified(block):
-    return bool(LOOPS_DONE.search(block)) and bool(REVIEW_DONE.search(block))
+def load_rules():
+    """The `rules` map of .claude/projects.json (id -> true/false), set by the system plan. A missing file, map or id means the rule is on."""
+    if _RULES_OVERRIDE is not None:
+        return _RULES_OVERRIDE
+    try:
+        with open(os.path.join(project_dir(), REGISTRY_FILE), encoding="utf-8") as fh:
+            rules = json.load(fh).get("rules")
+    except (OSError, ValueError, AttributeError):
+        return {}
+    return rules if isinstance(rules, dict) else {}
+
+
+def rule_on(rule_id, rules=None):
+    """True unless the plan turned this rule off. `rules` is the map to use; None reads the registry."""
+    return (load_rules() if rules is None else rules).get(rule_id, True) is not False
+
+
+def task_block_required(rules=None):
+    """A task block is needed before a push or a stop only while the verification loop or the review rule is on."""
+    return rule_on("verify-loop", rules) or rule_on("four-role-review", rules)
+
+
+def task_verified(block, rules=None):
+    loops = not rule_on("verify-loop", rules) or bool(LOOPS_DONE.search(block))
+    review = not rule_on("four-role-review", rules) or bool(REVIEW_DONE.search(block))
+    return loops and review
