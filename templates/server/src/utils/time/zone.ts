@@ -41,7 +41,7 @@ const formatterFor = (timeZone: string): Intl.DateTimeFormat => {
   return created;
 };
 
-/** Is `value` a time zone name the runtime knows (an IANA name such as `Asia/Amman`)? */
+/** Is `value` a time zone name the runtime knows (an IANA name such as `Etc/GMT-3`)? */
 export const isValidTimeZone = (value: unknown): value is string => {
   if (typeof value !== 'string' || value === '') return false;
   try {
@@ -85,7 +85,7 @@ const wallClockAsUtcMs = (instant: Date, timeZone: string): number => {
   return Date.UTC(year, month - 1, day, hour, minute, second);
 };
 
-/** Minutes the zone is ahead of UTC at `instant` (Amman: 180). Varies with daylight saving. */
+/** Minutes the zone is ahead of UTC at `instant` (Etc/GMT-3: 180). Varies with daylight saving. */
 export const utcOffsetMinutes = (instant: Date, timeZone: string): number => {
   assertInstant(instant);
   // The wall clock has no milliseconds, so compare against the instant cut to whole seconds.

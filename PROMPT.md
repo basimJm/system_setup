@@ -1,9 +1,11 @@
 # SYSTEM_SETUP — prompt for an AI agent
 
 Two prompts live in this file. **Part A** is given to an agent that has to create a new system with this tool
-(copy it, fill the `<…>` placeholders). **Part B** (between the `AGENT_PROMPT` markers) is what the tool itself writes
-into every generated repository as `docs/AGENT_PROMPT.md`, with the business answers and the project list filled in;
-give that file to the agent that will work inside the new repository.
+(copy it, fill the `<…>` placeholders). **Part B** is what the tool itself writes into every generated repository as
+`docs/AGENT_PROMPT.md`, with the business answers and the project list filled in; give that file to the agent that will work
+inside the new repository. Part B has two forms: the *review* prompt (between the `AGENT_PROMPT_REVIEW` markers), used when the
+tool wrote the documents with a model, and the *manual* prompt (between the `AGENT_PROMPT` markers), used with `--no-documents`
+or when no business document was given.
 
 ---
 
@@ -13,8 +15,8 @@ You are setting up a brand-new multi-project system with the SYSTEM_SETUP tool a
 business. Work in this order; do not skip the tests; ask the owner whenever a `<…>` value below is missing.
 
 ### 1. The tool
-- The tool lives at `<path to .claude/tools/SYSTEM_SETUP>` (in the source monorepo, or clone
-  `<git url of the repository that contains the tool>` and use `.claude/tools/SYSTEM_SETUP/`).
+- The tool lives at `<path to the system-setup repository>` (or clone `<git url of the repository that contains the tool>`
+  and use its root folder as `<tool>`).
 - Read `README.md` next to this file once (questions table, business file format, token contract).
 - Run its tests first: `python3 -m unittest discover -s <tool>/tests -p 'test_*.py'` — all green or stop and report.
 - The target folder must be **outside** the tool and empty: `<absolute target folder>`.
@@ -55,10 +57,13 @@ Then, inside the target: `python3 scripts/tasks.py check`, `python3 .claude/hook
 `python3 -m unittest scripts/test_tasks.py` — all green. Read the tool's report: no unresolved tokens, no sentinel
 leftovers, `tasks.py check: OK`, git initialised with `main` + one master per project.
 
-### 4. Configure the domain and the backlogs
-Follow `docs/AGENT_PROMPT.md` in the generated repository (Part B below, already filled with the answers): fill
-every TBD in `BUSINESS_DOMAIN.md` with the owner, write the PRD/BRD and the backlog of every project, rename or delete
-the `items` sample feature, run `tasks.py check` + `board`, commit, push `main` and the masters, protect them.
+### 4. Review the documents
+`SYSTEM_SETUP new` already wrote `BUSINESS_DOMAIN.md`, the BRD, PRD, Design Script and backlog of every module, `INTEGRATION.md`
+and a starting API draft per client module (one small model call each; `.system_setup/documents.json` records them). Follow
+`docs/AGENT_PROMPT.md` in the generated repository (the review prompt, already filled): review them against the business document,
+resolve the `PENDING` rows with the owner, run `tasks.py check` + `board`, commit, then start with `tasks.py next`. When the tool ran
+with `--no-documents` (or without a business document) `docs/AGENT_PROMPT.md` is the manual prompt below (Part B, manual): fill every
+TBD of `BUSINESS_DOMAIN.md` with the owner and write the PRD/BRD and backlog of every project yourself.
 
 ### 5. Work
 Work by the generated `.claude/rules.md` (one project per session, branch per task from the master, tests, no
@@ -127,4 +132,58 @@ Open decisions — ask the owner, never decide them yourself (each is a `PENDING
 3. Implement + unit tests for every acceptance criterion; no hardcoded values (config, constants, settings); AR + EN strings in resources; server tasks regenerate the API contract and name the affected client tasks.
 4. Project gate green; one verification loop (`Loops: 1/1`); four-role review (`Review: PASSED`), fixing every blocking finding first.
 5. Commit, push, PR into the project's master (never `main`), merge when green if the owner granted it, `python3 scripts/tasks.py set <ID> DONE` (this unblocks dependents in other projects and rewrites the board), next task. Stop only on `PENDING`/`BLOCKED` rows and report them to the owner.
+6. **A feature across modules** goes through the feature line instead of one session per module: agree the decisions with the owner, write `features/my-feature/PACKET.md` (`python3 scripts/line.py new my-feature`, two pages at most), then `python3 scripts/line.py run my-feature` (contract first, then a thin worker per module, QA by script, one reviewer, fix workers) and `python3 scripts/line.py merge my-feature` when the report says every module passed. Read `features/my-feature/REPORT.md`; `python3 scripts/usage.py --feature my-feature` gives the tokens. Details: `.claude/rules.md`, "Feature line".
 <!-- AGENT_PROMPT:END -->
+
+<!-- AGENT_PROMPT_REVIEW:START -->
+# <system name> — Prompt for the AI agent working in this repository
+
+> Written by SYSTEM_SETUP on <date> for `<repository>` from the reviewed plan and the owner's business document (raw copy:
+> `docs/BUSINESS.md`, plan: `system.plan.json`). The tool already wrote the documents with a model; you review them, settle the
+> open decisions with the owner and start the first task. One project per session; sub-agents one at a time; never invent an
+> answer the owner has not given — ask.
+
+## 1. Read once
+- Root `CLAUDE.md` and `.claude/rules.md` (auto-loaded; never read them again with a tool).
+- `BUSINESS_DOMAIN.md` §1–§2, §5, §9, §10, §12–§13, by section. `INTEGRATION.md` §1–§5 once, when a task touches two projects.
+
+## 2. The business
+<business summary>
+
+| Fact | Value |
+|---|---|
+| Default language / RTL | `<default language>` / <rtl> |
+| Currency / minor unit | `<currency>` / `<currency minor unit>` |
+| Stored / business time zone | `<stored time zone>` / `<business time zone>` |
+
+Open decisions — ask the owner, never decide them yourself (each is a `PENDING` backlog row):
+<open decisions>
+
+## 3. Projects (from `.claude/projects.json`; masters: <masters>)
+<projects table>
+
+## 4. What the tool wrote, and what it did not
+<document status>
+
+Files: `BUSINESS_DOMAIN.md` (§11 keeps the shipped base codes; the business's own proposed codes are in §11.1), `INTEGRATION.md`
+(§3, §4, §5, §8 are business-specific), per project `<Dir>/docs/<Name>_BRD.md`, `_PRD.md`, `_Design_Script.md` (clients) and the
+backlog `<Dir>/docs/<Prefix>_..._Tasks.md`, and a starting OpenAPI draft per client module in the server's `docs/api/draft/`. A
+module the engine generates no project for yet (a web app) has its documents in `docs/modules/<id>/` and no backlog.
+
+## 5. Before the first task (once, on a `docs/` branch from `main`, PR into `main`)
+1. Review each document against `docs/BUSINESS.md`: facts, numbers and names must come from it; fix what the model got wrong or
+   invented; every `OPEN:` line is an owner question. Anything marked invalid or failed above is still a starter: write it, or run
+   `SYSTEM_SETUP documents --target .` to retry it.
+2. `python3 scripts/tasks.py blocked` lists the `PENDING` rows. Walk through them with the owner: record each answer, dated, in the
+   section it belongs to (`BUSINESS_DOMAIN.md`, PRD, BRD), then `python3 scripts/tasks.py set <ID> DONE`.
+3. `python3 scripts/tasks.py check` (OK) and `board`; commit; PR into `main`; after the merge push every master from `main` and
+   protect `main` + the masters (PRs only, no force push).
+
+## 6. Then, task by task (every session)
+1. `cd <project>`; `python3 scripts/tasks.py next <project>` → the one task. Read only what the row names.
+2. `git fetch origin && git branch --no-track <branch> origin/<master> && git checkout <branch>`; `python3 scripts/tasks.py set <ID> "IN PROGRESS"`; task block in the project's `.claude/session.md`.
+3. Implement + unit tests for every acceptance criterion; no hardcoded values; server tasks regenerate the API contract and name the affected client tasks.
+4. Project gate green; one verification loop (`Loops: 1/1`); four-role review (`Review: PASSED`).
+5. Commit, push, PR into the project's master (never `main`), `python3 scripts/tasks.py set <ID> DONE` (this unblocks dependents in other projects). Stop only on `PENDING`/`BLOCKED` rows and report them.
+6. A feature across modules goes through the feature line (`python3 scripts/line.py new my-feature`); see `.claude/rules.md`, "Feature line".
+<!-- AGENT_PROMPT_REVIEW:END -->

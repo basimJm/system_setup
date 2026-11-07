@@ -15,7 +15,7 @@ export interface Destination {
 export interface CreateSessionRequest {
   /** The consumer's order / booking id; also the natural idempotency scope. */
   readonly orderId: string;
-  /** Integer minor units (fils, cents). */
+  /** Integer minor units (cents and similar). */
   readonly amount: number;
   /** ISO 4217 code. */
   readonly currency: string;

@@ -83,3 +83,11 @@
 4. `INTEGRATION.md` §1 row (role, master, backlog), §3 edges it adds, §6 readiness; root `.claude/session.md` index row; root `CLAUDE.md` §2 map row.
 5. `python3 scripts/tasks.py check` OK, `python3 .claude/hooks/test_hooks.py` green (masters and session files are read from the registry — no hook edit needed), `tasks.py board`.
 6. Commit on a `docs/` or `chore/` branch into the owning master; the first `tasks.py next <key>` must return its scaffold row.
+
+## 11. A feature across modules (the feature line)
+1. Short session with the owner: the questions, then `python3 scripts/line.py new <name>` and fill the packet: decisions, contract change, design, docs, and each module's tasks and criteria. `line.py check <name>`.
+2. Changed screens: a Design artifact from the packet for the owner to review; workers build on the existing tokens and components and do not wait for it. Exporting back to the design files stays manual.
+3. `python3 scripts/line.py run <name>` in a terminal tab. The contract worker finishes first and everything builds on its files; then one worker per module. QA runs by script, the reviewer sees only green code, and a failure or a gap goes to one fix worker with only that failure.
+4. Read `features/<name>/REPORT.md`: what passed, what failed, what you must decide, what no check covered. A stopped module keeps its work on its branch; `line.py run <name>` continues only what did not pass and tells the worker what is already there.
+5. `python3 scripts/line.py merge <name>`: push and PR by script through the same guard, contract module first, then statuses, board and docs once per master.
+6. `python3 scripts/usage.py --feature <name>`: compare with the targets and write down what you measured, even when a target was missed.

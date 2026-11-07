@@ -1,5 +1,5 @@
 {
-  "name": "@wab/server",
-  "description": "WAB backend API",
-  "config": {"devApi": "https://api-dev.wab.jo", "prodApi": "__PROD_API_URL__"}
+  "name": "@zed/server",
+  "description": "ZED backend API",
+  "config": {"devApi": "https://api-dev.zed.example", "prodApi": "__PROD_API_URL__"}
 }

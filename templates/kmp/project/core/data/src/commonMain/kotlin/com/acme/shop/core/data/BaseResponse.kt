@@ -2,7 +2,7 @@ package com.acme.shop.core.data
 
 import kotlinx.serialization.Serializable
 
-/** Base success envelope of the backend (`WAB-Server/CLAUDE.md` §6): `{ success, message, data, meta? }`. */
+/** Base success envelope of the backend (`Acme-Server/CLAUDE.md` §6): `{ success, message, data, meta? }`. */
 @Serializable
 data class BaseResponse<T>(
     val success: Boolean,

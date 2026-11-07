@@ -131,7 +131,7 @@ class ParsingTest(TempDirTest):
 class RenderingTest(TempDirTest):
     def test_tokens_render_lists_as_markdown_and_flag_open_items(self):
         values = token_values(load_business_file(self.write("business.md", SAMPLE_MD)))
-        self.assertEqual(set(f.token for f in FIELDS), set(values))
+        self.assertEqual(set(f.token for f in FIELDS), set(values) - {"__BUSINESS_TIME_ZONE_CODE__", "__CURRENCY_CODE__"})
         self.assertEqual("- Customer: browse, order, cancel\n- Shop owner: fulfil\n- refund", values["__BUSINESS_ACTORS__"])
         self.assertEqual("1. One order per slot\n2. Refund in full when the shop cancels", values["__BUSINESS_RULES__"])
         self.assertEqual(("off", "USD", "- Payment gateway"), (values["__RTL__"], values["__CURRENCY__"], values["__OPEN_DECISIONS__"]))
@@ -140,6 +140,17 @@ class RenderingTest(TempDirTest):
         self.assertIn("- Currency: TBD (open — ask the owner)", defaults["__OPEN_DECISIONS__"])
         self.assertIn("- Business summary: TBD (open — ask the owner)", defaults["__OPEN_DECISIONS__"])
         self.assertEqual(9, len(open_decisions(Business())))
+
+    def test_code_facing_defaults_fall_back_to_neutral_values_until_the_owner_answers(self):
+        defaults = token_values(Business())
+        self.assertEqual(("Etc/GMT-3", "XXX"), (defaults["__BUSINESS_TIME_ZONE_CODE__"], defaults["__CURRENCY_CODE__"]))
+        answered = token_values(Business(business_time_zone="Europe/Paris", currency="Euro (EUR)"))
+        self.assertEqual(("Europe/Paris", "EUR"), (answered["__BUSINESS_TIME_ZONE_CODE__"], answered["__CURRENCY_CODE__"]))
+        for zone in ("UTC", "Etc/GMT+5", "America/Argentina/Buenos_Aires"):
+            self.assertEqual(zone, token_values(Business(business_time_zone=zone))["__BUSINESS_TIME_ZONE_CODE__"])
+        for bad in ("soon", "paris time", "Mars/Base/X/Y", ""):
+            self.assertEqual("Etc/GMT-3", token_values(Business(business_time_zone=bad))["__BUSINESS_TIME_ZONE_CODE__"], bad)
+        self.assertEqual("XXX", token_values(Business(currency="dollars"))["__CURRENCY_CODE__"])
 
     def test_business_input_round_trips_through_the_markdown_loader(self):
         business = load_business_file(self.write("business.md", SAMPLE_MD))

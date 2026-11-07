@@ -1,8 +1,8 @@
 # LESSONS — what twelve agent sessions on a multi-project monorepo taught (generalized)
 
-> Distilled from the session transcripts and the per-project memory files of a system built end to end by AI agents: a Node/Express/Mongoose/Redis/Socket.IO/BullMQ backend, a React 19 + Vite admin panel, two Kotlin Multiplatform apps (Android + iOS), five TypeScript SDK packages (ports + adapters), with a backlog tool, hooks and a four-role review. Each lesson is one or two lines with the **why**. No facts of the source system (names, hosts, ids) are kept; they would be wrong for the next one.
+> Distilled from the session transcripts and the per-project memory files of a production marketplace built end to end by AI agents: a Node/Express/Mongoose/Redis/Socket.IO/BullMQ backend, a React 19 + Vite admin panel, two Kotlin Multiplatform apps (Android + iOS), five TypeScript SDK packages (ports + adapters), with a backlog tool, hooks and a four-role review. Each lesson is one or two lines with the **why**. No facts of the source system (names, hosts, ids) are kept; they would be wrong for the next one.
 >
-> How to use: the SYSTEM_SETUP engine copies this file into `<workspace>/.claude/tools/` reference or links it from the workspace `README.md`; agents read the group that matches their task, never the whole file. `PLAYBOOKS.md` turns the recurring ones into step lists.
+> How to use: the SYSTEM_SETUP engine copies this file into `<workspace>/docs/knowledge/` or links it from the workspace `README.md`; agents read the group that matches their task, never the whole file. `PLAYBOOKS.md` turns the recurring ones into step lists.
 
 ## 1. Workflow & tokens
 - Auto-loaded files (root `CLAUDE.md`, rules, roles, hooks, session, memory, the project's `CLAUDE.md`) are never read with a tool — they are already in context; re-reading them is pure token waste and was the largest avoidable cost.
@@ -170,3 +170,16 @@
 - A fix that needs a protected path the agent cannot write (hooks, settings) is offered as an exact patch or run outside the sandbox with approval — rules and hooks stay owner-controlled.
 - Process permissions are written as explicit conditional rules ("may self-merge only after the full local gate is green") and updated when the owner changes them.
 - Verification cadence decisions (one loop; batched every five; local gates, no CI; e2e only on request) are recorded with their date in rules and memory so hooks and agents enforce the same thing.
+
+## 12. Token cost and the feature line (measured on a real feature)
+- **Cost = requests × context.** Each response resends everything, so later steps cost the most. Long main sessions averaged ~450k tokens per request; sub-agents started at ~68k and read ~33M from cache each.
+- **Thin workers are real.** Start size with only the needed tools, no MCP, no skills, no project memory: 6.8k tokens, 3k for a read-only reviewer; 10.5–12.4k with the task card. Keep the measured numbers next to the targets, and report a missed target as missed.
+- **First real feature (two modules, one contract change):** 198 requests, 7.7M tokens through the model, $2.28 plus two stopped workers that never reported a cost. Uninterrupted workers read 2.1M and 3.0M from cache against a 1M target: missed. Context grew from 11k to 100k in one worker.
+- **A fresh context beats a long one.** The worker stopped at 100k context was finished by a new one for 215k cache read and $0.19, told only what was already on its branch. Short lives matter more than a small start.
+- **A custom system prompt drops the default advice to batch tool calls**, and each lone read or edit becomes a request. Say it again in the worker prompt.
+- **Naming the known files in the packet is the cheapest saving:** exploration is what grows the context.
+- **Set caps from measurements.** A first guess (800k) stopped a healthy worker; a stopped worker keeps its work and the retry continues it. A stopped agent reports no cost: show unknown, never zero.
+- **Scripts do what scripts can.** Formatting failures reached a model until a format step ran before QA. A reviewer on green code only is cheaper and more useful.
+- **A worktree comes from the master.** A script added on the tool's own branch is not there, and a fresh worktree has no built local packages: setup must build them, or the worker spends tokens working out why the compiler fails.
+- **Hooks in a thin worker:** `--settings` hooks still run with `--setting-sources ""`, so the enforcing hooks stay on at no context cost. A PreToolUse hook fires before the permission check; test the deny list separately. Allow and deny lists are guardrails, not a sandbox.
+- **Read the diff yourself before merging.** The reviewer's PASS is one opinion; running the real commands found a crash in the usage report that every unit test had missed.

@@ -46,16 +46,16 @@ describe('sanitizeDecimal', () => {
 
 describe('filterOptions', () => {
   const options = [
-    { value: 'a', label: 'Amman' },
-    { value: 'i', label: 'Irbid' },
-    { value: 'z', label: 'Zarqa' },
+    { value: 'a', label: 'Northville' },
+    { value: 'i', label: 'Eastford' },
+    { value: 'z', label: 'Southport' },
   ];
   it('keeps everything for a blank query', () => {
     expect(filterOptions(options, '  ')).toHaveLength(3);
   });
   it('matches case-insensitively on the label', () => {
-    expect(filterOptions(options, 'AM').map((o) => o.value)).toEqual(['a']);
-    expect(filterOptions(options, 'r').map((o) => o.value)).toEqual(['i', 'z']);
+    expect(filterOptions(options, 'NORTH').map((o) => o.value)).toEqual(['a']);
+    expect(filterOptions(options, 's').map((o) => o.value)).toEqual(['i', 'z']);
   });
   it('returns a copy and handles no match', () => {
     expect(filterOptions(options, 'x')).toEqual([]);

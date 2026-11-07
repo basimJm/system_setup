@@ -131,8 +131,8 @@ describe('global rate limit', () => {
     const app = buildApp({
       security: { corsAllowedOrigins: [], rateLimit: { windowMs: 60_000, max: 1 } },
     });
-    await request(app).get('/ping').set('X-Forwarded-For', '1.1.1.1');
-    const second = await request(app).get('/ping').set('X-Forwarded-For', '2.2.2.2');
+    await request(app).get('/ping').set('X-Forwarded-For', '192.0.2.1');
+    const second = await request(app).get('/ping').set('X-Forwarded-For', '198.51.100.2');
     expect(second.status).toBe(429);
   });
 
@@ -141,9 +141,9 @@ describe('global rate limit', () => {
       security: { corsAllowedOrigins: [], rateLimit: { windowMs: 60_000, max: 1 } },
       trustProxyHops: 1,
     });
-    const first = await request(app).get('/ping').set('X-Forwarded-For', '1.1.1.1');
-    const other = await request(app).get('/ping').set('X-Forwarded-For', '2.2.2.2');
-    const repeat = await request(app).get('/ping').set('X-Forwarded-For', '1.1.1.1');
+    const first = await request(app).get('/ping').set('X-Forwarded-For', '192.0.2.1');
+    const other = await request(app).get('/ping').set('X-Forwarded-For', '198.51.100.2');
+    const repeat = await request(app).get('/ping').set('X-Forwarded-For', '192.0.2.1');
     expect([first.status, other.status, repeat.status]).toEqual([200, 200, 429]);
   });
 });

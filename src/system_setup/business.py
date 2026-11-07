@@ -13,14 +13,22 @@ from typing import Callable, Dict, List, Mapping, Optional
 TBD = "TBD"
 DEFAULT_LANGUAGE = "ar"
 DEFAULT_STORED_TIME_ZONE = "UTC"
+# Code-facing defaults: what generated source uses while the business answer is still TBD (or is not a code / IANA name).
+# A neutral fixed-offset zone and the ISO 4217 code for "no currency"; the business documents keep saying TBD.
+FALLBACK_CODE_TIME_ZONE = "Etc/GMT-3"
+FALLBACK_CODE_CURRENCY = "XXX"
+IANA_ZONE_RE = re.compile(r"^(?:UTC|Etc/[A-Za-z0-9+-]+|[A-Z][A-Za-z_]+(?:/[A-Za-z0-9_+-]+){1,2})$")
+CURRENCY_CODE_RE = re.compile(r"\b[A-Z]{3}\b")
 RTL_ON, RTL_OFF = "on", "off"
 LIST_SEPARATOR = ";"
 OPEN_MARK = "open — ask the owner"
 PROMPT_FILE = "PROMPT.md"
 AGENT_PROMPT_REL = Path("docs") / "AGENT_PROMPT.md"
 BUSINESS_INPUT_REL = Path("docs") / "BUSINESS_INPUT.md"
-PROMPT_START = "<!-- AGENT_PROMPT:START -->"
-PROMPT_END = "<!-- AGENT_PROMPT:END -->"
+PROMPT_NAME = "AGENT_PROMPT"
+REVIEW_PROMPT_NAME = "AGENT_PROMPT_REVIEW"  # the prompt for a repository whose documents the tool already wrote (documents.py)
+PROMPT_START = f"<!-- {PROMPT_NAME}:START -->"
+PROMPT_END = f"<!-- {PROMPT_NAME}:END -->"
 README_PROMPT_LINK = ("## Give this to your AI agent\n[`docs/AGENT_PROMPT.md`](docs/AGENT_PROMPT.md) — the filled prompt: "
                       "the business, the projects, and the steps to write the PRDs, backlogs and tasks, then work task by task.\n")
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$", re.M)
@@ -213,8 +221,20 @@ def open_decisions(business: Business) -> List[str]:
     return items
 
 
+def code_time_zone(business: Business) -> str:
+    """The business time zone as source code needs it: an IANA name, else the neutral fallback."""
+    zone = business.business_time_zone.strip()
+    return zone if IANA_ZONE_RE.match(zone) else FALLBACK_CODE_TIME_ZONE
+
+
+def code_currency(business: Business) -> str:
+    """The first ISO 4217 style code in the currency answer (`<name> (ABC)` or `ABC`), else the neutral `XXX`."""
+    codes = [code for code in CURRENCY_CODE_RE.findall(business.currency) if code != TBD]
+    return codes[0] if codes else FALLBACK_CODE_CURRENCY
+
+
 def token_values(business: Business) -> Dict[str, str]:
-    """The 13 business tokens; lists as markdown bullets, rules numbered, empty lists flagged as open."""
+    """The 15 business tokens; lists as markdown bullets, rules numbered, empty lists flagged as open."""
     empty = f"{TBD} ({OPEN_MARK})"
     return {
         "__BUSINESS_SUMMARY__": business.summary or TBD,
@@ -224,6 +244,8 @@ def token_values(business: Business) -> Dict[str, str]:
         "__CURRENCY_MINOR_UNIT__": business.currency_minor_unit,
         "__STORED_TIME_ZONE__": business.stored_time_zone,
         "__BUSINESS_TIME_ZONE__": business.business_time_zone,
+        "__BUSINESS_TIME_ZONE_CODE__": code_time_zone(business),
+        "__CURRENCY_CODE__": code_currency(business),
         "__BUSINESS_ACTORS__": bullets(business.actors, empty),
         "__BUSINESS_RULES__": numbered(business.rules, empty),
         "__BUSINESS_ENTITIES__": bullets(business.entities, empty),
@@ -252,26 +274,29 @@ def write_business_input(repo_root: Path, business: Business, system_name: str, 
     return BUSINESS_INPUT_REL.as_posix()
 
 
-def agent_prompt_section(prompt_text: str) -> str:
-    """The part of PROMPT.md between the START/END markers (the whole file when they are missing)."""
-    start, end = prompt_text.find(PROMPT_START), prompt_text.find(PROMPT_END)
-    if start < 0 or end < 0 or end < start:
-        return prompt_text
-    return prompt_text[start + len(PROMPT_START):end].strip() + "\n"
+def agent_prompt_section(prompt_text: str, name: str = PROMPT_NAME) -> str:
+    """The part of PROMPT.md between the START/END markers of `name` (the default prompt when that section is missing; the whole
+    file when both are missing)."""
+    for candidate in (name, PROMPT_NAME):
+        start_mark, end_mark = f"<!-- {candidate}:START -->", f"<!-- {candidate}:END -->"
+        start, end = prompt_text.find(start_mark), prompt_text.find(end_mark)
+        if start >= 0 and end >= start:
+            return prompt_text[start + len(start_mark):end].strip() + "\n"
+    return prompt_text
 
 
 def prompt_placeholders(system_name: str, business: Business, projects_table: str, masters: str,
-                        repo: str, date: str) -> Dict[str, str]:
+                        repo: str, date: str, documents: str = "") -> Dict[str, str]:
     """`<…>` placeholders of PROMPT.md → values (business tokens included under their `<field>` names)."""
     values = {"<system name>": system_name, "<repository>": repo, "<date>": date,
-              "<projects table>": projects_table, "<masters>": masters}
+              "<projects table>": projects_table, "<masters>": masters, "<document status>": documents}
     for spec in FIELDS:
         values[f"<{spec.heading.lower()}>"] = token_values(business)[spec.token]
     return values
 
 
-def render_agent_prompt(prompt_text: str, placeholders: Mapping[str, str]) -> str:
-    text = agent_prompt_section(prompt_text)
+def render_agent_prompt(prompt_text: str, placeholders: Mapping[str, str], name: str = PROMPT_NAME) -> str:
+    text = agent_prompt_section(prompt_text, name)
     for marker in sorted(placeholders, key=len, reverse=True):
         text = text.replace(marker, placeholders[marker])
     return text
@@ -281,14 +306,14 @@ def unfilled_placeholders(text: str, placeholders: Mapping[str, str]) -> List[st
     return sorted(marker for marker in placeholders if marker in text)
 
 
-def write_agent_prompt(repo_root: Path, prompt_file: Path, placeholders: Mapping[str, str]) -> Optional[str]:
+def write_agent_prompt(repo_root: Path, prompt_file: Path, placeholders: Mapping[str, str], name: str = PROMPT_NAME) -> Optional[str]:
     """Writes `docs/AGENT_PROMPT.md` from the tool's PROMPT.md and links it from the generated README; None when the
     prompt file is missing."""
     if not prompt_file.is_file():
         return None
     path = repo_root / AGENT_PROMPT_REL
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_agent_prompt(prompt_file.read_text(encoding="utf-8"), placeholders), encoding="utf-8")
+    path.write_text(render_agent_prompt(prompt_file.read_text(encoding="utf-8"), placeholders, name), encoding="utf-8")
     readme = repo_root / "README.md"
     if readme.is_file() and AGENT_PROMPT_REL.as_posix() not in readme.read_text(encoding="utf-8"):
         with readme.open("a", encoding="utf-8") as handle:

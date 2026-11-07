@@ -12,7 +12,9 @@
     "__PROD_API_URL__",
     "__OWNER_GITHUB__",
     "__REPO_NAME__",
-    "__YEAR__"
+    "__YEAR__",
+    "__BUSINESS_TIME_ZONE_CODE__",
+    "__CURRENCY_CODE__"
   ],
   "sentinels": {
     "__SYSTEM_PREFIX__-Admin-Dashboard": "__ADMIN_DIR__"
@@ -28,12 +30,58 @@
     "TEMPLATE.json",
     ".DS_Store"
   ],
-  "post_generate": ["npm ci", "sh scripts/gate.sh"],
-  "binary_globs": ["**/*.png", "**/*.jpg", "**/*.ico", "**/*.woff", "**/*.woff2"],
+  "post_generate": [
+    "npm ci",
+    "sh scripts/gate.sh"
+  ],
+  "binary_globs": [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.ico",
+    "**/*.woff",
+    "**/*.woff2"
+  ],
   "notes": {
     "target_dir": "__SYSTEM_PREFIX__-Admin-Dashboard (the value of __ADMIN_DIR__)",
     "server_contract": "../__SERVER_DIR__/docs/api/openapi.admin.json; `contract/openapi.admin.json` is the committed snapshot the panel was generated from (items, alerts, exports, settings, audit-logs, profile, auth) — run `npm run api:sync` once the server template is in place",
     "urls": "__DEV_API_URL__ and __PROD_API_URL__ must be https origins (tests/envFiles.test.ts and the prod builds enforce it)",
     "after_generation": "replace src/assets/app-icon.png, `common.currency` in src/locales/*/core.json and BUSINESS_TIME_ZONE in src/constants/kernel.ts for the product"
-  }
+  },
+  "targeted": [
+    {
+      "file": "src/constants/kernel.ts",
+      "placeholder": "__BUSINESS_TIME_ZONE_CODE__",
+      "find": "BUSINESS_TIME_ZONE = 'Etc/GMT-3'",
+      "replace_with": "BUSINESS_TIME_ZONE = '__BUSINESS_TIME_ZONE_CODE__'",
+      "why": "the business time zone default comes from the business answer; the neutral fixed-offset zone Etc/GMT-3 is used while it is TBD"
+    },
+    {
+      "file": "src/data/mock/settingsFixture.ts",
+      "placeholder": "__BUSINESS_TIME_ZONE_CODE__",
+      "find": "timezone: 'Etc/GMT-3'",
+      "replace_with": "timezone: '__BUSINESS_TIME_ZONE_CODE__'",
+      "why": "mock settings follow the business answer"
+    },
+    {
+      "file": "src/data/mock/settingsFixture.ts",
+      "placeholder": "__CURRENCY_CODE__",
+      "find": "currency: 'XXX'",
+      "replace_with": "currency: '__CURRENCY_CODE__'",
+      "why": "mock settings follow the business answer; XXX is the ISO code for no currency"
+    },
+    {
+      "file": "src/locales/en/core.json",
+      "placeholder": "__CURRENCY_CODE__",
+      "find": "\"currency\": \"XXX\"",
+      "replace_with": "\"currency\": \"__CURRENCY_CODE__\"",
+      "why": "currency label follows the business answer"
+    },
+    {
+      "file": "src/locales/ar/core.json",
+      "placeholder": "__CURRENCY_CODE__",
+      "find": "\"currency\": \"XXX\"",
+      "replace_with": "\"currency\": \"__CURRENCY_CODE__\"",
+      "why": "currency label follows the business answer"
+    }
+  ]
 }

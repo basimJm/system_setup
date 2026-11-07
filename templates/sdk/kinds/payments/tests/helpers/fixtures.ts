@@ -12,7 +12,7 @@ export const sessionRequest = (
 ): CreateSessionRequest => ({
   orderId: 'order-1',
   amount: 12_500,
-  currency: 'JOD',
+  currency: 'KWD',
   customer: { id: 'cust-1', email: 'a@example.test' },
   description: 'Booking 1',
   returnUrl: 'https://app.example.test/return',

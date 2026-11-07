@@ -20,11 +20,11 @@ const fails = (work: () => void): boolean => {
 
 describe('validation', () => {
   it('checks phones, purposes, languages, codes and tokens', () => {
-    expect(isE164('+962791234567')).toBe(true);
+    expect(isE164('+991791234567')).toBe(true);
     expect(isE164('0791234567')).toBe(false);
     expect(
       fails(() => {
-        assertPhone('+962791234567');
+        assertPhone('+991791234567');
       }),
     ).toBe(false);
     expect(
@@ -86,7 +86,7 @@ describe('validation', () => {
   });
 
   it('masks phones for logs', () => {
-    expect(maskPhone('+962791234567')).toBe('+9627******67');
+    expect(maskPhone('+991791234567')).toBe('+9917******67');
     expect(maskPhone('+1234')).toBe('***');
   });
 });

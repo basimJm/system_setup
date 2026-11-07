@@ -5,7 +5,7 @@ import { Chip } from '../core/Chip';
 
 export interface ActiveFilter {
   key: string;
-  /** Already translated, e.g. "City: Amman". */
+  /** Already translated, e.g. "City: Northville". */
   label: string;
   onRemove: () => void;
 }

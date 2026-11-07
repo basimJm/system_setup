@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "domain": {
+    "label": "Business Domain Specification",
+    "words": 2200,
+    "headings": ["1. Actors & Identities", "2. Enums (shared by server, contracts and clients)", "3. Collections", "4. Relationships (summary)", "5. Computed Rules", "6. Permissions Matrix", "7. Real-time Events", "8. Notifications (events → recipients)", "9. Scheduled Jobs", "10. Settings (keys & defaults; admin-editable)", "11. Error Codes", "12. Open Points (assumptions in use — confirm or change)", "13. Integrations (providers behind SDK ports)"],
+    "patterns": []
+  },
+  "brd": {
+    "label": "Business Requirements (BRD)",
+    "words": 650,
+    "headings": ["1. Goals and success measures", "2. Actors and their needs", "3. Business requirements", "4. Non-functional requirements", "5. Phases and what each defers", "6. Dependencies on other projects and third parties", "7. Open decisions (owner)"],
+    "patterns": [["^\\|\\s*B\\d{2}\\s*\\|", "a requirement row such as | B01 |"]]
+  },
+  "prd_client": {
+    "label": "Product Requirements (PRD)",
+    "words": 1500,
+    "headings": ["0. Scope and principles", "1. Navigation map", "2. Screens", "3. Flows", "4. Cross-cutting behaviour", "5. Open questions (owner)"],
+    "patterns": [["^###\\s+S\\d{2}\\b", "a screen heading such as ### S01"], ["^###\\s+F\\d{2}\\b", "a flow heading such as ### F01"]]
+  },
+  "prd_server": {
+    "label": "Backend Product Requirements (PRD)",
+    "words": 1500,
+    "headings": ["0. Scope and principles", "1. Namespaces and actors", "2. Capabilities", "3. Flows", "4. Cross-cutting behaviour", "5. Open questions (owner)"],
+    "patterns": [["^###\\s+C\\d{2}\\b", "a capability heading such as ### C01"], ["^###\\s+F\\d{2}\\b", "a flow heading such as ### F01"]]
+  },
+  "design": {
+    "label": "Design Script",
+    "words": 800,
+    "headings": ["0. Instructions to the designer", "1. Global layout and components", "2. Pages and states", "3. Flows to prototype", "4. Completion checklist"],
+    "patterns": [["^###\\s+S\\d{2}\\b", "a screen heading such as ### S01"]]
+  },
+  "integration": {
+    "label": "Integration Map",
+    "words": 700,
+    "headings": ["3. Integration edges and their state", "4. Auth", "5. Real-time, push, jobs, storage, analytics", "8. Open decisions that block integration (owner)"],
+    "patterns": []
+  }
+}

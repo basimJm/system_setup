@@ -10,7 +10,7 @@ const build = (): { gateway: FakeGateway; tick: (ms: number) => void } => {
     environment: 'dev',
     provider: 'fake',
     webhookSecret: SECRET,
-    currencies: ['JOD'],
+    currencies: ['KWD'],
     sessionTtlSec: 60,
     now: () => new Date(now),
   });
@@ -47,7 +47,7 @@ describe('FakeGateway', () => {
       sessionId: 'sess_1',
       status: 'PENDING',
       amount: 12_500,
-      currency: 'JOD',
+      currency: 'KWD',
     });
     const webhook = gateway.settle('sess_1', 'PAID');
     const event = await gateway.parseWebhook({ headers: webhook.headers, rawBody: webhook.body });
@@ -60,7 +60,7 @@ describe('FakeGateway', () => {
       sessionId: 'sess_1',
       status: 'PAID',
       amount: 12_500,
-      currency: 'JOD',
+      currency: 'KWD',
       paidAt: START,
       reference: 'ref_2',
     });

@@ -11,7 +11,7 @@ import {
 } from '../src/validation';
 
 const upload = {
-  key: 'salons/1/photo.jpg',
+  key: 'shops/1/photo.jpg',
   visibility: 'PUBLIC' as const,
   contentType: 'image/jpeg',
   maxBytes: 10,

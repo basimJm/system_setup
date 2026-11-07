@@ -8,7 +8,7 @@ module.exports = async (lib) => {
   const session = await gateway.createSession({
     orderId: 'order-1',
     amount: 1000,
-    currency: 'JOD',
+    currency: 'USD',
     customer: { id: 'c1' },
     returnUrl: 'https://app.example.test/return',
     idempotencyKey: 'k1',

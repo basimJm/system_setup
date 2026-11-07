@@ -110,7 +110,7 @@ describe('HttpGateway', () => {
       sessionId: 'sess_1',
       status: 'PAID',
       amount: 12_500,
-      currency: 'JOD',
+      currency: 'KWD',
       paidAt: START,
       reference: 'ref_2',
     });
@@ -218,7 +218,7 @@ describe('HttpGateway', () => {
       text: JSON.stringify({
         sessionId: 's',
         amount: 1,
-        currency: 'JOD',
+        currency: 'KWD',
         status: 'WEIRD',
         paidAt: 'nope',
       }),

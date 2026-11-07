@@ -15,7 +15,7 @@ export interface OtpSendInput {
   /** E.164. */
   readonly phone: string;
   readonly purpose: OtpPurpose;
-  /** Picks the ARQAM template (`Accept-Language`). */
+  /** Picks the gateway template (`Accept-Language`). */
   readonly language: Language;
   /** End user's IP (trust-proxy aware); forwarded only by providers configured to send it. */
   readonly ip?: string;
@@ -54,7 +54,7 @@ export type OtpVerifyResult =
  * Phone OTP (BUSINESS_DOMAIN §3.1a): the server generates and delivers the code, checks it and
  * issues a signed single-use `otpToken`; every phone-verified action checks that token. Request
  * limits, blocks and counters stay with the backend (OtpGate). A channel outage throws
- * `ExternalServiceError`; a recipient ARQAM/WhatsApp refuses throws `OTP_DELIVERY_FAILED` (422).
+ * `ExternalServiceError`; a recipient the gateway refuses throws `OTP_DELIVERY_FAILED` (422).
  */
 export interface OtpProvider {
   /** Sends a new code (replacing an earlier one); answers the code lifetime in seconds. */

@@ -19,7 +19,7 @@ SDK_DESCRIPTIONS = {
     "analytics": "server events + Firebase / BigQuery ports",
 }
 APP_PREFIX_LENGTH = 3
-SYSTEM_PREFIX_LENGTH = 4  # default folder/task prefix of the system: 'Acme Shop' -> ACME, 'WAB' -> WAB
+SYSTEM_PREFIX_LENGTH = 4  # default folder/task prefix of the system: 'Acme Shop' -> ACME, 'Zed' -> ZED
 FIXED_PREFIXES = {"server": "SRV", "admin": "ADM"}
 MAIN_BRANCH = "main"
 API_VERSION_SEGMENT = "v1"
@@ -144,18 +144,18 @@ def prefix_from(name: str) -> str:
 
 
 def system_prefix_from(name: str) -> str:
-    """'Acme Shop' -> 'ACME', 'Beta Store' -> 'BETA', 'WAB' -> 'WAB' (letters of the name, at most 4, at least 2)."""
+    """'Acme Shop' -> 'ACME', 'Beta Store' -> 'BETA', 'Zed' -> 'ZED' (letters of the name, at most 4, at least 2)."""
     letters = re.sub(r"[^A-Za-z0-9]", "", name).upper()
     return letters[:SYSTEM_PREFIX_LENGTH].ljust(2, "X") if letters else "APP"
 
 
 def sdk_title(sdk: str) -> str:
-    """'otp' -> 'OTP', 'payments' -> 'Payments' (backlog file names, WAB style)."""
+    """'otp' -> 'OTP', 'payments' -> 'Payments' (backlog file names)."""
     return sdk.upper() if len(sdk) <= APP_PREFIX_LENGTH else sdk.capitalize()
 
 
 def sdk_prefix_from(sdk: str) -> str:
-    """'storage' -> 'STO', 'otp' -> 'OTP' (task ids, WAB style)."""
+    """'storage' -> 'STO', 'otp' -> 'OTP' (task ids)."""
     return prefix_from(sdk)
 
 

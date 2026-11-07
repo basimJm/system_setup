@@ -6,7 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MAVEN_BASE="${MAVEN_BASE:-https://repo1.maven.org/maven2}"
-CACHE="${WAB_LINT_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/wab-customer-lint}"
+CACHE="${APP_LINT_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/kmp-app-lint}"
 
 DETEKT_VERSION=1.23.8
 DETEKT_SHA=3afe89a11120303c73c9bdda3d8fe558dd9070a6937d27819ddc04b275381245

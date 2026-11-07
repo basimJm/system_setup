@@ -1,7 +1,7 @@
 # SYSTEM_SETUP template `kmp` — generic Kotlin Multiplatform app
 
 A ready-to-instantiate Kotlin Multiplatform app (Android + iOS, Compose Multiplatform) stored as a **snapshot of
-`KMP_TEMPLATE` output** under `project/` (553 files, ~4.9 MB, no build outputs, no real Firebase files, no keystores).
+KMP generator output** under `project/` (553 files, ~4.9 MB, no build outputs, no real Firebase files, no keystores).
 The snapshot carries one fixed **sentinel identity** (`Acme Shop` / `com.acme.shop` / `AcmeShop`, see §2); the
 SYSTEM_SETUP engine turns it into a new app by plain string substitution of text and paths. `instantiate.py` is the
 reference implementation of that step and `TEMPLATE.json` the machine-readable contract.
@@ -53,7 +53,7 @@ is the human copy. Counts are files containing the literal.
 | `https://app.example.com` / `app.example.com` | `__PROD_WEB_URL__` / `__PROD_WEB_HOST__` | 2 | `gradle.properties`, `Prod.xcconfig` |
 | `TEAMID0000` | `__APPLE_TEAM_ID__` | 1 | `Config.xcconfig` `TEAM_ID` (`DEVELOPMENT_TEAM = $(TEAM_ID)`) |
 | `/app/v1` | `__API_PREFIX__` | 9 | `AuthEndpoints.kt`, its test, `api_sync.py` `NAMESPACE_PREFIX`, `capture_remote_fixtures.py`, two CI tests, README/CLAUDE/memory |
-| `WAB-Server` | `__SERVER_DIR__` | 7 | `apiSync` default spec path `../WAB-Server/docs/api/openapi.customer.json` and KDoc comments |
+| `Acme-Server` | `__SERVER_DIR__` | 7 | `apiSync` default spec path `../Acme-Server/docs/api/openapi.customer.json` and KDoc comments |
 | `const val APP_NAMESPACE = "/app"` | `__REALTIME_NAMESPACE__` (**targeted edit**) | 1 | `core/realtime/.../RealtimeConfig.kt` only. `/app` is never replaced globally: `SocketIoProtocolTest` and `SocketIoRealtimeClientTest` use `40/app,` packets as fixed protocol test data (the client test pins `namespace = TEST_NAMESPACE` on its `RealtimeConfig`, so any configured default works) |
 
 Derived values: `__APP_PACKAGE_DASHED__` = package with `-`, `__APP_PACKAGE_PATH__` = package with `/`,
@@ -70,14 +70,14 @@ folder is literally named `AcmeShop` today). After writing, scan every path and 
 fail if any is left (`instantiate.py::verify`).
 
 ### What stays on purpose (neutral, not identity)
-`WAB-…` reference numbers and `help@wab.jo` in test data, the lint cache dir `wab-customer-lint`, `sara@example.com` /
+`REF-…` reference numbers and `help@example.com` in test data, the lint cache dir `kmp-app-lint`, `sara@example.com` /
 `name@example.com` in a validator test and a preview, and the Firebase placeholder project ids
 `firebase-{dev,prod}-placeholder`. None of them is a sentinel; a project may rename them freely.
 
 ## 3. Reference instantiation
 
 ```bash
-python3 .claude/tools/SYSTEM_SETUP/templates/kmp/instantiate.py --target /path/BetaStore \
+python3 templates/kmp/instantiate.py --target /path/BetaStore \
   --app-name "Beta Store" --app-name-ar "متجر بيتا" --package io.beta.store --project-name BetaStore \
   --dev-api-url https://api-dev.beta.io --prod-api-url https://api.beta.io \
   --dev-web-url https://app-dev.beta.io --prod-web-url https://app.beta.io --team-id ABCDE12345 \
@@ -92,41 +92,24 @@ sentinel left; `python3 -m unittest discover -s scripts/ci/tests` 93 OK; `python
 (`androidApp/src/{dev,prod}/google-services.json`, `iosApp/Firebase/{dev,prod}/GoogleService-Info.plist`); set the
 real Apple team in `iosApp/Configuration/Local.xcconfig` or `--team-id`.
 
-## 4. Regenerating the snapshot from a newer customer app
+## 4. Maintaining the snapshot
 
-The snapshot is `KMP_TEMPLATE` output with the sentinel identity. From the monorepo root, on the `customer` master:
-
-```bash
-rm -rf "$TMPDIR/AcmeShop" && \
-.claude/tools/KMP_TEMPLATE/KMP_TEMPLATE --yes --no-git --target "$TMPDIR/AcmeShop" \
-  --app-name "Acme Shop" --app-name-ar "متجر أكمي" --package com.acme.shop --project-name AcmeShop \
-  --dev-api-url https://api-dev.example.com --prod-api-url https://api.example.com \
-  --dev-web-url https://app-dev.example.com --prod-web-url https://app.example.com \
-  --team-id TEAMID0000 --api-prefix /app/v1 --realtime-namespace /app --dev-data-source mock
-```
-
-Then:
-1. Remove anything the generator or a gate left behind: `build/`, `.gradle/`, `.kotlin/`, `local.properties`, `.DS_Store`,
-   `DerivedData`, `xcuserdata` (`TEMPLATE.json` → `skip`). Never copy real Firebase files, keystores or `Local.xcconfig`.
-2. Neutralize the Firebase placeholder project id: KMP_TEMPLATE derives it from the package's last segment
-   (`shop-dev-placeholder`); replace with `firebase-dev-placeholder` / `firebase-prod-placeholder` in the four placeholder
-   files, otherwise `shop` leaks into every new app.
-3. `rm -rf templates/kmp/project && cp -R "$TMPDIR/AcmeShop" templates/kmp/project`; keep the execute bits of `gradlew`
-   and `scripts/ci/*.sh`.
-4. Re-run the sweep of §2 (`grep -rlF` for every literal, `grep -rniE 'acme|shop'` minus the known forms, `"/app`
-   literals, `example.com`, `WAB`) and update `sentinels`, `sentinel_locations`, `targeted`, the counts in this README
-   and `source.customer_app_commit` in `TEMPLATE.json`. Any new literal of the identity that the generator emits must
-   become a sentinel or be neutralized; a value too short to replace globally becomes a `targeted` edit.
-5. Instantiate a second identity (§3) and run `post_generate` from `TEMPLATE.json` on it; then delete its build outputs.
+`project/` is maintained by hand in this repository. When you change it:
+1. Never add build outputs (`build/`, `.gradle/`, `.kotlin/`, `local.properties`, `.DS_Store`, `DerivedData`, `xcuserdata`; see
+   `TEMPLATE.json` → `skip`), real Firebase files, keystores or `Local.xcconfig`. The four Firebase files stay placeholders.
+2. Any literal of the sentinel identity you add must become a sentinel in `TEMPLATE.json`; a value too short to replace
+   globally becomes a `targeted` edit. Never add a real person, business, host, e-mail address or country default: use the
+   neutral literals of §2 or a token.
+3. Instantiate a second identity (§3), run `post_generate` from `TEMPLATE.json` on it, then delete its build outputs.
+4. Run `python3 -m unittest discover -s tests -p 'test_*.py'` in the repository root: the privacy test fails on private data.
 
 ## 5. Limits
 - Plain substitution: the new package must be lower-case dotted segments, the project name a CamelCase identifier, URLs
   `https://<host>` without path; the sentinels are chosen so no shorter literal is a substring of a longer one's
   replacement, but a new value that itself contains a sentinel (e.g. an app literally called "Acme Shop") is not supported.
 - The realtime namespace is a single targeted edit (`/app` is too short for global replacement).
-- Icons, logo (`core/design-system/.../composeResources/drawable`), colors and fonts still show the template brand;
+- Icons and logo (`core/design-system/.../composeResources/drawable`) are neutral placeholders, colors and fonts are the template design;
   `project/README.md` → "Replace before release" lists them.
 - No OpenAPI spec is shipped: `./gradlew apiSync` expects `../__SERVER_DIR__/docs/api/openapi.customer.json` (or
   `--spec`); the contract gate is skipped until a spec exists.
-- The snapshot follows the customer app only when regenerated (§4); it is a copy, not a live link.
-- `instantiate.py` refuses a non-empty target and has no `--merge`; use KMP_TEMPLATE for merging into an existing folder.
+- `instantiate.py` refuses a non-empty target and has no `--merge`; merge by hand into an existing folder.

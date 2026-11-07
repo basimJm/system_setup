@@ -8,17 +8,17 @@ import kotlin.test.assertNull
 class ExternalLinksTest {
     @Test
     fun whatsAppLinkStripsEverythingButDigits() {
-        assertEquals("https://wa.me/962791234567", ExternalLinks.whatsApp("+962 79 123 4567"))
-        assertEquals("https://wa.me/962791234567", ExternalLinks.whatsApp("(+962) 79-123-4567"))
+        assertEquals("https://wa.me/991791234567", ExternalLinks.whatsApp("+991 79 123 4567"))
+        assertEquals("https://wa.me/991791234567", ExternalLinks.whatsApp("(+991) 79-123-4567"))
     }
 
     @Test
     fun telLinkKeepsOnlyALeadingPlusAndDigits() {
-        assertEquals("tel:+962791234567", ExternalLinks.tel(" +962791234567 "))
-        assertEquals("tel:+962791234567", ExternalLinks.tel("+962 (79) 123-4567"))
+        assertEquals("tel:+991791234567", ExternalLinks.tel(" +991791234567 "))
+        assertEquals("tel:+991791234567", ExternalLinks.tel("+991 (79) 123-4567"))
         assertEquals("tel:0791234567", ExternalLinks.tel("079 123 4567"))
-        assertEquals("+96265000100", ExternalLinks.dialable("+962 6 500 0100"))
-        assertEquals("962", ExternalLinks.dialable("9+62"), "a plus inside the number is dropped")
+        assertEquals("+99165000100", ExternalLinks.dialable("+991 6 500 0100"))
+        assertEquals("991", ExternalLinks.dialable("9+91"), "a plus inside the number is dropped")
     }
 
     @Test
@@ -28,7 +28,7 @@ class ExternalLinksTest {
         assertEquals("comgooglemaps://?q=31.95,35.91", MapLinks.googleMapsApp(31.95, 35.91))
         assertEquals("comgooglemaps://", MapLinks.googleMapsAppProbe())
         assertEquals("https://maps.apple.com/?ll=31.95,35.91&q=%D8%B5", MapLinks.appleMaps(31.95, 35.91, "ص"))
-        assertEquals("mailto:help@wab.jo", ExternalLinks.mailto(" help@wab.jo "))
+        assertEquals("mailto:help@example.com", ExternalLinks.mailto(" help@example.com "))
     }
 
     @Test
@@ -41,9 +41,9 @@ class ExternalLinksTest {
     @Test
     fun outcomeNamesTheMissingAppAndTheFakeRecordsEveryCall() = runTest {
         val fake = FakeExternalActions(unavailable = setOf(ExternalApp.DIALER))
-        assertEquals(ExternalApp.DIALER, fake.dial("+962 79").unavailableApp)
-        assertNull(fake.openWhatsApp("+962 79").unavailableApp)
+        assertEquals(ExternalApp.DIALER, fake.dial("+991 79").unavailableApp)
+        assertNull(fake.openWhatsApp("+991 79").unavailableApp)
         assertNull(ExternalOutcome.Opened.unavailableApp)
-        assertEquals(listOf("tel:+96279", "https://wa.me/96279"), fake.calls)
+        assertEquals(listOf("tel:+99179", "https://wa.me/99179"), fake.calls)
     }
 }

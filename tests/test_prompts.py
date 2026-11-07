@@ -44,9 +44,9 @@ class ValidatorTest(unittest.TestCase):
 
     def test_app_specs(self):
         self.assertEqual(AppSpec("Customer", "customer"), parse_app("Customer:customer"))
-        self.assertEqual(AppSpec("Salon Staff", "salon-staff"), parse_app("Salon Staff"))
+        self.assertEqual(AppSpec("Shop Staff", "shop-staff"), parse_app("Shop Staff"))
         self.assertEqual("التاجر", parse_app("Merchant:merchant:التاجر").name_ar)
-        self.assertEqual("SalonStaff", parse_app("Salon Staff").project)
+        self.assertEqual("ShopStaff", parse_app("Shop Staff").project)
         for bad in ("Customer:Cust", ":x", "Admin:admin", "Main:main", "Server:server"):
             with self.assertRaises(ValueError, msg=bad):
                 parse_app(bad)
@@ -60,7 +60,7 @@ class DerivedNamesTest(unittest.TestCase):
         self.assertEqual("acme-shop", slug_from("Acme Shop!"))
         self.assertEqual("app-2026", slug_from("2026"))
         self.assertEqual("ACM", prefix_from("Acme Shop"))
-        self.assertEqual(("ACME", "BETA", "WAB", "AX"), tuple(system_prefix_from(n) for n in ("Acme Shop", "Beta Store!", "WAB", "a")))
+        self.assertEqual(("ACME", "BETA", "ZED", "AX"), tuple(system_prefix_from(n) for n in ("Acme Shop", "Beta Store!", "ZED", "a")))
         self.assertEqual("ABX", prefix_from("a b"))
 
     def test_spec_names_packages_prefixes_and_masters(self):

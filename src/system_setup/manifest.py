@@ -145,7 +145,7 @@ def load_manifest(template_dir: Path) -> Manifest:
 
 
 def tool_root() -> Path:
-    """`.claude/tools/SYSTEM_SETUP` (this file is src/system_setup/manifest.py)."""
+    """The tool folder (this file is src/system_setup/manifest.py)."""
     return Path(__file__).resolve().parents[2]
 
 

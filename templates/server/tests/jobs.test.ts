@@ -167,16 +167,16 @@ describe('bullmq job scheduler', () => {
       id: 'daily',
       name: 'ping',
       cron: '0 9 * * *',
-      timeZone: 'Asia/Amman',
+      timeZone: 'Etc/GMT-3',
     });
     await scheduler.repeat({
       id: 'daily',
       name: 'ping',
       cron: '5 0 * * *',
-      timeZone: 'Asia/Amman',
+      timeZone: 'Etc/GMT-3',
     });
     await expect(
-      scheduler.repeat({ id: 'bad', name: 'ping', cron: 'not a cron', timeZone: 'Asia/Amman' }),
+      scheduler.repeat({ id: 'bad', name: 'ping', cron: 'not a cron', timeZone: 'Etc/GMT-3' }),
     ).rejects.toThrow();
   });
 });

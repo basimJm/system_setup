@@ -69,7 +69,7 @@ describe('settings registry', () => {
     ['otp.length', '6', false],
     ['pagination.appPageSize', 100, true],
     ['pagination.appPageSize', 101, false],
-    ['timezone', 'Asia/Amman', true],
+    ['timezone', 'Etc/GMT-3', true],
     ['timezone', 'Mars/Olympus', false],
     ['items.maxPerOwner', 0, false],
   ] as const)('%s accepts %p: %s', (key, value, ok) => {

@@ -38,7 +38,7 @@ class LocalizationTest(TempProject):
 
     def test_untranslated_copy_is_flagged_but_short_brand_names_are_not(self):
         self.assertTrue(any("untranslated copy" in m for m in self.run_check(res(("a", "Retry now")), res(("a", "Retry now")))))
-        self.assertEqual(self.run_check(res(("a", "WAB"), ("b", "OK")), res(("a", "WAB"), ("b", "OK"))), [])
+        self.assertEqual(self.run_check(res(("a", "ZED"), ("b", "OK")), res(("a", "ZED"), ("b", "OK"))), [])
 
     def test_translatable_false_is_skipped(self):
         en = '<resources><string name="x" translatable="false">Brand Name</string></resources>'

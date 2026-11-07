@@ -24,7 +24,7 @@ const memoryStream = (): { stream: Writable; lines: () => Record<string, unknown
 
 describe('maskPhone', () => {
   it('keeps only the last three digits and the plus sign', () => {
-    expect(maskPhone('+962788123456')).toBe('+*********456');
+    expect(maskPhone('+991788123456')).toBe('+*********456');
   });
 
   it('masks short values entirely down to the visible tail', () => {
@@ -63,11 +63,11 @@ describe('redactSensitive', () => {
 
   it('masks phone numbers, including the object form', () => {
     const result = redactSensitive({
-      phone: { dialCode: '+962', number: '788123456', e164: '+962788123456' },
+      phone: { dialCode: '+991', number: '788123456', e164: '+991788123456' },
       mobile: '0788123456',
     });
     expect(result).toEqual({
-      phone: { dialCode: '+962', number: '******456', e164: '+*********456' },
+      phone: { dialCode: '+991', number: '******456', e164: '+*********456' },
       mobile: '*******456',
     });
   });
@@ -93,7 +93,7 @@ describe('createLogger', () => {
   it('writes JSON with service name and redacts sensitive fields', () => {
     const { stream, lines } = memoryStream();
     const logger = createLogger({ level: 'info', destination: stream });
-    logger.info({ token: 'secret-token', phone: '+962788123456', orderId: 'o1' }, 'login');
+    logger.info({ token: 'secret-token', phone: '+991788123456', orderId: 'o1' }, 'login');
     const [line] = lines();
     expect(line).toMatchObject({ service: SERVICE_NAME, msg: 'login', orderId: 'o1' });
     expect(line?.['token']).toBe(REDACTION_PLACEHOLDER);

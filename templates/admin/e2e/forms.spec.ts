@@ -28,7 +28,7 @@ test('form kit: search debounces, combobox picks by keyboard, validation message
   await city.pressSequentially('ir');
   await expect(card.getByRole('listbox').getByRole('option')).toHaveCount(1);
   await page.keyboard.press('Enter');
-  await expect(city).toHaveValue('Irbid');
+  await expect(city).toHaveValue('Eastford');
 
   await card.getByLabel('Price').fill('12.3456');
   await expect(card.getByLabel('Price')).toHaveValue('12.345');

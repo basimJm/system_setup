@@ -74,8 +74,8 @@ describe('SettingsPage', () => {
     await userEvent.type(reminders, '60, 15');
     const failures = await box(/Failed background jobs that raise an alert/);
     expect(failures).toHaveValue('5');
-    expect(screen.getByText('Asia/Amman')).toBeInTheDocument();
-    expect(screen.getByText('JOD')).toBeInTheDocument();
+    expect(screen.getByText('Etc/GMT-3')).toBeInTheDocument();
+    expect(screen.getByText('XXX')).toBeInTheDocument();
     await userEvent.clear(failures);
     await userEvent.type(failures, '8');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));

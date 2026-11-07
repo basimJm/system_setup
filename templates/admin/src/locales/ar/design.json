@@ -83,10 +83,10 @@
       "saved": "تم الحفظ (عرض تجريبي فقط، لم يُرسل شيء)",
       "updatedBy": "ليث الحسن",
       "option": {
-        "amman": "الشمال",
-        "irbid": "الجنوب",
-        "zarqa": "الشرق",
-        "aqaba": "الغرب"
+        "northville": "الشمال",
+        "eastford": "الجنوب",
+        "southport": "الشرق",
+        "westbury": "الغرب"
       },
       "currency": "دولار"
     },
@@ -103,10 +103,10 @@
       "bulkApprove": "الموافقة على المحدد",
       "exported": "تم طلب التصدير ({{count}})",
       "city": {
-        "amman": "الشمال",
-        "irbid": "الجنوب",
-        "zarqa": "الشرق",
-        "aqaba": "الغرب"
+        "northville": "الشمال",
+        "eastford": "الجنوب",
+        "southport": "الشرق",
+        "westbury": "الغرب"
       },
       "pagination": "تقسيم صفحات جدول البيانات v2",
       "item": "العنصر"
@@ -117,9 +117,9 @@
       "anyCity": "أي منطقة",
       "exported": "التصديرات المطلوبة: {{list}}",
       "cities": {
-        "amman": "الشمال",
-        "irbid": "الجنوب",
-        "zarqa": "الشرق"
+        "northville": "الشمال",
+        "eastford": "الجنوب",
+        "southport": "الشرق"
       }
     },
     "overlays": {

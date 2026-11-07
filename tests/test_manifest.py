@@ -8,7 +8,7 @@ from _support import FIXTURE_TEMPLATES, TempDirTest
 from manifest import DEFAULT_DEST, KINDS, ManifestError, available_kinds, load_manifest, parse_manifest
 
 VALID = {"kind": "server", "description": "x", "placeholders": ["__SYSTEM_NAME__", "__APP_DIR_<n>__"],
-         "sentinels": {"WAB": "__SYSTEM_PREFIX__"}, "rename_paths": {"WAB": "__SYSTEM_PREFIX__"},
+         "sentinels": {"ZED": "__SYSTEM_PREFIX__"}, "rename_paths": {"ZED": "__SYSTEM_PREFIX__"},
          "skip": ["node_modules/**"], "post_generate": ["npm install"], "binary_globs": ["*.png"]}
 
 
@@ -17,7 +17,7 @@ class ManifestTest(TempDirTest):
         manifest = parse_manifest(VALID, self.root)
         self.assertEqual("server", manifest.kind)
         self.assertEqual(["__SYSTEM_NAME__", "__APP_DIR_<n>__", "__SYSTEM_PREFIX__"], manifest.tokens)
-        self.assertEqual({"WAB": "__SYSTEM_PREFIX__"}, manifest.sentinels)
+        self.assertEqual({"ZED": "__SYSTEM_PREFIX__"}, manifest.sentinels)
         self.assertEqual(["npm install"], manifest.post_generate)
         self.assertEqual(DEFAULT_DEST["server"], manifest.dest)
         self.assertEqual(".", parse_manifest(dict(VALID, kind="workspace"), self.root).dest)
@@ -36,7 +36,7 @@ class ManifestTest(TempDirTest):
 
     def test_unknown_documentation_keys_are_tolerated(self):
         data = dict(VALID, kind="kmp", source={"tool": "x"}, derived_placeholders={"__X__": "y"}, sentinel_locations={},
-                    neutral_literals=["WAB-1001"], verified="2026-10-28", regenerate="KMP_TEMPLATE …", firebase="placeholders")
+                    neutral_literals=["REF-1001"], verified="2026-10-28", regenerate="by hand", firebase="placeholders")
         self.assertEqual("kmp", parse_manifest(data, self.root).kind)
 
     def test_optional_keys_may_be_absent(self):
@@ -49,7 +49,7 @@ class ManifestTest(TempDirTest):
             "missing placeholders": {"kind": "server", "description": "x"},
             "unknown kind": dict(VALID, kind="backend"),
             "placeholder not a token": dict(VALID, placeholders=["SYSTEM_NAME"]),
-            "sentinel target not a token": dict(VALID, sentinels={"@wab": "__NPM_SCOPE__/x"}),
+            "sentinel target not a token": dict(VALID, sentinels={"@zed": "__NPM_SCOPE__/x"}),
             "empty sentinel literal": dict(VALID, sentinels={"": "__NPM_SCOPE__"}),
             "skip not a list": dict(VALID, skip="node_modules"),
             "dest escapes": dict(VALID, dest="../elsewhere"),

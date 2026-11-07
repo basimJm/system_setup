@@ -10,7 +10,7 @@ import {
 } from '@/domain/shared/dateRange';
 
 const at = (iso: string) => new Date(iso);
-/** Wednesday 2026-10-14 12:00 in Amman (UTC+3). */
+/** Wednesday 2026-10-14 12:00 in the business zone (UTC+3). */
 const NOW = at('2026-10-14T09:00:00Z');
 
 describe('resolvePreset', () => {
@@ -26,7 +26,7 @@ describe('resolvePreset', () => {
     expect(resolvePreset(preset, NOW)).toEqual({ from, to });
   });
 
-  it('uses the Amman day, which starts at 21:00Z the evening before', () => {
+  it('uses the business-zone day, which starts at 21:00Z the evening before', () => {
     expect(resolvePreset('today', at('2026-10-13T20:59:59Z'))).toEqual({
       from: '2026-10-13',
       to: '2026-10-13',
@@ -106,7 +106,7 @@ describe('isValidRange', () => {
 });
 
 describe('rangeToInstants', () => {
-  it('is the half-open UTC span of whole Amman days', () => {
+  it('is the half-open UTC span of whole business-zone days', () => {
     const { start, end } = rangeToInstants({ from: '2026-10-13', to: '2026-10-14' });
     expect(start.toISOString()).toBe('2026-10-12T21:00:00.000Z');
     expect(end.toISOString()).toBe('2026-10-14T21:00:00.000Z');

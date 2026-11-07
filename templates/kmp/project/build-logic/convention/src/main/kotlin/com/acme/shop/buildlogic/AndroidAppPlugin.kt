@@ -28,8 +28,8 @@ class AndroidAppPlugin : Plugin<Project> {
             apply(plugin = "com.google.gms.google-services")
             // Generates the Crashlytics build id; without it the Crashlytics SDK aborts the app at startup.
             apply(plugin = "com.google.firebase.crashlytics")
-            // Baseline + Startup Profiles, only when the producer module is part of the build (the KMP_TEMPLATE
-            // tool generates projects without it).
+            // Baseline + Startup Profiles, only when the producer module is part of the build (the template
+            // generates projects without it).
             val profiles = rootProject.findProject(AndroidSdk.BASELINE_PROFILE_PROJECT_PATH) != null
             if (profiles) apply(plugin = "androidx.baselineprofile")
 

@@ -29,8 +29,6 @@ class PlacesApiService(
         return client.get("$BASE_URL/autocomplete/json") {
             parameter("input", query)
             parameter("key", apiKey)
-            // Optional: restrict to Jordan region
-            parameter("components", "country:jo")
         }.body()
     }
 

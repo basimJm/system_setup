@@ -3,7 +3,7 @@
   "description": "Fixture: admin panel",
   "placeholders": ["__SYSTEM_NAME__", "__ADMIN_DIR__", "__DEV_WEB_URL__", "__PROD_WEB_URL__"],
   "sentinels": {},
-  "rename_paths": {"WAB": "__SYSTEM_PREFIX__"},
+  "rename_paths": {"ZED": "__SYSTEM_PREFIX__"},
   "skip": [],
   "post_generate": ["npm install"],
   "binary_globs": []

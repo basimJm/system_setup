@@ -49,7 +49,7 @@ beforeEach(async () => {
 
 describe('redisKey', () => {
   it('allows separators in the trusted prefix but not in parts', () => {
-    expect(redisKey('otp:req', '+962788123456')).toBe('otp:req:+962788123456');
+    expect(redisKey('otp:req', '+991788123456')).toBe('otp:req:+991788123456');
     expect(() => redisKey('otp:req', 'a:b')).toThrow();
     expect(() => redisKey('otp:req', '')).toThrow();
     expect(() => redisKey('otp:req')).toThrow();
@@ -174,10 +174,10 @@ describe('limiter with a block (OTP-style)', () => {
 
   it('allows the hit that reaches the limit, then blocks later hits', async () => {
     const lim = create();
-    const first = await lim.hit('+962788123456');
-    const second = await lim.hit('+962788123456');
-    const third = await lim.hit('+962788123456');
-    const fourth = await lim.hit('+962788123456');
+    const first = await lim.hit('+991788123456');
+    const second = await lim.hit('+991788123456');
+    const third = await lim.hit('+991788123456');
+    const fourth = await lim.hit('+991788123456');
     expect([first.allowed, second.allowed, third.allowed, fourth.allowed]).toEqual([
       true,
       true,
@@ -197,12 +197,12 @@ describe('limiter with a block (OTP-style)', () => {
 
   it('reports the block without counting, and uses the documented key names', async () => {
     const lim = create();
-    for (let i = 0; i < 3; i += 1) await lim.hit('+962788123456');
-    const status = await lim.status('+962788123456');
+    for (let i = 0; i < 3; i += 1) await lim.hit('+991788123456');
+    const status = await lim.status('+991788123456');
     expect(status.blocked).toBe(true);
     expect(status.retryAfterMs).toBeGreaterThan(0);
-    expect(await redis.exists('otp:block:+962788123456')).toBe(1);
-    expect(await redis.exists('otp:req:+962788123456')).toBe(0);
+    expect(await redis.exists('otp:block:+991788123456')).toBe(1);
+    expect(await redis.exists('otp:req:+991788123456')).toBe(0);
   });
 
   it('does not count hits while blocked, and starts fresh after the block ends', async () => {

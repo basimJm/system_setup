@@ -35,7 +35,7 @@ class EndToEndTest(TempDirTest):
         self.assertTrue((repo / "ACME-Server/docs/ACME_Server_Tasks.md").is_file())
         self.assertFalse((repo / "ACME-Server/node_modules").exists())
         self.assertFalse((repo / "ACME-Server/debug.log").exists())
-        self.assertIn(b"WAB", (repo / "ACME-Server/assets/logo.png").read_bytes())
+        self.assertIn(b"ZED", (repo / "ACME-Server/assets/logo.png").read_bytes())
         # sdk: common + kind overlay, rename, kinds metadata
         self.assertIn("// storage:", (repo / "acme-shop-storage/src/storage.ts").read_text(encoding="utf-8"))
         self.assertIn("// otp:", (repo / "acme-shop-otp/src/otp.ts").read_text(encoding="utf-8"))

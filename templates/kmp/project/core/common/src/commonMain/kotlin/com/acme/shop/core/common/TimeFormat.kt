@@ -57,12 +57,12 @@ object TimeFormat {
     }
 }
 
-/** Root CLAUDE.md: UTC stored, Asia/Amman computed, 12-hour displayed. */
+/** Root CLAUDE.md: UTC stored, Etc/GMT-3 computed, 12-hour displayed. */
 object BusinessTime {
     /** Current instant as a kotlinx-datetime value (the platform clock behind `SystemClock`; Kotlin/Native safe). */
     fun nowInstant(): kotlinx.datetime.Instant = kotlinx.datetime.Instant.fromEpochMilliseconds(SystemClock.now().toEpochMilliseconds())
 
-    const val ZONE_ID = "Asia/Amman"
+    const val ZONE_ID = "Etc/GMT-3"
 
     /** The business zone, loaded once. */
     val zone: TimeZone by lazy { TimeZone.of(ZONE_ID) }

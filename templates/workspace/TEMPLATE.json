@@ -63,6 +63,7 @@
   "post_generate": [
     "python3 scripts/tasks.py check",
     "python3 .claude/hooks/test_hooks.py",
-    "python3 -m unittest scripts/test_tasks.py"
+    "python3 -m unittest scripts/test_tasks.py",
+    "python3 -m unittest scripts/test_map_recall.py scripts/test_qa_usage.py scripts/test_line.py"
   ]
 }

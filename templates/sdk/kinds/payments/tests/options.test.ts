@@ -36,7 +36,7 @@ describe('resolveConfig', () => {
       provider: 'http',
       webhookSecret: 's',
       http,
-      currencies: ['JOD'],
+      currencies: ['KWD'],
       sessionTtlSec: 60,
       webhookToleranceSec: 10,
       timeoutMs: 5,
@@ -49,7 +49,7 @@ describe('resolveConfig', () => {
       checkoutUrl: 'http://localhost:4242/pay',
     });
     expect(withHttp).toMatchObject({
-      currencies: ['JOD'],
+      currencies: ['KWD'],
       sessionTtlSec: 60,
       webhookToleranceSec: 10,
       timeoutMs: 5,
@@ -69,7 +69,7 @@ describe('resolveConfig', () => {
       'http',
     ]);
     expect(
-      fieldsOf({ environment: 'dev', provider: 'fake', webhookSecret: 's', currencies: ['jod'] }),
+      fieldsOf({ environment: 'dev', provider: 'fake', webhookSecret: 's', currencies: ['kwd'] }),
     ).toEqual(['currencies.0']);
     expect(fieldsOf({ environment: 'dev', provider: 'fake', webhookSecret: '' })).toEqual([
       'webhookSecret',

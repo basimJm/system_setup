@@ -33,3 +33,6 @@ Local.xcconfig
 # Agent worktrees (one per parallel agent) and nested git backups
 .claude/worktrees/
 .nested-git-backup/
+
+# Line runs: status files and worker logs
+features/*/run/

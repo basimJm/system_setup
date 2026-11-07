@@ -9,8 +9,8 @@ import { redisKey } from '../src/utils/redis/keys';
 import { startTestRedis, type TestRedis } from './helpers/redis';
 
 const logger = createLogger({ level: 'silent' });
-const PHONE = '+962791234567';
-const OTHER_PHONE = '+962781234567';
+const PHONE = '+991791234567';
+const OTHER_PHONE = '+991781234567';
 const NOW = new Date('2026-10-12T10:00:00.000Z');
 
 let testRedis: TestRedis;

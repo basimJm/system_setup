@@ -15,7 +15,7 @@ class AppLanguageTest {
 
     @Test
     fun codesAndPlatformLocaleTagsResolveToTheirLanguage() {
-        listOf("ar", "AR", "ar_JO", "ar-JO", " ar ").forEach { assertEquals(AppLanguage.ARABIC, AppLanguage.fromCode(it), it) }
+        listOf("ar", "AR", "ar_EG", "ar-EG", " ar ").forEach { assertEquals(AppLanguage.ARABIC, AppLanguage.fromCode(it), it) }
         listOf("en", "EN", "en_US", "en-GB").forEach { assertEquals(AppLanguage.ENGLISH, AppLanguage.fromCode(it), it) }
     }
 

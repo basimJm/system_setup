@@ -33,7 +33,7 @@
     "app.example.com": "__PROD_WEB_HOST__",
     "TEAMID0000": "__APPLE_TEAM_ID__",
     "/app/v1": "__API_PREFIX__",
-    "WAB-Server": "__SERVER_DIR__"
+    "Acme-Server": "__SERVER_DIR__"
   },
   "rename_paths": {
     "com/acme/shop": "__APP_PACKAGE_PATH__",

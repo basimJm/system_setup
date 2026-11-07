@@ -50,7 +50,7 @@ createPayments(options): PaymentGateway
 | `provider` | `fake` / `http` (mock on localhost) | `http` (or a vendor adapter) | fake refused in prod |
 | `webhookSecret` | any | ≥ 16 chars | env only |
 | `http.baseUrl`, `http.apiKey`, `http.checkoutUrl?` | `http://localhost:<port>` | https | |
-| `currencies` | e.g. `['JOD']` | same | empty = any ISO code |
+| `currencies` | e.g. `['USD']` | same | empty = any ISO code |
 | `sessionTtlSec`, `webhookToleranceSec` | 1800 / 300 | same | |
 | `timeoutMs`, `retry` | 10 s / 3 | same | |
 | `logger`, `fetch`, `now` | injected | injected | |

@@ -133,7 +133,7 @@ describe('time', () => {
     expect(isLocalDate('2026-1-1')).toBe(false);
   });
 
-  it('rolls the Amman day over at exactly 21:00:00.000Z', () => {
+  it('rolls the business-zone day over at exactly 21:00:00.000Z', () => {
     expect(localDateOf(new Date('2026-10-14T20:59:59.999Z'))).toBe('2026-10-14');
     expect(localDateOf(new Date('2026-10-14T21:00:00.000Z'))).toBe('2026-10-15');
     expect(localMinutesOf(new Date('2026-10-14T21:30:00Z'))).toBe(30);
@@ -175,7 +175,7 @@ describe('formatters', () => {
     expect(formatNumber(1234, 'ar')).toContain('١');
   });
 
-  it('formats JOD with 3 decimals, grouping, and language digits', () => {
+  it('formats KWD with 3 decimals, grouping, and language digits', () => {
     expect(formatMoneyAmount('1234.5', 'en')).toBe('1,234.500');
     expect(formatMoneyAmount('0.001', 'en')).toBe('0.001');
     expect(formatMoneyAmount('-12.5', 'en')).toBe('-12.500');
@@ -186,7 +186,7 @@ describe('formatters', () => {
     expect(() => formatMoneyAmount('1,5', 'en')).toThrow(RangeError);
   });
 
-  it('shows instants in Amman with a 12-hour clock', () => {
+  it('shows instants in the business zone with a 12-hour clock', () => {
     const iso = '2026-10-14T21:30:00Z';
     expect(formatInstant(iso, 'en', 'time')).toMatch(/^12:30\s?am$/i);
     expect(formatInstant(iso, 'en', 'date')).toBe('15 Oct 2026');

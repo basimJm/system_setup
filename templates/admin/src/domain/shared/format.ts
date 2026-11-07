@@ -49,7 +49,7 @@ const OPTIONS: Readonly<Record<DateStyle, Intl.DateTimeFormatOptions>> = {
   },
 };
 
-/** Formats a UTC instant in Asia/Amman: 12-hour clock, language digits. `input` is an ISO string or a Date. */
+/** Formats a UTC instant in Etc/GMT-3: 12-hour clock, language digits. `input` is an ISO string or a Date. */
 export function formatInstant(
   input: string | Date,
   language: Language,

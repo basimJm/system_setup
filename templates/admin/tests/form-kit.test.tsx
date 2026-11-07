@@ -89,7 +89,7 @@ describe('MoneyField', () => {
         <MoneyField
           label="Price"
           value={v}
-          currencyLabel="JOD"
+          currencyLabel="KWD"
           onValueChange={(next) => {
             onChange(next);
             setV(next);
@@ -102,7 +102,7 @@ describe('MoneyField', () => {
     await userEvent.type(input, '12.3456');
     expect(input).toHaveValue('12.345');
     expect(onChange).toHaveBeenLastCalledWith('12.345');
-    expect(screen.getByText('JOD')).toBeVisible();
+    expect(screen.getByText('KWD')).toBeVisible();
   });
 });
 
@@ -183,7 +183,7 @@ describe('FormActions', () => {
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
   });
 
-  it('prints who and when in Amman 12-hour time, with Arabic digits in Arabic', () => {
+  it('prints who and when in the business zone 12-hour time, with Arabic digits in Arabic', () => {
     const lastUpdated = { by: 'Dana', at: '2026-10-12T09:30:00Z' };
     const { unmount } = renderWithApp(<FormActions dirty={false} lastUpdated={lastUpdated} />);
     expect(screen.getByText(/Last updated by Dana/)).toHaveTextContent(/12:30/);

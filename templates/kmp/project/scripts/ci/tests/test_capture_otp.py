@@ -26,12 +26,12 @@ class FakeRecorder:
 class CaptureOtpTest(unittest.TestCase):
     def test_requests_then_verifies_with_the_fixed_code(self):
         rec = FakeRecorder([{"allowed": True}], {"otpToken": "tok"})
-        token = capture_otp.otp_token(rec, "http://127.0.0.1:4000", "+962790000001", "LOGIN", "123456", 20)
+        token = capture_otp.otp_token(rec, "http://127.0.0.1:4000", "+991790000001", "LOGIN", "123456", 20)
         self.assertEqual("tok", token)
         self.assertEqual(
             [
-                (capture_otp.REQUEST_PATH, {"phone": "+962790000001", "purpose": "LOGIN"}, False),
-                (capture_otp.VERIFY_PATH, {"phone": "+962790000001", "purpose": "LOGIN", "code": "123456"}, False),
+                (capture_otp.REQUEST_PATH, {"phone": "+991790000001", "purpose": "LOGIN"}, False),
+                (capture_otp.VERIFY_PATH, {"phone": "+991790000001", "purpose": "LOGIN", "code": "123456"}, False),
             ],
             rec.calls,
         )
@@ -39,7 +39,7 @@ class CaptureOtpTest(unittest.TestCase):
     def test_waits_out_a_running_resend_countdown_once(self):
         rec = FakeRecorder([{"allowed": False, "resendAfterSeconds": 7}, {"allowed": True}], {"otpToken": "tok"})
         with mock.patch.object(capture_otp.time, "sleep") as sleep:
-            token = capture_otp.otp_token(rec, "b", "+962790000002", "REGISTER", "123456", 20, save=True)
+            token = capture_otp.otp_token(rec, "b", "+991790000002", "REGISTER", "123456", 20, save=True)
         sleep.assert_called_once_with(8)
         self.assertEqual("tok", token)
         self.assertEqual(3, len(rec.calls))
@@ -47,7 +47,7 @@ class CaptureOtpTest(unittest.TestCase):
 
     def test_failed_verify_gives_an_empty_token(self):
         rec = FakeRecorder([{"allowed": False, "blockedUntil": "2026-10-26T10:00:00Z"}], None)
-        self.assertEqual("", capture_otp.otp_token(rec, "b", "+962790000003", "CHANGE_PHONE", "000000", 20))
+        self.assertEqual("", capture_otp.otp_token(rec, "b", "+991790000003", "CHANGE_PHONE", "000000", 20))
 
 
 if __name__ == "__main__":

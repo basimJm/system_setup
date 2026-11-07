@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Tests for `templates/workspace` (the monorepo-root layer of SYSTEM_SETUP).
 
-Run: python3 -m unittest discover -s .claude/tools/SYSTEM_SETUP/tests -p 'test_*.py'
+Run: python3 -m unittest discover -s tests -p 'test_*.py'
 
 The test plays the role of the core engine: it copies the template, replaces every placeholder from
 TEMPLATE.json with fake values (a two-project registry), writes a minimal backlog per project and then runs
 the template's `post_generate` commands (`tasks.py check`, the hook tests, the tasks tests) inside the
-generated workspace. It also guards the template itself: every placeholder is declared, nothing WAB-specific
-leaked in, and the bundled skills carry their license.
+generated workspace. It also guards the template itself: every placeholder is declared, nothing from the system
+the template was learned from leaked in, and the bundled skills carry their license.
 """
 from __future__ import annotations
 
@@ -20,24 +20,27 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from test_no_private_data import load_deny, scan_text  # noqa: E402
+
 TOOL_DIR = Path(__file__).resolve().parents[1]
 TEMPLATE_DIR = TOOL_DIR / "templates" / "workspace"
 KNOWLEDGE_DIR = TOOL_DIR / "knowledge"
 TEXT_SUFFIXES = {".md", ".json", ".py", ".txt", ".gitignore", ""}
 PLACEHOLDER_RE = re.compile(r"__[A-Z][A-Z0-9_]*__")
-# Facts that belong to the system the template was learned from and must never reach a new system.
-LEAK_RE = re.compile(
-    r"WAB|wab-|Render|onrender|HyperPay|ARQAM|Amman|JOD|salon|Salon|basim|\+962|wab-dev|wab-prod",
-)
+
+SHARED_SCRIPTS = ("scripts/map.py", "scripts/recall.py", "scripts/line.py", "scripts/qa.py", "scripts/usage.py",
+                  "scripts/test_map_recall.py", "scripts/test_qa_usage.py", "scripts/test_line.py")
+SHARED_FEATURE_FILES = ("features/PACKET_TEMPLATE.md", "features/prompts/worker.md", "features/prompts/contract.md",
+                        "features/prompts/po.md", "features/prompts/docs.md")
 
 FAKE_PROJECTS = {
-    "server": {"title": "Backend API", "prefix": "SRV", "dir": "Acme-Server", "master": "server",
+    "server": {"title": "Backend API", "kind": "server", "prefix": "SRV", "dir": "Acme-Server", "master": "server",
                "backlog": "Acme-Server/docs/Acme_Server_Tasks.md", "session": "Acme-Server/.claude/session.md",
                "memory": "Acme-Server/.claude/memory.md", "integration": "Acme-Server/.claude/Integration.md"},
-    "admin": {"title": "Admin panel", "prefix": "ADM", "dir": "Acme-Admin", "master": "admin",
+    "admin": {"title": "Admin panel", "kind": "web", "prefix": "ADM", "dir": "Acme-Admin", "master": "admin",
               "backlog": "Acme-Admin/docs/Acme_Admin_Tasks.md", "session": "Acme-Admin/.claude/session.md",
               "memory": "Acme-Admin/.claude/memory.md", "integration": "Acme-Admin/.claude/Integration.md"},
-    "app": {"title": "Customer app", "prefix": "APP", "dir": "Acme-App", "master": "app",
+    "app": {"title": "Customer app", "kind": "kmp", "prefix": "APP", "dir": "Acme-App", "master": "app",
             "backlog": "Acme-App/docs/Acme_App_Tasks.md", "session": "Acme-App/.claude/session.md",
             "memory": "Acme-App/.claude/memory.md", "integration": "Acme-App/.claude/Integration.md"},
 }
@@ -129,6 +132,7 @@ class TemplateContract(unittest.TestCase):
             "python3 scripts/tasks.py check",
             "python3 .claude/hooks/test_hooks.py",
             "python3 -m unittest scripts/test_tasks.py",
+            "python3 -m unittest scripts/test_map_recall.py scripts/test_qa_usage.py scripts/test_line.py",
         ])
 
     def test_every_placeholder_in_files_is_declared_and_every_declared_one_is_used(self):
@@ -148,7 +152,8 @@ class TemplateContract(unittest.TestCase):
                     ".claude/hooks/_common.py", ".claude/hooks/guard_git.py", ".claude/hooks/stop_review.py",
                     ".claude/hooks/check_hardcoded.py", ".claude/hooks/session_start.py",
                     ".claude/hooks/prompt_reminder.py", ".claude/hooks/test_hooks.py",
-                    "scripts/tasks.py", "scripts/test_tasks.py",
+                    "scripts/tasks.py", "scripts/test_tasks.py", *SHARED_SCRIPTS, *SHARED_FEATURE_FILES,
+                    "docs/knowledge/system-overview.md", "docs/knowledge/facts.md", "docs/knowledge/session-archive.md",
                     "docs/README.md", "docs/templates/TASKS_TEMPLATE.md", "docs/templates/PRD_TEMPLATE.md",
                     "docs/templates/BRD_TEMPLATE.md", "docs/templates/PROJECT_CLAUDE_TEMPLATE.md",
                     "docs/templates/PROJECT_SESSION_TEMPLATE.md", "docs/templates/PROJECT_MEMORY_TEMPLATE.md",
@@ -165,23 +170,17 @@ class TemplateContract(unittest.TestCase):
         for script in ("session_start.py", "prompt_reminder.py", "guard_git.py", "check_hardcoded.py", "stop_review.py"):
             self.assertIn(script, wired)
 
-    def test_scripts_are_unchanged_copies_of_the_live_tool_except_naming(self):
-        live = TOOL_DIR.parents[2] / "scripts"
-        if not (live / "tasks.py").is_file():
-            self.skipTest("live scripts/ not available")
-        self.assertEqual((live / "test_tasks.py").read_bytes(), (TEMPLATE_DIR / "scripts" / "test_tasks.py").read_bytes())
-        live_lines = (live / "tasks.py").read_text(encoding="utf-8").splitlines()
-        tpl_lines = (TEMPLATE_DIR / "scripts" / "tasks.py").read_text(encoding="utf-8").splitlines()
-        self.assertEqual(len(live_lines), len(tpl_lines))
-        differing = [(a, b) for a, b in zip(live_lines, tpl_lines) if a != b]
-        self.assertLessEqual(len(differing), 3, differing)
-        for live_line, _ in differing:
-            self.assertIn("WAB", live_line, "only the source-system naming may differ")
+    def test_loaded_files_fit_the_budgets_they_ship_with(self):
+        text = (TEMPLATE_DIR / ".claude" / "projects.json").read_text(encoding="utf-8")
+        budgets = json.loads(text.replace("__PROJECTS_JSON__", "{}"))["context_budgets"]["root"]
+        for rel, limit in budgets.items():
+            self.assertLessEqual(len((TEMPLATE_DIR / rel).read_text(encoding="utf-8")) // 4, limit, rel)
 
     def test_no_source_system_facts_leak(self):
+        deny = load_deny()
         for path in list(template_text_files()) + sorted(KNOWLEDGE_DIR.glob("*.md")):
-            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                self.assertIsNone(LEAK_RE.search(line), f"{path.relative_to(TOOL_DIR)}:{n}: {line[:120]}")
+            rel = path.relative_to(TOOL_DIR).as_posix()
+            self.assertEqual([], scan_text(rel, path.read_text(encoding="utf-8"), deny), rel)
 
     def test_knowledge_files_exist_with_required_groups(self):
         lessons = (KNOWLEDGE_DIR / "LESSONS.md").read_text(encoding="utf-8")
@@ -233,6 +232,23 @@ class GeneratedWorkspace(unittest.TestCase):
         self.assertIn("SRV-002", nxt.stdout)
         blocked = run(self.target, "python3 scripts/tasks.py blocked")
         self.assertIn("SRV-003", blocked.stdout)
+
+    def test_the_map_and_the_feature_line_work_in_a_generated_system(self):
+        printed = run(self.target, "python3 scripts/map.py")
+        self.assertEqual(printed.returncode, 0, printed.stderr)
+        for key in FAKE_PROJECTS:
+            self.assertIn(f"`{key}`", printed.stdout)
+        self.assertEqual(run(self.target, "python3 scripts/map.py server").returncode, 0)
+        self.assertEqual(run(self.target, "python3 scripts/recall.py board").returncode, 0)
+        self.assertEqual(run(self.target, "python3 scripts/usage.py --feature none").returncode, 0)
+        self.assertEqual(run(self.target, "python3 scripts/line.py new sample-feature").returncode, 0)
+        packet = (self.target / "features" / "sample-feature" / "PACKET.md").read_text(encoding="utf-8")
+        self.assertIn("# Feature: sample-feature", packet)
+        self.assertNotEqual(run(self.target, "python3 scripts/line.py check sample-feature").returncode, 0, "the template's example task is not real")
+        registry = json.loads((self.target / ".claude" / "projects.json").read_text(encoding="utf-8"))
+        for project in registry["projects"].values():
+            self.assertIn(project["kind"], registry["kinds"])
+        self.assertTrue(registry["line"]["scope_exempt"][0].startswith("Acme-Server/"))
 
     def test_hooks_read_masters_from_the_registry(self):
         code = ("import sys; sys.path.insert(0, '.claude/hooks'); import _common; "

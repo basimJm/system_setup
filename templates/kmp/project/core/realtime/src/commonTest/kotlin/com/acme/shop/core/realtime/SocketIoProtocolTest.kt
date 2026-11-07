@@ -53,7 +53,7 @@ class SocketIoProtocolTest {
     @Test
     fun realServerFramesDecodeToTheEventsTheScreensUse() {
         val order = socket(
-            """42/app,["entity.updated",{"id":"6ade3cfcc2cfb0cb993a1726","referenceNumber":"WAB-Z4JSMB","status":"PENDING",""" +
+            """42/app,["entity.updated",{"id":"6ade3cfcc2cfb0cb993a1726","referenceNumber":"REF-Z4JSMB","status":"PENDING",""" +
                 """"paymentStatus":"PAY_ON_ARRIVAL","appointmentStart":"2026-10-30T08:00:00.000Z",""" +
                 """"appointmentEnd":"2026-10-30T09:00:00.000Z","respondBy":"2026-10-30T09:00:00.000Z",""" +
                 """"total":"49.000","personsCount":1}]""",

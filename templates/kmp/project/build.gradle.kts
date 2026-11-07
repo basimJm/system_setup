@@ -16,7 +16,7 @@ plugins {
 /** Regenerates the Kotlin contract from the server OpenAPI snapshot. */
 tasks.register<Exec>("apiSync") {
     group = "contract"
-    description = "Generate core/data contract DTOs + operations from ../WAB-Server/docs/api/openapi.customer.json"
+    description = "Generate core/data contract DTOs + operations from ../Acme-Server/docs/api/openapi.customer.json"
     commandLine("python3", "scripts/api_sync.py")
 }
 

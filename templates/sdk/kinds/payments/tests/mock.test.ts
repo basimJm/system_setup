@@ -6,7 +6,7 @@ const request = (overrides: Partial<MockRequest>): MockRequest => ({
   method: 'POST',
   url: '/v1/sessions',
   headers: auth,
-  body: JSON.stringify({ orderId: 'o1', amount: 100, currency: 'JOD' }),
+  body: JSON.stringify({ orderId: 'o1', amount: 100, currency: 'KWD' }),
   ...overrides,
 });
 
@@ -36,7 +36,7 @@ describe('MockGateway.handle', () => {
     });
     expect(mock.handle(request({})).status).toBe(200);
     expect(
-      mock.handle(request({ body: JSON.stringify({ orderId: 'o1', amount: 1, currency: 'JOD' }) })),
+      mock.handle(request({ body: JSON.stringify({ orderId: 'o1', amount: 1, currency: 'KWD' }) })),
     ).toEqual({
       status: 409,
       body: { error: { code: 'IDEMPOTENCY_CONFLICT' } },

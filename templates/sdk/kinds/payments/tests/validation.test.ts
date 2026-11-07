@@ -51,18 +51,18 @@ describe('validation', () => {
     ).toBe(true);
     expect(
       fails(() => {
-        assertCurrency('JOD', []);
-        assertCurrency('JOD', ['JOD']);
+        assertCurrency('KWD', []);
+        assertCurrency('KWD', ['KWD']);
       }),
     ).toBe(false);
     expect(
       fails(() => {
-        assertCurrency('USD', ['JOD']);
+        assertCurrency('USD', ['KWD']);
       }),
     ).toBe(true);
     expect(
       fails(() => {
-        assertCurrency('jod', []);
+        assertCurrency('kwd', []);
       }),
     ).toBe(true);
   });
@@ -76,7 +76,7 @@ describe('validation', () => {
             metadata: { a: '1' },
             destinations: [{ accountId: 'acc-1', amount: 10_000 }],
           }),
-          ['JOD'],
+          ['KWD'],
         );
       }),
     ).toBe(false);

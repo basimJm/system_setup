@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "platforms": [
+    {"id": "server", "title": "Server"},
+    {"id": "web", "title": "Web"},
+    {"id": "android", "title": "Android"},
+    {"id": "ios", "title": "iOS"}
+  ],
+  "kinds": [
+    {
+      "id": "server",
+      "title": "Backend server",
+      "description": "The API, the database access, the scheduled jobs and the real-time channel every other module talks to.",
+      "platforms": {"allowed": ["server"], "default": ["server"]},
+      "deployable": true,
+      "stores_data": true,
+      "generated": true
+    },
+    {
+      "id": "admin",
+      "title": "Admin web panel",
+      "description": "The web panel the owner's team uses to control the whole system.",
+      "platforms": {"allowed": ["web"], "default": ["web"]},
+      "deployable": true,
+      "stores_data": false,
+      "generated": true
+    },
+    {
+      "id": "app",
+      "title": "Mobile app",
+      "description": "An app for one kind of user (customer, merchant, driver ...), shared Kotlin code for Android and iOS.",
+      "platforms": {"allowed": ["android", "ios", "web"], "default": ["android", "ios"]},
+      "deployable": false,
+      "stores_data": false,
+      "generated": "android and ios together"
+    },
+    {
+      "id": "web",
+      "title": "Web app",
+      "description": "A website or web application for one kind of user (customer portal, merchant site ...).",
+      "platforms": {"allowed": ["web"], "default": ["web"]},
+      "deployable": true,
+      "stores_data": false,
+      "generated": false
+    }
+  ]
+}

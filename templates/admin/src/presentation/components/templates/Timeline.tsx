@@ -22,7 +22,7 @@ export interface TimelineProps {
   empty: string;
 }
 
-/** Status history: one row per change, in the order given, times in Asia/Amman with language digits. */
+/** Status history: one row per change, in the order given, times in Etc/GMT-3 with language digits. */
 export function Timeline({ entries, ariaLabel, empty }: TimelineProps) {
   const { language } = useLanguage();
   if (entries.length === 0) return <p className="app-timeline__empty">{empty}</p>;

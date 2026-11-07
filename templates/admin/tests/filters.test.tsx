@@ -31,7 +31,7 @@ describe('DateRangePicker', () => {
     expect(screen.getByText(/2026-10-08 – 2026-10-14/)).toBeVisible();
   });
 
-  it('choosing a preset resolves its days in Amman', async () => {
+  it('choosing a preset resolves its days in the business zone', async () => {
     renderWithApp(<PickerHarness />);
     await userEvent.selectOptions(screen.getByLabelText('Period'), 'lastMonth');
     expect(screen.getByRole('status')).toHaveTextContent('lastMonth|2026-09-01|2026-09-30|false');
@@ -78,7 +78,7 @@ describe('FilterBar', () => {
     renderWithApp(
       <FilterBar
         active={[
-          { key: 'city', label: 'City: Amman', onRemove: remove },
+          { key: 'city', label: 'City: Northville', onRemove: remove },
           { key: 'state', label: 'State: Live', onRemove: () => undefined },
         ]}
         onClearAll={clear}
@@ -88,7 +88,7 @@ describe('FilterBar', () => {
     );
     expect(screen.getByRole('button', { name: 'control' })).toBeVisible();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
-    await userEvent.click(screen.getByRole('button', { name: 'Remove filter City: Amman' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove filter City: Northville' }));
     expect(remove).toHaveBeenCalledTimes(1);
     await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     expect(clear).toHaveBeenCalledTimes(1);
@@ -166,7 +166,7 @@ describe('FiltersSection (gallery)', () => {
         <FiltersSection />
       </main>,
     );
-    await userEvent.selectOptions(screen.getByLabelText('Region'), 'irbid');
+    await userEvent.selectOptions(screen.getByLabelText('Region'), 'eastford');
     expect(screen.getByText('Region: South')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Remove filter Region: South' }));
     expect(screen.queryByText('Region: South')).toBeNull();

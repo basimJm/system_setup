@@ -40,11 +40,11 @@ class RealtimeRefreshTest {
         assertEquals(4, events.refreshesFor(RealtimeEvents.ENTITY_UPDATED, entityId = "b1").toList().size, "b1 + the 2 id-less events")
     }
 
-    /** The real `entity.updated` payload (WAB-Server `sockets/ordersEvents.ts` summaryOf): no `updatedAt`. */
+    /** The real `entity.updated` payload (Acme-Server `sockets/ordersEvents.ts` summaryOf): no `updatedAt`. */
     private fun serverSummary(paymentStatus: String) = RealtimeEvent(
         RealtimeEvents.ENTITY_UPDATED,
         Json.parseToJsonElement(
-            """{"id":"b1","referenceNumber":"WAB-RM7GX8","status":"APPROVED","paymentStatus":"$paymentStatus",
+            """{"id":"b1","referenceNumber":"REF-RM7GX8","status":"APPROVED","paymentStatus":"$paymentStatus",
             |"appointmentStart":"2026-10-28T06:00:00.000Z","appointmentEnd":"2026-10-28T06:45:00.000Z",
             |"respondBy":"2026-10-28T06:00:00.000Z","total":"15.000","personsCount":1}""".trimMargin(),
         ),

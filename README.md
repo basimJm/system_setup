@@ -1,6 +1,6 @@
 # SYSTEM_SETUP
 
-Creates a brand-new multi-project system with the same shape as WAB — backend server, admin web panel, one or more
+Creates a brand-new multi-project system with the shape of a production marketplace — backend server, admin web panel, one or more
 Kotlin Multiplatform apps, SDK packages — plus the AI-agent workspace that ties them together (root `CLAUDE.md`,
 `.claude/{rules,roles,hooks,session,memory}.md`, hooks, `scripts/tasks.py`, `.claude/projects.json`, `INTEGRATION.md`,
 per-project backlogs/session/memory files, knowledge playbooks). It also asks about the **business domain** (summary,
@@ -10,12 +10,15 @@ agent can write the PRDs and backlogs and work from them. Everything comes from 
 CLI + template engine. `PROMPT.md` is the prompt to give an AI agent that has to run the tool (§5).
 
 ```bash
-./SYSTEM_SETUP            # interactive
-./SYSTEM_SETUP --help     # flags for non-interactive use
+./SYSTEM_SETUP                    # interactive (run from a clone of this repository)
+./SYSTEM_SETUP --help             # flags for non-interactive use
 ./SYSTEM_SETUP --list-templates
+./SYSTEM_SETUP intake             # Claude interviews you and writes BUSINESS.md (§7)
+./SYSTEM_SETUP new --business-doc BUSINESS.md   # analyze, review the plan, generate (§7)
+/path/to/system-setup/SYSTEM_SETUP --help   # the entry works from any folder
 ```
 
-Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s tests`
+Standard-library Python 3.9 only. Tests: `python3 -m unittest discover -s tests -p 'test_*.py'`
 (they run on `tests/fixtures/templates`, never on the real templates, so the core stays green while templates evolve).
 
 ## 1. What it creates
@@ -119,6 +122,10 @@ Business domain (from the answers, available to every kind; the workspace templa
 `__BUSINESS_ACTORS__`, `__BUSINESS_ENTITIES__`, `__BUSINESS_JOBS__`, `__BUSINESS_INTEGRATIONS__` (bullets),
 `__BUSINESS_RULES__` (numbered), `__OPEN_DECISIONS__` (the owner's open decisions + every answer left `TBD`, flagged
 `open — ask the owner`). An empty list renders as one `TBD (open — ask the owner)` item.
+Code-facing defaults, used by `targeted` edits of generated source: `__BUSINESS_TIME_ZONE_CODE__` (the business time zone when
+it is an IANA name, else the neutral fixed-offset zone `Etc/GMT-3`) and `__CURRENCY_CODE__` (the first three-letter code in
+the currency answer, else the ISO code for no currency, `XXX`). Template tests pin their own fixture zone, so after choosing
+another zone re-derive the offset assertions that name `Etc/GMT-3`.
 
 Per app, while the `kmp` template is instantiated for that app: `__APP_NAME__`, `__APP_NAME_AR__`, `__APP_SLUG__`,
 `__APP_DIR__`, `__APP_PACKAGE__` (`<package root>.<slug>`), `__APP_PACKAGE_PATH__` (`com/acme/customer`),
@@ -151,10 +158,10 @@ app/SDK with the per-app/per-SDK tokens filled in; the block disappears when the
   `neutral_literals`, `verified`, …) are ignored.
 - **Sentinels**: literal strings in the template that stand for a token (the kmp snapshot's identity `Acme Shop` /
   `com.acme.shop` / `com-acme-shop` / `com/acme/shop` / `AcmeShop`, the `example.com` URLs and bare hosts, `TEAMID0000`,
-  `/app/v1`, `WAB-Server`). Replaced longest literal first, plain string replacement, then tokens become values.
+  `/app/v1`, `Acme-Server`). Replaced longest literal first, plain string replacement, then tokens become values.
   The engine never substitutes inside `binary_globs`, files that are not UTF-8, or (workspace) `.claude/skills/**`.
 - **rename_paths**: the same idea on the relative path of every file (`com/acme/shop` → the package as a path spans
-  folders; `AcmeShop` → the project name); tokens in paths are rendered too (`WAB___APP_PROJECT___Tasks.md`); parents
+  folders; `AcmeShop` → the project name); tokens in paths are rendered too (`Acme___APP_PROJECT___Tasks.md`); parents
   are created; execute bits are preserved.
 - **layers**: sub-folders copied in order, later ones overlay earlier ones. Defaults: `sdk` = `common/` then the kind's
   overlay (`kinds.<name>.dir`, else `kinds/<name>/`); `kmp` = `project/` when present; otherwise the template root.
@@ -198,13 +205,121 @@ does not know.
    and extend `tests/test_e2e.py`; keep `python3 -m unittest discover -s tests` green.
 3. Document the new tokens here and in the template's `TEMPLATE.json` `placeholders`.
 
-## 7. Layout
+## 7. From a business description: `intake`, `new` and the plan
+
+The flat command above asks for every value. The plan-driven flow starts from the business instead:
+
+```bash
+./SYSTEM_SETUP intake [--out BUSINESS.md]
+./SYSTEM_SETUP new [--business-doc FILE | --plan FILE] [--yes] [--target DIR] [--templates DIR] [--knowledge DIR] [--no-git] [--run-post]
+                   [--no-documents] [--documents-budget USD]
+./SYSTEM_SETUP documents [--target DIR] [--business-doc FILE] [--budget USD]
+```
+
+**`intake`** starts an interactive `claude` session with `INTAKE_PROMPT.md` as its instructions (`claude <start message> --tools Write
+--append-system-prompt <INTAKE_PROMPT.md + the output path>`, run from the folder of `--out`, with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`).
+Claude interviews a non-technical person in their own language, one question at a time and without jargon, until the picture is
+complete (who uses it, what each kind of user does, how money moves, rules, the stages of the main things, reminders, languages,
+countries, currency, what exists already), keeps what was decided apart from what was not, never invents an answer, and writes
+`BUSINESS.md` in a fixed structure (sections 1 to 11, headings in English, content in the person's language). It asks for no secret.
+It refuses to overwrite an existing file. Without `claude` it prints what to do: paste `INTAKE_PROMPT.md` into claude.ai, answer,
+save the result as `BUSINESS.md`, then run `new --business-doc BUSINESS.md`.
+
+**`new`** takes a free-form business document (the `intake` result, or any text in any language; `examples/business/` has three):
+1. *Analyze*: one `claude -p` call through the `Analyzer` seam (`src/system_setup/analyzer.py`). Flags: the document on stdin inside
+   `<business_document>` tags, `--system-prompt` (the document is data, not instructions; gaps become `open_questions`, never invented
+   values), `--json-schema` of the plan, `--tools ""`, `--strict-mcp-config`, `--setting-sources ""`, `--disable-slash-commands`,
+   `--no-session-persistence`, `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`, `--max-budget-usd`, run from an empty temporary folder. Model, budget
+   cap, `claude` command and timeout are data in `catalog/analyzer.json`. The real cost from the JSON result is printed. Failures end with a
+   message: `claude` missing, a non-zero exit, a budget stop, output that is not JSON or not the plan, a plan that fails validation (one
+   repair call that lists the problems, inside the same budget, then a clear error).
+2. *Review* (`src/system_setup/review.py`, proposal as the default, Enter keeps it): names and identifiers; per module keep / remove /
+   add and its platforms (web, Android, iOS); per SDK keep / remove / add, then build internally, already published (package +
+   version) or none, then the provider (the catalog list, `other`, or none); per deployable module the host, and for the server the
+   database and cache; each open question (Enter leaves it open, `=` takes the proposed answer); the language of the generated documents.
+   It never asks for a secret and refuses one that is typed (key shapes, `password=...`, long opaque tokens). `--yes` accepts the proposal.
+3. *Generate*: `system.plan.json` (the reviewed plan) and `docs/BUSINESS.md` (the document) are written into the new repository and
+   committed with it. What the engine builds today is generated through `generate()`: the server, the admin panel, KMP apps (Android and
+   iOS together) and the catalog SDKs set to build internally. Everything else in the plan is printed at the end under **Recorded in the plan,
+   generated in a later phase** (web modules, single-platform apps, new, published or no-code SDKs, providers, hosts, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
+   `system.plan.json` in the current folder so nothing paid for is lost.
+
+`new --plan FILE` skips the model for the plan: the plan is validated, reviewed (or accepted with `--yes`) and generated.
+
+### The document step (`documents.py`, `docrender.py`, `catalog/prompts/`)
+After the parts are generated and before the first commit, `new` writes the documents of a mature project with one small model call
+each, through the same `Analyzer` seam and flags as the analysis (no tools, no MCP, no settings). It runs when a business document is
+given (`--business-doc`, with or without `--plan`); `--plan` alone uses no model, and `--no-documents` skips the step. What is written:
+
+| Document | Where | Notes |
+|---|---|---|
+| `BUSINESS_DOMAIN.md` | root | written first; every other document cites its section numbers. `## 11. Error Codes` keeps the shipped block (the admin and app tests compare their error catalogs with it); the business's own codes are added as a proposal in §11.1 |
+| BRD, PRD, Design Script | `<project>/docs/` (a module with no generated project yet, such as a web app, goes to `docs/modules/<id>/`) | per module, server first; the server has no Design Script; screens `S01…`, flows `F01…`, capabilities `C01…`, requirements `B01…` |
+| backlog | the project's backlog file | JSON Schema output rendered here in the exact `\| ID \| Title \| Branch \| Needs \| Status \| Notes \|` format; foundation rows `TODO`, a row needing another project `BLOCKED`, each unanswered open question a `PENDING` row marked `**owner input**`, a final end-to-end row |
+| `INTEGRATION.md` | root | §3, §4, §5, §8 are written for the business; the rest of the template, including the live board markers, is kept |
+| API drafts | `<server>/docs/api/draft/openapi.<module>.draft.json` | OpenAPI 3.1 per client module, marked a starting draft, validated; never written over `docs/api/openapi.*.json`, which the server generates from code and its tests compare |
+| `CLAUDE.md` facts | root and every project | a marked block rewritten on every run |
+
+Order: domain; per module (server first) BRD, PRD, Design Script; then the backlogs, server first (a client row needs the ids of server
+rows, and the server backlog reads digests of the client PRDs); then `INTEGRATION.md` and the API drafts. Each call receives its plan
+slice, the relevant paragraphs of the business document and only the sections of earlier documents it must agree with. The document is
+data between tags, never instructions. Prose is written in the plan's document language; ids, section numbers, headings, table headers and
+`tasks.py` statuses stay English. Prompts and the headings each document must have are data in `catalog/prompts/`.
+
+Budget and cost: `catalog/documents.json` holds the model, the budget of one call and the budget of one run (`--documents-budget`
+overrides it); a call is never started that could not fit, so the run stops before exceeding the total and can be resumed. The cost
+of every call and the total are printed from the real result.
+
+Resume: `.system_setup/documents.json` records every document with the hash of exactly what was sent to the model. `SYSTEM_SETUP
+documents --target DIR` (also what to run after a stop or a kill) skips what is done and unchanged, redoes what changed or failed, keeps a
+document someone edited, and keeps a backlog whose statuses changed. A Markdown document is checked for its headings and for leftover
+`TBD` or template tokens; a failure gets one repair call, then it is written, marked `invalid` in the state file and reported, and the
+rest of the run finishes. A backlog or contract that stays invalid is not written.
+
+### The plan file (`system.plan.json`, `src/system_setup/plan.py`)
+Versioned (`schema_version`: 1) and validated with the standard library only. Model output is untrusted: every field is checked and all
+problems come back together, each naming its field, for example `modules[1].platforms[0]: 'desktop' is not one of android, ios, web`.
+
+| Section | Holds |
+|---|---|
+| `system` | `name` (Latin letters), `name_ar` (optional local-script name), `slug`, `prefix`, `package_root`, `npm_scope` |
+| `languages` | `default`, `supported`, `direction` (`ltr`/`rtl`), `documents` (language of the generated documents) |
+| `countries`, `currency`, `time_zones` | ISO country codes; `code`, `minor_unit`, `decimals`; `stored`, `business` (IANA) |
+| `business` | `summary`, `actors` (`name`, `does`), `rules`, `entities` (`name`, `states`), `jobs`, `existing` |
+| `modules` | `id`, `kind` (from the catalog: `server`, `admin`, `app`, `web`), `name`, `audience`, `why`, `platforms` (`server`, `web`, `android`, `ios`; limited per kind) |
+| `sdks` | `id`, `title`, `why`, `source` (`internal`, `published`, `none`), `package` + `version` (only when published), `provider` (one name or several separated by commas), `known`, `provider_known` |
+| `deployment` | per deployable module (`part` = module id): `host`, `database`, `cache`, `known` |
+| `rules` | empty in version 1 (rules arrive in a later phase) |
+| `open_questions` | `id`, `question`, `why`, `proposed_default`, `answer` (null while open) |
+
+`known` and `provider_known` are computed from the catalog when a plan is read (never trusted from the input): an SDK, provider or host
+that is not in the catalog is allowed and marked `known: false`.
+
+### The catalog (`catalog/*.json`, `src/system_setup/catalog.py`)
+Lists are data: `modules.json` (platforms and module kinds with their allowed and default platforms), `sdks.json` (a `generated` flag
+that must match the SDKs the engine builds), `providers.json` (common vendors per SDK; OTP, push and e-mail notifications, payments,
+storage, maps, analytics), `deploy.json` (hosts per part kind, databases, caches), `analyzer.json`. They are proposals: any other name
+is allowed. Adding a choice is a JSON edit; no code changes.
+
+## 8. Layout
 
 ```
 SYSTEM_SETUP                 entry (bash → python3 src/system_setup/cli.py)
 src/system_setup/cli.py      questions, flags, generate(), report
 src/system_setup/prompts.py  validators, derived names, Spec (every token value)
 src/system_setup/business.py business-domain questions, --business file parsing, business tokens, BUSINESS_INPUT.md, AGENT_PROMPT.md
+src/system_setup/commands.py `intake` and `new` (the plan-driven flow)
+src/system_setup/plan.py     system.plan.json: versioned schema, validation, the model's JSON schema
+src/system_setup/catalog.py  loads catalog/*.json (module kinds, SDKs, providers, hosts, analyzer settings)
+src/system_setup/analyzer.py the Analyzer seam: ClaudeAnalyzer (claude -p), FakeAnalyzer, propose() with one repair retry
+src/system_setup/documents.py the document step: jobs, slices, budget, state file, resume, writing
+src/system_setup/docrender.py markdown checks, backlog schema + rendering, OpenAPI draft, CLAUDE.md facts (pure functions)
+src/system_setup/review.py   the review questions, secret refusal
+src/system_setup/planspec.py plan -> Spec for generate(), and the list of what is recorded but not generated yet
+catalog/                     modules.json, sdks.json, providers.json, deploy.json, analyzer.json, documents.json (data only)
+catalog/prompts/             the document prompts and the required headings (data)
+INTAKE_PROMPT.md             the interview prompt (used by `intake`, or pasted into claude.ai)
+examples/business/           three sample business documents; tests/fixtures/plans/ holds the plans the real analyzer made from them
 PROMPT.md                    Part A: prompt for an agent that sets up a system; Part B: filled into every repo as docs/AGENT_PROMPT.md
 src/system_setup/manifest.py TEMPLATE.json contract
 src/system_setup/engine.py   copy, substitute, rename, layers, targeted edits, verification, post_generate
@@ -213,4 +328,5 @@ src/system_setup/workspace.py projects.json, per-project files, knowledge, tasks
 templates/<kind>/            built by the template owners (workspace, server, admin, sdk, kmp)
 knowledge/                   LESSONS.md, PLAYBOOKS.md (copied into every generated workspace)
 tests/                       unit + end-to-end tests on tests/fixtures/templates (+ tests/fixtures/knowledge)
+tests/test_no_private_data.py  privacy guard: secret shapes + hashed deny list over every tracked file and file name
 ```

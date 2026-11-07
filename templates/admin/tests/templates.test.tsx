@@ -41,7 +41,7 @@ describe('ListPage', () => {
         actions={<button type="button">New</button>}
         filters={{
           controls: <button type="button">filter control</button>,
-          active: [{ key: 'c', label: 'City: Amman', onRemove: () => undefined }],
+          active: [{ key: 'c', label: 'City: Northville', onRemove: () => undefined }],
         }}
         toolbar={{ selectedCount: 2 }}
         table={table}
@@ -150,7 +150,7 @@ describe('Timeline', () => {
     { id: '1', title: 'Requested', at: '2026-10-11T18:20:00Z', reason: 'Because' },
   ];
 
-  it('lists entries in the given order with actor, Amman 12-hour time and reason', () => {
+  it('lists entries in the given order with actor, business-zone 12-hour time and reason', () => {
     renderWithApp(<Timeline entries={entries} ariaLabel="History" empty="none" />);
     const items = within(screen.getByRole('list', { name: 'History' })).getAllByRole('listitem');
     expect(items).toHaveLength(2);

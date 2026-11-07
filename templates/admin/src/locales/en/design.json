@@ -83,10 +83,10 @@
       "saved": "Saved (demo only, nothing was sent)",
       "updatedBy": "Layth Al-Hasan",
       "option": {
-        "amman": "North",
-        "irbid": "South",
-        "zarqa": "East",
-        "aqaba": "West"
+        "northville": "North",
+        "eastford": "South",
+        "southport": "East",
+        "westbury": "West"
       },
       "currency": "USD"
     },
@@ -103,10 +103,10 @@
       "bulkApprove": "Approve selected",
       "exported": "Export requested ({{count}})",
       "city": {
-        "amman": "North",
-        "irbid": "South",
-        "zarqa": "East",
-        "aqaba": "West"
+        "northville": "North",
+        "eastford": "South",
+        "southport": "East",
+        "westbury": "West"
       },
       "pagination": "Data table v2 pagination",
       "item": "Item"
@@ -117,9 +117,9 @@
       "anyCity": "Any region",
       "exported": "Exports requested: {{list}}",
       "cities": {
-        "amman": "North",
-        "irbid": "South",
-        "zarqa": "East"
+        "northville": "North",
+        "eastford": "South",
+        "southport": "East"
       }
     },
     "overlays": {
