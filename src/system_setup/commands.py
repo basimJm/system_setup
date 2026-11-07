@@ -25,7 +25,7 @@ from workspace import git_init, run_tasks_check
 INTAKE_PROMPT_FILE = "INTAKE_PROMPT.md"
 INTAKE_START = "Start the interview now."
 BUSINESS_DOC_REL = SAVED_DOCUMENT
-SUBCOMMANDS = ("intake", "new", "documents", "lessons")
+SUBCOMMANDS = ("intake", "new", "documents", "lessons", "update")
 NO_CLAUDE_MDS = {"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"}
 
 NO_CLAUDE_HELP = """\
@@ -265,6 +265,9 @@ def run(argv: List[str], generate: Callable, print_report: Callable, **seams) ->
     if argv[0] == "lessons":   # lessons.py / lessons_cmd.py: list the tool's lessons, import a project's reviewed ones
         from lessons_cmd import run_lessons
         return run_lessons(argv[1:], **{k: v for k, v in seams.items() if k in ("say", "reader")})
+    if argv[0] == "update":   # update.py: a changed business or plan is followed with additions only
+        from update import run_update
+        return run_update(argv[1:], generate, **{k: v for k, v in seams.items() if k in ("analyzer", "reader", "say")})
     if argv[0] == "documents":
         return run_documents_command(argv[1:], **{k: v for k, v in seams.items() if k in ("analyzer", "say")})
     if argv[0] == "intake":

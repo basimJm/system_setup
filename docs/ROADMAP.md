@@ -80,7 +80,7 @@ Each phase is one branch and one PR into `main`.
 
 ### 8. Update and full proof
 - [ ] Server audiences come from the plan: no `merchant` or `customer` module, route or contract unless the plan has that audience.
-- [ ] `update` adds a module or SDK and refreshes documents without overwriting work.
+- [x] `update` adds a module or SDK and refreshes documents without overwriting work. (additions only; removals and changed parts become PENDING rows; an edited document gets a `.proposed.md`)
 - [ ] The fallback time zone is `UTC` and any zone or currency works without editing template tests (today the fallback is
       `Etc/GMT-3` and template tests pin it).
 - [ ] End to end on the three samples: generated, checked, built, first task run through the production line.
