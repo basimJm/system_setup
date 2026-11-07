@@ -138,7 +138,7 @@ class NewCommandTest(TempDirTest):
         target = self.root / "from-doc"
         out = io.StringIO()
         with redirect_stdout(out):
-            code = run_new(["--business-doc", str(document), "--yes", "--target", str(target), "--no-git", *self.fixture_args()],
+            code = run_new(["--business-doc", str(document), "--yes", "--target", str(target), "--no-git", "--no-documents", *self.fixture_args()],
                            generate, print_report, analyzer=fake)
         self.assertEqual(0, code, out.getvalue())
         self.assertEqual("# Acme Shop\nWe sell groceries.\n", fake.requests[0].document)
@@ -161,7 +161,7 @@ class NewCommandTest(TempDirTest):
 
         out = io.StringIO()
         with redirect_stdout(out):
-            code = run_new(["--no-git", *self.fixture_args()], generate, print_report, analyzer=FakeAnalyzer([valid_plan_data()]), reader=reader)
+            code = run_new(["--no-git", "--no-documents", *self.fixture_args()], generate, print_report, analyzer=FakeAnalyzer([valid_plan_data()]), reader=reader)
         self.assertEqual(0, code, out.getvalue())
         self.assertTrue(any("Keep or remove" in p or "keep or remove" in p for p in prompts))
         self.assertTrue(any(p.startswith("Continue?") for p in prompts))

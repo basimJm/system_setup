@@ -212,6 +212,8 @@ The flat command above asks for every value. The plan-driven flow starts from th
 ```bash
 ./SYSTEM_SETUP intake [--out BUSINESS.md]
 ./SYSTEM_SETUP new [--business-doc FILE | --plan FILE] [--yes] [--target DIR] [--templates DIR] [--knowledge DIR] [--no-git] [--run-post]
+                   [--no-documents] [--documents-budget USD]
+./SYSTEM_SETUP documents [--target DIR] [--business-doc FILE] [--budget USD]
 ```
 
 **`intake`** starts an interactive `claude` session with `INTAKE_PROMPT.md` as its instructions (`claude <start message> --tools Write
@@ -239,11 +241,40 @@ save the result as `BUSINESS.md`, then run `new --business-doc BUSINESS.md`.
 3. *Generate*: `system.plan.json` (the reviewed plan) and `docs/BUSINESS.md` (the document) are written into the new repository and
    committed with it. What the engine builds today is generated through `generate()`: the server, the admin panel, KMP apps (Android and
    iOS together) and the catalog SDKs set to build internally. Everything else in the plan is printed at the end under **Recorded in the plan,
-   generated in a later phase** (web modules, single-platform apps, new, published or no-code SDKs, providers, hosts, other languages,
-   the document language) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
+   generated in a later phase** (web modules, single-platform apps, new, published or no-code SDKs, providers, hosts, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
    `system.plan.json` in the current folder so nothing paid for is lost.
 
-`new --plan FILE` skips the model entirely: the plan is validated, reviewed (or accepted with `--yes`) and generated.
+`new --plan FILE` skips the model for the plan: the plan is validated, reviewed (or accepted with `--yes`) and generated.
+
+### The document step (`documents.py`, `docrender.py`, `catalog/prompts/`)
+After the parts are generated and before the first commit, `new` writes the documents of a mature project with one small model call
+each, through the same `Analyzer` seam and flags as the analysis (no tools, no MCP, no settings). It runs when a business document is
+given (`--business-doc`, with or without `--plan`); `--plan` alone uses no model, and `--no-documents` skips the step. What is written:
+
+| Document | Where | Notes |
+|---|---|---|
+| `BUSINESS_DOMAIN.md` | root | written first; every other document cites its section numbers. `## 11. Error Codes` keeps the shipped block (the admin and app tests compare their error catalogs with it); the business's own codes are added as a proposal in §11.1 |
+| BRD, PRD, Design Script | `<project>/docs/` (a module with no generated project yet, such as a web app, goes to `docs/modules/<id>/`) | per module, server first; the server has no Design Script; screens `S01…`, flows `F01…`, capabilities `C01…`, requirements `B01…` |
+| backlog | the project's backlog file | JSON Schema output rendered here in the exact `\| ID \| Title \| Branch \| Needs \| Status \| Notes \|` format; foundation rows `TODO`, a row needing another project `BLOCKED`, each unanswered open question a `PENDING` row marked `**owner input**`, a final end-to-end row |
+| `INTEGRATION.md` | root | §3, §4, §5, §8 are written for the business; the rest of the template, including the live board markers, is kept |
+| API drafts | `<server>/docs/api/draft/openapi.<module>.draft.json` | OpenAPI 3.1 per client module, marked a starting draft, validated; never written over `docs/api/openapi.*.json`, which the server generates from code and its tests compare |
+| `CLAUDE.md` facts | root and every project | a marked block rewritten on every run |
+
+Order: domain; per module (server first) BRD, PRD, Design Script; then the backlogs, server first (a client row needs the ids of server
+rows, and the server backlog reads digests of the client PRDs); then `INTEGRATION.md` and the API drafts. Each call receives its plan
+slice, the relevant paragraphs of the business document and only the sections of earlier documents it must agree with. The document is
+data between tags, never instructions. Prose is written in the plan's document language; ids, section numbers, headings, table headers and
+`tasks.py` statuses stay English. Prompts and the headings each document must have are data in `catalog/prompts/`.
+
+Budget and cost: `catalog/documents.json` holds the model, the budget of one call and the budget of one run (`--documents-budget`
+overrides it); a call is never started that could not fit, so the run stops before exceeding the total and can be resumed. The cost
+of every call and the total are printed from the real result.
+
+Resume: `.system_setup/documents.json` records every document with the hash of exactly what was sent to the model. `SYSTEM_SETUP
+documents --target DIR` (also what to run after a stop or a kill) skips what is done and unchanged, redoes what changed or failed, keeps a
+document someone edited, and keeps a backlog whose statuses changed. A Markdown document is checked for its headings and for leftover
+`TBD` or template tokens; a failure gets one repair call, then it is written, marked `invalid` in the state file and reported, and the
+rest of the run finishes. A backlog or contract that stays invalid is not written.
 
 ### The plan file (`system.plan.json`, `src/system_setup/plan.py`)
 Versioned (`schema_version`: 1) and validated with the standard library only. Model output is untrusted: every field is checked and all
@@ -281,9 +312,12 @@ src/system_setup/commands.py `intake` and `new` (the plan-driven flow)
 src/system_setup/plan.py     system.plan.json: versioned schema, validation, the model's JSON schema
 src/system_setup/catalog.py  loads catalog/*.json (module kinds, SDKs, providers, hosts, analyzer settings)
 src/system_setup/analyzer.py the Analyzer seam: ClaudeAnalyzer (claude -p), FakeAnalyzer, propose() with one repair retry
+src/system_setup/documents.py the document step: jobs, slices, budget, state file, resume, writing
+src/system_setup/docrender.py markdown checks, backlog schema + rendering, OpenAPI draft, CLAUDE.md facts (pure functions)
 src/system_setup/review.py   the review questions, secret refusal
 src/system_setup/planspec.py plan -> Spec for generate(), and the list of what is recorded but not generated yet
-catalog/                     modules.json, sdks.json, providers.json, deploy.json, analyzer.json (data only)
+catalog/                     modules.json, sdks.json, providers.json, deploy.json, analyzer.json, documents.json (data only)
+catalog/prompts/             the document prompts and the required headings (data)
 INTAKE_PROMPT.md             the interview prompt (used by `intake`, or pasted into claude.ai)
 examples/business/           three sample business documents; tests/fixtures/plans/ holds the plans the real analyzer made from them
 PROMPT.md                    Part A: prompt for an agent that sets up a system; Part B: filled into every repo as docs/AGENT_PROMPT.md

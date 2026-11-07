@@ -243,7 +243,7 @@ def git_init(repo_root: Path, message: str, masters: Optional[List[str]] = None)
     return None
 
 
-def next_steps(spec: Spec, registry: Dict[str, object], git_done: bool = True) -> List[str]:
+def next_steps(spec: Spec, registry: Dict[str, object], git_done: bool = True, documents: bool = False) -> List[str]:
     masters = spec.masters()
     repo = f"git@github.com:{spec.owner_github}/{spec.repo_name or spec.slug}.git"
     lines = [f"cd {spec.target}"]
@@ -259,8 +259,13 @@ def next_steps(spec: Spec, registry: Dict[str, object], git_done: bool = True) -
         kind = "server" if name == "server" else "admin" if name == "admin" else "sdk" if name in spec.sdks else "app"
         lines.append(f"{project['dir']}: install `{INSTALL_COMMANDS[kind]}` · gate `{GATE_COMMANDS[kind]}` · "
                      f"first task `python3 scripts/tasks.py next {name}` then `tasks.py set {project['prefix']}-001 \"IN PROGRESS\"`")
-    lines.append("Give docs/AGENT_PROMPT.md to your AI agent: it fills the TBD answers of BUSINESS_DOMAIN.md with the owner, "
-                 "writes the PRDs/BRDs and every backlog from the business domain, then works task by task.")
+    if documents:
+        lines.append("Give docs/AGENT_PROMPT.md to your AI agent: the tool already wrote BUSINESS_DOMAIN.md, the BRD/PRD/Design Script and backlog "
+                     "of every module, INTEGRATION.md and the starting API drafts; the agent reviews them, resolves the PENDING rows with you, "
+                     "then starts with `python3 scripts/tasks.py next <project>`.")
+    else:
+        lines.append("Give docs/AGENT_PROMPT.md to your AI agent: it fills the TBD answers of BUSINESS_DOMAIN.md with the owner, "
+                     "writes the PRDs/BRDs and every backlog from the business domain, then works task by task.")
     lines.append("Read CLAUDE.md and .claude/rules.md at the root before the first task; the hooks in .claude/settings.json "
                  "enforce branching, tests and the review.")
     return lines

@@ -82,7 +82,10 @@ def system_prompt(catalog: Catalog) -> str:
 
 
 class AnalyzerError(Exception):
-    """Base of every analysis failure; the message is written for the person running the tool."""
+    """Base of every analysis failure; the message is written for the person running the tool. `cost_usd` is what the failed
+    call still cost, when the model reported it."""
+
+    cost_usd: float = 0.0
 
 
 class ClaudeNotFound(AnalyzerError):
@@ -110,11 +113,18 @@ class PlanRejected(AnalyzerError):
 
 @dataclass
 class Request:
+    """One model call. The default (`mode` "plan") is the analysis of a business document. The document step (documents.py) sends
+    its own `system` prompt and `message`: `mode` "json" asks for the structured `schema`, "text" for plain Markdown."""
     document: str
     catalog: Catalog
     budget_usd: Optional[float] = None
     previous: Any = None
     errors: List[str] = field(default_factory=list)
+    mode: str = "plan"
+    label: str = ""
+    system: Optional[str] = None
+    message: Optional[str] = None
+    schema: Any = None
 
 
 @dataclass
@@ -151,6 +161,8 @@ class FakeAnalyzer(Analyzer):
 
 
 def user_message(request: Request) -> str:
+    if request.message is not None:
+        return request.message
     text = f"<business_document>\n{request.document.strip()}\n</business_document>\n\nAnswer with the plan for the document above."
     if request.errors:
         problems = "\n".join(f"- {error}" for error in request.errors)
@@ -172,14 +184,21 @@ class ClaudeAnalyzer(Analyzer):
 
     def command(self, request: Request) -> List[str]:
         budget = request.budget_usd if request.budget_usd is not None else self.settings.max_budget_usd
-        return [self.settings.claude_bin, "-p", "--model", self.settings.model, "--output-format", "json",
-                "--no-session-persistence", "--strict-mcp-config", "--setting-sources", "", "--disable-slash-commands",
-                "--tools", "", "--max-budget-usd", f"{budget:.2f}", "--system-prompt", system_prompt(request.catalog),
-                "--json-schema", json.dumps(model_schema(request.catalog), ensure_ascii=False)]
+        if request.mode == "plan":
+            system, schema = system_prompt(request.catalog), model_schema(request.catalog)
+        else:
+            system, schema = request.system or "", request.schema
+        command = [self.settings.claude_bin, "-p", "--model", self.settings.model, "--output-format", "json",
+                   "--no-session-persistence", "--strict-mcp-config", "--setting-sources", "", "--disable-slash-commands",
+                   "--tools", "", "--max-budget-usd", f"{budget:.2f}", "--system-prompt", system]
+        if schema is not None:
+            command += ["--json-schema", json.dumps(schema, ensure_ascii=False)]
+        return command
 
     def analyze(self, request: Request) -> Analysis:
-        if len(request.document) > MAX_DOCUMENT_CHARS:
-            raise AnalyzerFailed(f"the document is {len(request.document)} characters; the limit is {MAX_DOCUMENT_CHARS}. Shorten it or split it.")
+        size = len(request.document) if request.message is None else len(request.message)
+        if size > MAX_DOCUMENT_CHARS:
+            raise AnalyzerFailed(f"the document is {size} characters; the limit is {MAX_DOCUMENT_CHARS}. Shorten it or split it.")
         env = dict(self.environ, **NO_CLAUDE_MDS)
         with tempfile.TemporaryDirectory() as neutral:  # no project folder, so no project settings or skills can apply
             try:
@@ -200,8 +219,10 @@ class ClaudeAnalyzer(Analyzer):
         cost = float(result.get("total_cost_usd") or result.get("cost_usd") or 0.0) if result else 0.0
         budget = request.budget_usd if request.budget_usd is not None else self.settings.max_budget_usd
         if result and "budget" in str(result.get("subtype", "")).lower():
-            raise BudgetStop(f"the analysis stopped at its budget cap of ${budget:.2f} (spent ${cost:.4f}). Raise `max_budget_usd` "
-                             "in catalog/analyzer.json or shorten the document.")
+            stop = BudgetStop(f"the analysis stopped at its budget cap of ${budget:.2f} (spent ${cost:.4f}). Raise `max_budget_usd` "
+                              "in catalog/analyzer.json or shorten the document.")
+            stop.cost_usd = cost
+            raise stop
         if code != 0:
             detail = tail(stderr) or tail(str(result.get("result", ""))) if result else tail(stderr or stdout)
             raise AnalyzerFailed(f"`{self.settings.claude_bin}` exited with code {code}" + (f": {detail}" if detail else ""))
@@ -209,6 +230,11 @@ class ClaudeAnalyzer(Analyzer):
             raise BadOutput(f"`{self.settings.claude_bin}` did not print JSON: {tail(stdout) or 'nothing'}")
         if result.get("is_error"):
             raise AnalyzerFailed(f"the model run reported an error: {tail(str(result.get('result', ''))) or result.get('subtype', 'unknown')}")
+        if request.mode == "text":
+            text = result.get("result")
+            if not isinstance(text, str) or not text.strip():
+                raise BadOutput("the model answered with no text")
+            return Analysis(text, cost)
         data = result.get("structured_output")
         if data is None:
             data = self.from_text(str(result.get("result", "")))

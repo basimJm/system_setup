@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "model": "sonnet",
+  "max_budget_per_call_usd": 0.6,
+  "max_budget_total_usd": 8.0,
+  "min_call_budget_usd": 0.1,
+  "timeout_seconds": 900,
+  "excerpt_chars": 9000
+}

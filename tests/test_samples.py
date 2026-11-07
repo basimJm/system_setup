@@ -88,7 +88,7 @@ class SampleGenerationTest(TempDirTest):
 
     def generate(self, name, via_document):
         target = self.root / f"out-{name}"
-        args = ["--yes", "--target", str(target), "--templates", str(self.templates), "--knowledge", str(FIXTURE_KNOWLEDGE), "--no-git"]
+        args = ["--yes", "--target", str(target), "--templates", str(self.templates), "--knowledge", str(FIXTURE_KNOWLEDGE), "--no-git", "--no-documents"]
         args += ["--business-doc", str(SAMPLE_DOCS / f"{name}.md")] if via_document else ["--plan", str(FIXTURE_PLANS / f"{name}.json")]
         out = io.StringIO()
         with redirect_stdout(out):

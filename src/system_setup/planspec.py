@@ -92,7 +92,7 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
     other_languages = [code for code in plan.languages.supported if code != plan.languages.default]
     if other_languages:
         deferred.append(f"other languages {', '.join(other_languages)}: recorded for the documents and apps")
-    deferred.append(f"language of the generated documents: {plan.languages.documents}; the documents are written in a later phase")
+    deferred.append(f"language of the generated documents: {plan.languages.documents}; used when the model step writes the documents")
     if plan.countries:
         deferred.append(f"countries {', '.join(plan.countries)}")
     name = plan.system.name

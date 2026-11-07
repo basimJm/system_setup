@@ -4,6 +4,7 @@ is unchanged; `cli.main` hands `intake` and `new` to `run`, passing its own `gen
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -11,18 +12,20 @@ from pathlib import Path
 from typing import Callable, List, Optional
 
 from analyzer import Analyzer, AnalyzerError, ClaudeAnalyzer, PlanRejected, propose
-from catalog import AnalyzerSettings, CatalogError, load_analyzer_settings, load_catalog
+from catalog import AnalyzerSettings, CatalogError, load_analyzer_settings, load_catalog, load_document_settings
+from documents import BUSINESS_DOC_REL as SAVED_DOCUMENT, DocumentsError, run_documents
 from engine import EngineError
 from manifest import ManifestError, templates_root, tool_root
 from plan import PLAN_FILE, Plan, PlanError, dumps, load_plan
 from planspec import DEFERRED_TITLE, plan_to_spec
 from prompts import ask, validate_required
 from review import is_yes, review, yes_no
+from workspace import git_init, run_tasks_check
 
 INTAKE_PROMPT_FILE = "INTAKE_PROMPT.md"
 INTAKE_START = "Start the interview now."
-BUSINESS_DOC_REL = "docs/BUSINESS.md"
-SUBCOMMANDS = ("intake", "new")
+BUSINESS_DOC_REL = SAVED_DOCUMENT
+SUBCOMMANDS = ("intake", "new", "documents")
 NO_CLAUDE_MDS = {"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"}
 
 NO_CLAUDE_HELP = """\
@@ -52,6 +55,19 @@ def parse_new(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--knowledge", type=Path, default=None, help="folder of lessons and playbooks to copy to docs/knowledge/")
     parser.add_argument("--run-post", action="store_true", help="run each template's post_generate commands")
     parser.add_argument("--no-git", action="store_true", help="do not run 'git init' + first commit")
+    parser.add_argument("--no-documents", action="store_true", help="do not write the documents with the model; the starters stay")
+    parser.add_argument("--documents-budget", type=float, metavar="USD", help="total budget of the document step for this run "
+                        "(default: catalog/documents.json)")
+    return parser.parse_args(argv)
+
+
+def parse_documents(argv: List[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="SYSTEM_SETUP documents", description="Writes or resumes the documents of a generated system: "
+                                     "BUSINESS_DOMAIN.md, per module BRD, PRD, Design Script and backlog, INTEGRATION.md and the API drafts. "
+                                     "Finished documents whose inputs did not change are skipped.")
+    parser.add_argument("--target", type=Path, default=None, help="the generated system (default: the current folder)")
+    parser.add_argument("--business-doc", type=Path, metavar="FILE", help=f"the business document (default: {BUSINESS_DOC_REL} in the system)")
+    parser.add_argument("--budget", type=float, metavar="USD", help="total budget of this run (default: catalog/documents.json)")
     return parser.parse_args(argv)
 
 
@@ -113,7 +129,13 @@ def run_new(argv: List[str], generate: Callable, print_report: Callable, analyze
     try:
         if args.plan:
             plan = load_plan(args.plan.expanduser(), catalog)
-            say(f"Plan {args.plan} is valid; no model is used.")
+            say(f"Plan {args.plan} is valid; no model is used for the plan.")
+            if args.business_doc is not None:
+                try:
+                    document = args.business_doc.expanduser().read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError) as error:
+                    say(f"Cannot read the business document {args.business_doc}: {error}")
+                    return 2
         else:
             doc_path = args.business_doc
             if doc_path is None:
@@ -139,12 +161,27 @@ def run_new(argv: List[str], generate: Callable, print_report: Callable, analyze
     except AnalyzerError as error:
         say(f"Analysis failed: {error}")
         return 1
+    doc_settings, doc_budget = None, None
+    if args.no_documents:
+        say("--no-documents: the documents stay the starters.")
+    elif document is None:
+        say("No business document was given, so no model is used and the documents stay the starters "
+            "(`SYSTEM_SETUP documents --business-doc FILE` writes them later).")
+    else:
+        try:
+            doc_settings = load_document_settings()
+        except CatalogError as error:
+            say(str(error))
+            return 1
+        doc_budget = args.documents_budget if args.documents_budget is not None else doc_settings.max_budget_total_usd
     plan = review(plan, catalog, reader, say, yes=args.yes)
     target = args.target or Path(ask("Create the system in folder", str(Path.cwd() / plan.system.slug), validate_required, reader) if not args.yes
                                  else Path.cwd() / plan.system.slug)
     conversion = plan_to_spec(plan, Path(target).expanduser(), catalog)
     spec = conversion.spec
     say(f"\nCreating {spec.system_name} ({spec.prefix}, {spec.package_root}, {spec.npm_scope}) in {spec.target}")
+    if doc_settings is not None:
+        say(f"After the parts are generated the model writes the documents, one small call each (at most ${doc_budget:.2f} in all).")
     if not args.yes and not is_yes(ask("Continue? (yes/no)", "yes", yes_no, reader)):
         say("Cancelled.")
         return 1
@@ -152,9 +189,21 @@ def run_new(argv: List[str], generate: Callable, print_report: Callable, analyze
     if document is not None:
         extra[BUSINESS_DOC_REL] = document if document.endswith("\n") else document + "\n"
     templates = (args.templates or templates_root()).resolve()
+    hook = None
+    if doc_settings is not None:
+        writer = analyzer or ClaudeAnalyzer(AnalyzerSettings(settings.claude_bin, doc_settings.model, doc_settings.max_budget_per_call_usd,
+                                                              doc_settings.timeout_seconds))
+        text = document
+
+        def hook(root: Path):
+            return run_documents(root, plan, text, catalog, writer, doc_settings, say, doc_budget, f"SYSTEM_SETUP documents --target {root}")
     try:
-        report = generate(spec, templates, run_post=args.run_post, git=not args.no_git, knowledge=args.knowledge, extra_files=extra)
-    except (EngineError, ManifestError) as error:
+        report = generate(spec, templates, run_post=args.run_post, git=not args.no_git, knowledge=args.knowledge, extra_files=extra,
+                          documents=hook)
+    except KeyboardInterrupt:
+        say(f"\nInterrupted. The parts are in {spec.target}; finish the documents with: SYSTEM_SETUP documents --target {spec.target}")
+        return 130
+    except (EngineError, ManifestError, DocumentsError) as error:
         saved = keep_plan(plan)
         say(f"\n{error}\nThe reviewed plan was saved to {saved}; fix the problem and run `SYSTEM_SETUP new --plan {saved}`.")
         return 1
@@ -162,6 +211,37 @@ def run_new(argv: List[str], generate: Callable, print_report: Callable, analyze
     print_report(report, args.run_post)
     print_deferred(conversion.deferred, say)
     return 0 if report.ok else 1
+
+
+def run_documents_command(argv: List[str], analyzer: Optional[Analyzer] = None, say: Callable[[str], None] = print) -> int:
+    """`SYSTEM_SETUP documents`: writes or resumes the documents of a generated system (also after a stop or a kill)."""
+    args = parse_documents(argv)
+    root = (args.target or Path.cwd()).expanduser().resolve()
+    try:
+        catalog, settings, doc_settings = load_catalog(), load_analyzer_settings(), load_document_settings()
+        plan = load_plan(root / PLAN_FILE, catalog)
+        doc_path = (args.business_doc or root / BUSINESS_DOC_REL).expanduser()
+        document = doc_path.read_text(encoding="utf-8")
+    except (CatalogError, PlanError) as error:
+        say(str(error))
+        return 2
+    except (OSError, UnicodeDecodeError) as error:
+        say(f"Cannot read the business document ({error}). Pass it with --business-doc FILE.")
+        return 2
+    writer = analyzer or ClaudeAnalyzer(AnalyzerSettings(settings.claude_bin, doc_settings.model, doc_settings.max_budget_per_call_usd,
+                                                          doc_settings.timeout_seconds))
+    try:
+        outcome = run_documents(root, plan, document, catalog, writer, doc_settings, say, args.budget, f"SYSTEM_SETUP documents --target {root}")
+    except DocumentsError as error:
+        say(str(error))
+        return 2
+    ok, output = run_tasks_check(root)
+    say(f"tasks.py check: {'OK' if ok else 'skipped' if ok is None else 'PROBLEMS'}" + (f"\n{output}" if output and not ok else ""))
+    if not (root / ".git").exists():  # an earlier run was stopped before the first commit
+        masters = sorted({p["master"] for p in json.loads((root / ".claude" / "projects.json").read_text(encoding="utf-8"))["projects"].values()} - {"main"})
+        error = git_init(root, f"{plan.system.name}: system generated by SYSTEM_SETUP", masters)
+        say("Git: " + (error or "initialised: first commit on main + local master branches"))
+    return 0 if ok is not False and not outcome.unfinished and not outcome.stopped else 1
 
 
 def keep_plan(plan: Plan) -> Path:
@@ -182,6 +262,8 @@ def print_deferred(deferred: List[str], say: Callable[[str], None] = print) -> N
 
 
 def run(argv: List[str], generate: Callable, print_report: Callable, **seams) -> int:
+    if argv[0] == "documents":
+        return run_documents_command(argv[1:], **{k: v for k, v in seams.items() if k in ("analyzer", "say")})
     if argv[0] == "intake":
         return run_intake(argv[1:], **{k: v for k, v in seams.items() if k in ("runner", "say", "environ", "settings")})
     return run_new(argv[1:], generate, print_report, **{k: v for k, v in seams.items() if k in ("analyzer", "reader", "say")})

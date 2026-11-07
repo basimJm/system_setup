@@ -200,3 +200,38 @@ def load_analyzer_settings(root: Optional[Path] = None) -> AnalyzerSettings:
     if isinstance(timeout, bool) or not isinstance(timeout, int) or timeout <= 0:
         raise CatalogError("analyzer.json: `timeout_seconds` must be a whole number above 0")
     return AnalyzerSettings(_text(data, "claude_bin", "analyzer.json"), _text(data, "model", "analyzer.json"), float(budget), timeout)
+
+
+@dataclass(frozen=True)
+class DocumentSettings:
+    """The document step (documents.py): the model, the budget of one call, the budget of one run, the smallest budget worth a
+    call, the timeout, and how much of the business document one call may read."""
+    model: str
+    max_budget_per_call_usd: float
+    max_budget_total_usd: float
+    min_call_budget_usd: float
+    timeout_seconds: int
+    excerpt_chars: int
+
+
+def load_document_settings(root: Optional[Path] = None) -> DocumentSettings:
+    root = root or tool_root() / CATALOG_DIR
+    data = _read(root, "documents.json")
+
+    def number(key: str, low: float = 0.0) -> float:
+        value = data.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= low:
+            raise CatalogError(f"documents.json: `{key}` must be a number above {low:g}")
+        return float(value)
+
+    def whole(key: str) -> int:
+        value = data.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise CatalogError(f"documents.json: `{key}` must be a whole number above 0")
+        return value
+
+    settings = DocumentSettings(_text(data, "model", "documents.json"), number("max_budget_per_call_usd"), number("max_budget_total_usd"),
+                                number("min_call_budget_usd"), whole("timeout_seconds"), whole("excerpt_chars"))
+    if settings.max_budget_per_call_usd > settings.max_budget_total_usd:
+        raise CatalogError("documents.json: `max_budget_per_call_usd` cannot be above `max_budget_total_usd`")
+    return settings
