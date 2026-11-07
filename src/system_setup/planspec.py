@@ -11,7 +11,8 @@ from typing import List
 from business import Business
 from catalog import Catalog
 from plan import Plan
-from prompts import SDK_CATALOG, AppSpec, Spec, slug_from
+from sdks import plan_sdks
+from prompts import AppSpec, Spec, slug_from
 
 ARABIC = re.compile(r"[؀-ۿ]")
 MOBILE = ("android", "ios")
@@ -50,7 +51,7 @@ def business_of(plan: Plan) -> Business:
 
 
 def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
-    """The engine builds one server, one admin panel, KMP apps for Android and iOS together, and the five catalog SDKs."""
+    """The engine builds one server, one admin panel, KMP apps for Android and iOS together, and every internal SDK of the plan (see sdks.py)."""
     deferred: List[str] = []
     servers = [m for m in plan.modules if m.kind == "server"]
     admins = [m for m in plan.modules if m.kind == "admin"]
@@ -73,19 +74,8 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
                 deferred.append(f"app module {label}: the web target was chosen and is not generated yet")
         elif module.kind not in ("server", "admin"):
             deferred.append(f"module {label} of kind {module.kind}: not generated yet")
-    sdks: List[str] = []
-    for sdk in plan.sdks:
-        label = f"SDK '{sdk.id}' ({sdk.title})"
-        if sdk.source == "published":
-            deferred.append(f"{label}: already published as {sdk.package} {sdk.version}; the server will depend on it in a later phase")
-        elif sdk.source == "none":
-            deferred.append(f"{label}: chosen as no code; recorded for the documents")
-        elif sdk.id in SDK_CATALOG:
-            sdks.append(sdk.id)
-        else:
-            deferred.append(f"{label}: " + ("new SDK, " if not sdk.known else "an SDK the engine cannot build yet, ") + "a skeleton (port, fake adapter, tests) comes in a later phase")
-        if sdk.provider:
-            deferred.append(f"{label}: provider {sdk.provider}" + ("" if sdk.provider_known else " (not in the catalog)") + "; its adapter comes in a later phase")
+    selection = plan_sdks(plan, catalog)   # SDKs and providers: sdks.py (internal = generated, published = a dependency, none = nothing)
+    deferred += selection.deferred
     for item in plan.deployment:
         extra = ", ".join(p for p in (f"database {item.database}" if item.database != "none" else "", f"cache {item.cache}" if item.cache != "none" else "") if p)
         deferred.append(f"deployment of '{item.part}': host {item.host}" + (f", {extra}" if extra else "") + "; deployment files come in a later phase")
@@ -102,5 +92,7 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
         notes.append(f"the system name '{plan.system.name}' does not give the slug '{plan.system.slug}', so folders are named from the slug ('{name}')")
     spec = Spec(system_name=name, system_name_ar=plan.system.name_ar or plan.system.name, prefix=plan.system.prefix,
                 package_root=plan.system.package_root, npm_scope=plan.system.npm_scope, target=target.resolve(),
-                with_server=bool(servers), with_admin=bool(admins), apps=apps, sdks=sdks, business=business_of(plan))
+                with_server=bool(servers), with_admin=bool(admins), apps=apps, sdks=[s.id for s in selection.internal], business=business_of(plan),
+                sdk_overrides=selection.overrides, sdk_plans={s.id: s for s in selection.internal}, published_sdks=selection.published,
+                skeleton_missing=list(catalog.skeleton_missing))
     return Conversion(spec, notes + deferred)

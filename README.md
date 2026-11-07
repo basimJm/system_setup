@@ -240,8 +240,8 @@ save the result as `BUSINESS.md`, then run `new --business-doc BUSINESS.md`.
    It never asks for a secret and refuses one that is typed (key shapes, `password=...`, long opaque tokens). `--yes` accepts the proposal.
 3. *Generate*: `system.plan.json` (the reviewed plan) and `docs/BUSINESS.md` (the document) are written into the new repository and
    committed with it. What the engine builds today is generated through `generate()`: the server, the admin panel, KMP apps (Android and
-   iOS together) and the catalog SDKs set to build internally. Everything else in the plan is printed at the end under **Recorded in the plan,
-   generated in a later phase** (web modules, single-platform apps, new, published or no-code SDKs, providers, hosts, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
+   iOS together) and every SDK set to build internally, with its providers (see *SDKs and providers* below). Everything else in the plan is printed at the end under **Recorded in the plan,
+   generated in a later phase** (web modules, single-platform apps, hosts, other languages) and never makes the run fail. If generation fails after the analysis, the reviewed plan is saved as
    `system.plan.json` in the current folder so nothing paid for is lost.
 
 `new --plan FILE` skips the model for the plan: the plan is validated, reviewed (or accepted with `--yes`) and generated.
@@ -297,9 +297,31 @@ that is not in the catalog is allowed and marked `known: false`.
 
 ### The catalog (`catalog/*.json`, `src/system_setup/catalog.py`)
 Lists are data: `modules.json` (platforms and module kinds with their allowed and default platforms), `sdks.json` (a `generated` flag
-that must match the SDKs the engine builds), `providers.json` (common vendors per SDK; OTP, push and e-mail notifications, payments,
-storage, maps, analytics), `deploy.json` (hosts per part kind, databases, caches), `analyzer.json`. They are proposals: any other name
+that must match the SDKs with a dedicated overlay, and `ports`: what a provider adapter implements), `providers.json` (common vendors per SDK; OTP, push and e-mail notifications, payments,
+storage, maps, analytics; `adapter` or `builtin` where a ready adapter exists), `deploy.json` (hosts per part kind, databases, caches), `analyzer.json`. They are proposals: any other name
 is allowed. Adding a choice is a JSON edit; no code changes.
+
+### SDKs and providers (`src/system_setup/sdks.py`)
+The plan's `sdks` decide what is generated; nothing is hard-coded per SDK or provider.
+
+| `source` | What happens |
+|---|---|
+| `internal` | The SDK folder `<slug>-<id>/` is generated. A catalog SDK with a dedicated overlay (`templates/sdk/kinds/<id>/`) uses it; **any other SDK, listed or new in the plan, is built from the generic overlay** `templates/sdk/kinds/generic/`: a port, a fake adapter, a contract test (`tests/contract/port.contract.ts`), a facade with timeout and retries, a loop test, its own folder, a unique task prefix and its backlog, all named from the plan through tokens. |
+| `published` | No folder. The package and version are added to the generated server's `package.json` and to a section of the root `INTEGRATION.md`. |
+| `none` | Nothing is generated. |
+
+Each chosen provider (`provider` may name several, separated by `,`, `+` or `/`) is then handled inside that SDK:
+
+| Provider | Result |
+|---|---|
+| has an `adapter` in `catalog/providers.json` | `templates/sdk/providers/<sdk>/<adapter>/files/` (source and unit tests) is copied in and exported from `src/index.ts`; its npm packages are added to **that SDK's** `package.json` only, so the shipped lock no longer matches and that SDK's `post_generate` runs `npm install` once instead of `npm ci`; its environment **key names** go to `.env.example`; a `PENDING` backlog row asks the owner for a proof with a real account. |
+| is `builtin` (already in the SDK overlay, e.g. S3) | Nothing is copied; it is named the default. |
+| has no adapter, or is not in the catalog | A **skeleton**: `src/adapters/<id>.ts` implements the port and rejects every call; `tests/<id>.test.ts` holds an `it.failing` test that lists what is missing, so the generated SDK's CI stays green and honest (the day the adapter works the test turns red and says to remove the marker); and a `TODO` backlog row. |
+
+The first chosen provider is named the default in `src/config/providers.ts` (`CHOSEN_PROVIDERS`, `DEFAULT_PROVIDER`) and in a comment of `.env.example`, which holds key names only, never a value. The port a skeleton implements comes from `ports` in `catalog/sdks.json` (by channel; `generic_port` for any other SDK), and what a skeleton lacks from `skeleton.missing` in `providers.json`. An sdk template without a `providers/` folder still generates (providers are skipped).
+
+Ready adapters, ported and generalized (no business names, URLs or keys) from a production system: `fcm` (push, firebase-admin loaded lazily), `smtp` (e-mail, nodemailer), `http-sms` (SMS through any JSON HTTP gateway), and `s3`, `cloudflare-r2`, `backblaze-b2` (built into the storage SDK). To add one: put `adapter.json` (packages, environment keys, exports, usage) and `files/` under `templates/sdk/providers/<sdk>/<adapter>/` and add `"adapter": "<adapter>"` to the provider in `providers.json`; no code changes. Adapter unit tests use stubbed vendors, so only a real push, e-mail or SMS proves the vendor side.
+
 
 ## 8. Layout
 
@@ -316,6 +338,7 @@ src/system_setup/documents.py the document step: jobs, slices, budget, state fil
 src/system_setup/docrender.py markdown checks, backlog schema + rendering, OpenAPI draft, CLAUDE.md facts (pure functions)
 src/system_setup/review.py   the review questions, secret refusal
 src/system_setup/planspec.py plan -> Spec for generate(), and the list of what is recorded but not generated yet
+src/system_setup/sdks.py     plan SDKs by source, providers: ready adapters, builtin, skeletons, published SDKs, backlog rows
 catalog/                     modules.json, sdks.json, providers.json, deploy.json, analyzer.json, documents.json (data only)
 catalog/prompts/             the document prompts and the required headings (data)
 INTAKE_PROMPT.md             the interview prompt (used by `intake`, or pasted into claude.ai)

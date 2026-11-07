@@ -39,6 +39,7 @@ class SdkChoice:
     title: str
     description: str
     generated: bool
+    ports: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # channel (or `*`) -> what a provider adapter implements
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,8 @@ class Provider:
     title: str
     sdk: str
     channel: str
+    adapter: str = ""       # a ready adapter in templates/sdk/providers/<sdk>/<adapter>/
+    builtin: bool = False   # already inside the SDK's overlay: nothing to copy
 
 
 @dataclass(frozen=True)
@@ -65,10 +68,17 @@ class Catalog:
     hosts: List[Choice]
     databases: List[Choice]
     caches: List[Choice]
+    generic_port: Dict[str, Any] = field(default_factory=dict)   # the port of an SDK that has no `ports` of its own
+    skeleton_missing: List[str] = field(default_factory=list)    # what a generated adapter skeleton still lacks
 
     # ---- lookups (case-insensitive on the id or the title) ----
     def sdk_known(self, sdk_id: str) -> bool:
         return sdk_id in self.sdks
+
+    def port_for(self, sdk_id: str, channel: str) -> Dict[str, Any]:
+        """The port descriptor a provider of `channel` implements in `sdk_id` (the generic port when the SDK has none)."""
+        ports = self.sdks[sdk_id].ports if sdk_id in self.sdks else {}
+        return ports.get(channel) or ports.get("*") or next(iter(ports.values()), None) or self.generic_port
 
     def provider_ids(self, text: str) -> List[str]:
         """`'fcm, smtp'` -> ['fcm', 'smtp'] (empty for '' or 'none')."""
@@ -170,17 +180,29 @@ def load_catalog(root: Optional[Path] = None) -> Catalog:
         sdk_id = _text(item, "id", "sdks.json")
         if sdk_id in sdks:
             raise CatalogError(f"sdks.json: duplicate sdk {sdk_id!r}")
-        sdks[sdk_id] = SdkChoice(sdk_id, _text(item, "title", "sdks.json"), str(item.get("description", "")), bool(item.get("generated")))
+        ports = item.get("ports") or {}
+        if not isinstance(ports, dict) or not all(isinstance(v, dict) and v.get("interface") and v.get("methods") for v in ports.values()):
+            raise CatalogError(f"sdks.json: sdk {sdk_id!r}: `ports` maps a channel to {{interface, methods, call}}")
+        sdks[sdk_id] = SdkChoice(sdk_id, _text(item, "title", "sdks.json"), str(item.get("description", "")), bool(item.get("generated")), ports)
+    providers_data = _read(root, "providers.json")
     providers = [Provider(_text(item, "id", "providers.json"), _text(item, "title", "providers.json"),
-                          _text(item, "sdk", "providers.json"), str(item.get("channel", "")))
-                 for item in _items(_read(root, "providers.json"), "providers", "providers.json")]
+                          _text(item, "sdk", "providers.json"), str(item.get("channel", "")), str(item.get("adapter", "")),
+                          bool(item.get("builtin")))
+                 for item in _items(providers_data, "providers", "providers.json")]
+    both = sorted(p.id for p in providers if p.adapter and p.builtin)
+    if both:
+        raise CatalogError(f"providers.json: provider(s) with both `adapter` and `builtin`: {', '.join(both)}")
     _unique([provider.id for provider in providers], "providers", "providers.json")
     orphan = sorted({provider.sdk for provider in providers if provider.sdk not in sdks})
     if orphan:
         raise CatalogError(f"providers.json: provider(s) for unknown sdk(s): {', '.join(orphan)}")
     deploy = _read(root, "deploy.json")
+    generic_port = sdks_data.get("generic_port") or {}
+    if not (generic_port.get("interface") and generic_port.get("methods")):
+        raise CatalogError("sdks.json: `generic_port` needs `interface` and `methods`")
+    missing = [str(item) for item in (providers_data.get("skeleton") or {}).get("missing", [])]
     return Catalog(platforms, kinds, sdks, providers, _choices(deploy, "hosts", "deploy.json"),
-                   _choices(deploy, "databases", "deploy.json"), _choices(deploy, "caches", "deploy.json"))
+                   _choices(deploy, "databases", "deploy.json"), _choices(deploy, "caches", "deploy.json"), generic_port, missing)
 
 
 @dataclass(frozen=True)

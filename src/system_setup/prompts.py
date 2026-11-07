@@ -5,7 +5,7 @@ import datetime as _dt
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlsplit
 
 from business import Business, token_values as business_token_values
@@ -240,6 +240,10 @@ class Spec:
     sdk_overrides: Dict[str, Dict[str, str]] = field(default_factory=dict)
     # The business domain the tool asked about (business.py); TBD placeholders when the owner skipped a question.
     business: Business = field(default_factory=Business)
+    # Phase 5: the plan's SDKs (sdks.SdkPlan by id) with their providers, and the published ones (package + version, no folder).
+    sdk_plans: Dict[str, Any] = field(default_factory=dict)
+    published_sdks: List[Any] = field(default_factory=list)
+    skeleton_missing: List[str] = field(default_factory=list)   # what a generated adapter skeleton still lacks (catalog/providers.json)
 
     # --- derived names (one place, used by every template kind) ---
     @property
@@ -395,6 +399,7 @@ class Spec:
             "__SDK_DIR__": self.sdk_dir(sdk),
             "__SDK_PACKAGE__": self.sdk_package(sdk),
             "__SDK_PREFIX__": self.sdk_prefix(sdk),
+            "__SDK_PREFIX_LOWER__": self.sdk_prefix(sdk).lower(),
             "__SDK_DESCRIPTION__": self.sdk_description(sdk),
             "__SDK_LAYER__": self.sdk_layer(sdk),
         }
