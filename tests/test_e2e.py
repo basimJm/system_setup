@@ -186,7 +186,7 @@ class CliMainTest(TempDirTest):
         self.assertIn("knowledge: docs/knowledge/LESSONS.md", out.getvalue())
         with redirect_stdout(io.StringIO()) as out:
             self.assertEqual(0, main(["--list-templates", "--templates", str(FIXTURE_TEMPLATES)]))
-        self.assertEqual(5, out.getvalue().count("ready"))
+        self.assertEqual(6, out.getvalue().count("ready"))
 
     def test_invalid_flag_and_target_inside_the_tool_are_refused(self):
         with redirect_stdout(io.StringIO()) as out:

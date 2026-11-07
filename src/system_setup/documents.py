@@ -170,7 +170,7 @@ def make_targets(plan: Plan, registry: Dict[str, Any], root: Path) -> List[Targe
             key = "server"
         elif module.kind == "admin" and "admin" in projects and "admin" not in used:
             key = "admin"
-        elif module.kind == "app" and module.id in projects and module.id not in used:
+        elif module.kind in ("app", "web") and module.id in projects and module.id not in used:
             key = module.id
         used.add(key)
         entry = projects.get(key, {}) if key else {}

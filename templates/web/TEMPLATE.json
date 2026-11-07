@@ -1,0 +1,24 @@
+{
+  "kind": "web",
+  "base": "admin",
+  "description": "A customer- or merchant-facing web app: the admin template (React 19 + TypeScript strict + Vite, app shell, sign-in, RTL + LTR, Arabic + English, contract-typed data layer, design tokens, local gate, docs and agent rules) in its own folder, named and branded for the web module, with its own task prefix, master branch and backlog. A thin layer: every file comes from templates/admin (the `base`); this template only changes the identity (folder, package name, display names) and adds nothing else yet. Any number of web apps can be generated.",
+  "placeholders": [
+    "__WEB_NAME__",
+    "__WEB_NAME_AR__",
+    "__WEB_SLUG__",
+    "__WEB_DIR__",
+    "__WEB_PREFIX__"
+  ],
+  "sentinels": {
+    "__SYSTEM_PREFIX__-Admin-Dashboard": "__WEB_DIR__",
+    "__ADMIN_DIR__": "__WEB_DIR__",
+    "__SYSTEM_NAME__ Admin": "__WEB_NAME__",
+    "لوحة تحكم __SYSTEM_NAME_AR__": "__WEB_NAME_AR__",
+    "__SYSTEM_SLUG__-admin-dashboard": "__WEB_SLUG__"
+  },
+  "notes": {
+    "target_dir": "<system prefix>-Web-<Name> (the value of __WEB_DIR__)",
+    "base": "templates/admin is read first (files, skip list, binary globs, sentinels, targeted edits, post_generate); the sentinels above replace the admin identity by the web app's own",
+    "after_generation": "the sample module `items` and the `/admin/v1` contract come from the admin template: replace them with the screens and the API of this web app's audience (its backlog and PRD say which)"
+  }
+}

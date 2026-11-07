@@ -1,0 +1,8 @@
+{
+  "kind": "web",
+  "base": "admin",
+  "description": "Fixture: web app on top of the admin fixture",
+  "placeholders": ["__WEB_NAME__", "__WEB_DIR__", "__WEB_SLUG__"],
+  "sentinels": {"__ADMIN_DIR__": "__WEB_DIR__", "__SYSTEM_NAME__ admin panel": "__WEB_NAME__"},
+  "skip": ["docs/ZED_Admin_Tasks.md"]
+}

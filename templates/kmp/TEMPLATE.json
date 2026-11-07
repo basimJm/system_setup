@@ -222,5 +222,123 @@
     "identity": "Beta Store / io.beta.store / BetaStore / /store/v1 / /store",
     "results": "553 files, 56 package folders renamed, no sentinel left; policy tests 93 OK; policy_checks all ok; detekt 0 findings; gradle testAndroidHostTest + :androidApp:assembleDevDebug + :composeApp:linkDebugFrameworkIosSimulatorArm64 — see README.md §3"
   },
-  "regenerate": "not regenerated: the snapshot is maintained by hand, see README.md section 4"
+  "regenerate": "not regenerated: the snapshot is maintained by hand, see README.md section 4",
+  "prune": {
+    "ios": {
+      "skip": [
+        "iosApp/**",
+        "**/src/iosMain/**",
+        "**/src/iosTest/**",
+        "scripts/ci/run_ios_checks.sh",
+        "scripts/ci/tests/test_ios_checks.py",
+        "config/swiftlint.yml"
+      ],
+      "edits": [
+        {
+          "file": "build-logic/convention/src/main/kotlin/com/acme/shop/buildlogic/KotlinMultiplatform.kt",
+          "find": "    extension.apply {\n        listOf(\n            iosArm64(),\n            iosSimulatorArm64(),\n        ).forEach { iosTarget ->\n            iosTarget.binaries.framework {\n                baseName = frameworkName\n                isStatic = true\n            }\n        }\n    }\n    configureKotlinQuality(extension)\n",
+          "replace_with": "    configureKotlinQuality(extension)\n"
+        },
+        {
+          "file": "build-logic/convention/src/main/kotlin/com/acme/shop/buildlogic/ComposeAppPlugin.kt",
+          "find": "                listOf(iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->\n                    iosTarget.binaries.all {\n                        binaryOption(BINARY_OPTION_BUNDLE_ID, AndroidSdk.NAMESPACE_ROOT)\n                        binaryOption(BINARY_OPTION_GC, GC_CONCURRENT_MARK_SWEEP)\n                        binaryOption(BINARY_OPTION_APP_STATE_TRACKING, APP_STATE_TRACKING_ENABLED)\n                    }\n                    iosTarget.binaries.framework {\n                        baseName = \"ComposeApp\"\n                        isStatic = true\n                        // Swift implements the Firebase bridges, so their Kotlin interfaces must be in the framework API.\n                        export(project(\":core:firebase\"))\n                    }\n                }\n\n",
+          "replace_with": ""
+        },
+        {
+          "file": "build-logic/convention/src/main/kotlin/com/acme/shop/buildlogic/ComposeAppPlugin.kt",
+          "find": "                sourceSets.iosMain.dependencies {\n                    implementation(libs.findBundle(\"ktor-ios\").get())\n                }\n\n",
+          "replace_with": ""
+        },
+        {
+          "file": "build-logic/convention/src/main/kotlin/com/acme/shop/buildlogic/KmpFeatureDataPlugin.kt",
+          "find": "                sourceSets.iosMain.dependencies {\n                    implementation(libs.findBundle(\"ktor-ios\").get())\n                }\n",
+          "replace_with": ""
+        },
+        {
+          "file": "core/network/build.gradle.kts",
+          "find": "    sourceSets.iosMain.dependencies {\n        implementation(libs.bundles.ktor.ios)\n    }\n",
+          "replace_with": ""
+        },
+        {
+          "file": "core/storage/build.gradle.kts",
+          "find": "    add(\"kspIosSimulatorArm64\", libs.androidx.room.compiler)\n    add(\"kspIosArm64\", libs.androidx.room.compiler)\n",
+          "replace_with": ""
+        },
+        {
+          "file": "gradle/libs.versions.toml",
+          "find": "ktor-client-darwin = { module = \"io.ktor:ktor-client-darwin\", version.ref = \"ktor\" }\n",
+          "replace_with": ""
+        },
+        {
+          "file": "gradle/libs.versions.toml",
+          "find": "ktor-ios = [\"ktor-client-darwin\"]\n",
+          "replace_with": ""
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "find": "  ios:\n    name: iOS ${{ matrix.scheme }} ${{ matrix.configuration }}\n    runs-on: macos-15\n    timeout-minutes: 60\n    strategy:\n      fail-fast: false\n      matrix:\n        include:\n          - { scheme: iosApp-Dev, configuration: Debug-Dev }\n          - { scheme: iosApp-Dev, configuration: Release-Dev }\n          - { scheme: iosApp-Prod, configuration: Debug-Prod }\n          - { scheme: iosApp-Prod, configuration: Release-Prod }\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-java@v4\n        with:\n          distribution: temurin\n          java-version: 21\n      - uses: gradle/actions/setup-gradle@v4\n      - uses: maxim-lobanov/setup-xcode@v1\n        with:\n          xcode-version: latest-stable\n      # The Xcode \"Compile Kotlin Framework\" phase runs Gradle; warnings are errors (see the project build settings).\n      - name: Build for the iOS simulator\n        run: >-\n          xcodebuild\n          -project iosApp/iosApp.xcodeproj\n          -scheme ${{ matrix.scheme }}\n          -configuration ${{ matrix.configuration }}\n          -sdk iphonesimulator\n          -destination 'generic/platform=iOS Simulator'\n          CODE_SIGNING_ALLOWED=NO\n          build\n      - name: Kotlin/Native unit tests\n        if: matrix.configuration == 'Debug-Dev'\n        run: ./gradlew iosSimulatorArm64Test --stacktrace\n      - name: SwiftLint\n        if: matrix.configuration == 'Debug-Dev'\n        run: |\n          brew install swiftlint\n          swiftlint lint --strict --config config/swiftlint.yml\n\n",
+          "replace_with": ""
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "find": "needs: [policy, lint, secret-scan, android, ios]",
+          "replace_with": "needs: [policy, lint, secret-scan, android]"
+        },
+        {
+          "file": "config/policy.json",
+          "find": "    \"iosConfigurations\": [\n      \"Debug-Dev\",\n      \"Release-Dev\",\n      \"Debug-Prod\",\n      \"Release-Prod\"\n    ],\n    \"iosSchemes\": {\n      \"iosApp-Dev\": [\n        \"Debug-Dev\",\n        \"Release-Dev\"\n      ],\n      \"iosApp-Prod\": [\n        \"Debug-Prod\",\n        \"Release-Prod\"\n      ]\n    },\n",
+          "replace_with": "    \"iosConfigurations\": [],\n    \"iosSchemes\": {},\n"
+        }
+      ],
+      "post_generate": [
+        "./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64"
+      ]
+    },
+    "android": {
+      "skip": [
+        "androidApp/**"
+      ],
+      "edits": [
+        {
+          "file": "settings.gradle.kts",
+          "find": "    \":androidApp\",\n",
+          "replace_with": ""
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "find": "  android:\n    name: Android ${{ matrix.flavor }} ${{ matrix.buildType }}\n    runs-on: ubuntu-latest\n    timeout-minutes: 45\n    strategy:\n      fail-fast: false\n      matrix:\n        include:\n          - { flavor: dev, buildType: debug, task: DevDebug }\n          - { flavor: dev, buildType: release, task: DevRelease }\n          - { flavor: prod, buildType: debug, task: ProdDebug }\n          - { flavor: prod, buildType: release, task: ProdRelease }\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-java@v4\n        with:\n          distribution: temurin\n          java-version: 21\n      - uses: gradle/actions/setup-gradle@v4\n      - name: Assemble\n        run: ./gradlew :androidApp:assemble${{ matrix.task }} --stacktrace\n      - name: Android Lint (warnings are errors)\n        run: ./gradlew :androidApp:lint${{ matrix.task }} --stacktrace\n      - name: Print Android Lint findings\n        if: failure()\n        run: cat androidApp/build/reports/lint-results-*.txt 2>/dev/null | head -300 || true\n      # commonTest of every module, run on the JVM.\n      - name: Unit tests\n        if: matrix.task == 'DevDebug'\n        run: ./gradlew testAndroidHostTest --stacktrace\n      - name: Performance budget (R8 mapping and APK size)\n        if: matrix.buildType == 'release'\n        run: python3 scripts/ci/policy_checks.py budget --flavor ${{ matrix.flavor }}\n      - name: Upload reports\n        if: always()\n        uses: actions/upload-artifact@v4\n        with:\n          name: android-reports-${{ matrix.task }}\n          path: |\n            androidApp/build/reports\n            **/build/reports/tests\n          if-no-files-found: ignore\n\n",
+          "replace_with": ""
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "find": "needs: [policy, lint, secret-scan, android, ios]",
+          "replace_with": "needs: [policy, lint, secret-scan, ios]"
+        },
+        {
+          "file": "config/policy.json",
+          "find": "    \"flavors\": [\n      \"dev\",\n      \"prod\"\n    ],\n",
+          "replace_with": "    \"flavors\": [],\n"
+        },
+        {
+          "file": "config/policy.json",
+          "find": "    \"buildTypes\": [\n      \"debug\",\n      \"release\"\n    ],\n",
+          "replace_with": "    \"buildTypes\": [],\n"
+        },
+        {
+          "file": "config/policy.json",
+          "find": "    \"gradlePropertyKeys\": [\n      \"DEV_API_BASE_URL\",\n      \"PROD_API_BASE_URL\",\n      \"DEV_DATA_SOURCE\",\n      \"PROD_DATA_SOURCE\"\n    ],\n",
+          "replace_with": "    \"gradlePropertyKeys\": [],\n"
+        },
+        {
+          "file": "scripts/ci/run_detekt.sh",
+          "find": "$ROOT/androidApp/src,",
+          "replace_with": ""
+        }
+      ],
+      "post_generate": [
+        "./gradlew :androidApp:assembleDevDebug"
+      ]
+    }
+  },
+  "prune_note": "Platform choice. A group is applied when the app did NOT choose that platform (an Android-only app drops `ios`, an iOS-only app drops `android`): its `skip` globs are not copied, its `edits` (exact find -> replace_with on the generated files; a text that is missing is an error) remove the Gradle targets, the settings entry and the CI job, and its `post_generate` commands are not listed. Android-only: no iosApp folder, no iOS target in any build file, no iOS CI job. iOS-only: no androidApp folder, module, CI job or Android policy variants; the shared modules keep their Android library target because the convention plugins apply it to every module, so an iOS-only app still needs the Android SDK to configure Gradle (not built or proven)."
 }

@@ -60,5 +60,32 @@
   "binary_globs": [
     "**/*.png",
     "**/*.jar"
-  ]
+  ],
+  "prune": {
+    "ios": {
+      "skip": [
+        "iosApp/**",
+        "**/iosMain/**"
+      ],
+      "edits": [
+        {
+          "file": "build-logic/Targets.kt",
+          "find": "    iosArm64()\n    iosSimulatorArm64()\n",
+          "replace_with": ""
+        }
+      ]
+    },
+    "android": {
+      "skip": [
+        "androidApp/**"
+      ],
+      "edits": [
+        {
+          "file": "build-logic/Targets.kt",
+          "find": "    androidTarget()\n",
+          "replace_with": ""
+        }
+      ]
+    }
+  }
 }

@@ -46,12 +46,17 @@ def app_token_values(spec: Spec, app: AppSpec) -> Dict[str, str]:
     return values
 
 
+def dropped_platforms(manifest: Manifest, app: AppSpec) -> List[str]:
+    """The prune groups (platforms) of the kmp template this app did not choose: an Android-only app drops `ios`."""
+    return [group for group in manifest.prune if group not in app.platforms]
+
+
 def instantiate_apps(manifest: Manifest, repo_root: Path, spec: Spec) -> List[Result]:
     """One app per AppSpec; a sentinel left in any path or text file of the app is an error (as in the snapshot's
     instantiate.py `verify`), never a warning."""
     results = []
     for app in spec.apps:
-        result = instantiate(manifest, repo_root, app_token_values(spec, app), spec.part_values())
+        result = instantiate(manifest, repo_root, app_token_values(spec, app), spec.part_values(), drop=dropped_platforms(manifest, app))
         errors = verification_errors(result)
         if errors:
             raise EngineError(f"kmp {spec.app_dir(app)}: sentinels left after instantiation:\n  " + "\n  ".join(errors))

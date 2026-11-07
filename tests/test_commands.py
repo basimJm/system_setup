@@ -54,7 +54,7 @@ class PlanToSpecTest(TempDirTest):
                      "other languages ar", "language of the generated documents: en", "countries IE"):
             self.assertIn(part, text)
 
-    def test_web_modules_single_platform_apps_published_and_new_sdks_are_recorded_not_dropped(self):
+    def test_single_platform_apps_web_modules_published_and_new_sdks_are_converted_or_recorded_not_dropped(self):
         data = valid_plan_data()
         data["modules"] += [
             {"id": "portal", "kind": "web", "name": "Portal", "audience": "parents", "why": "pay", "platforms": ["web"]},
@@ -69,9 +69,12 @@ class PlanToSpecTest(TempDirTest):
         conversion = self.convert(Plan.from_dict(data, CATALOG))
         spec, text = conversion.spec, "\n".join(conversion.deferred)
         self.assertEqual(["customer", "driver"], [a.slug for a in spec.apps])
+        self.assertEqual([["android", "ios"], ["android"]], [a.platforms for a in spec.apps])
+        self.assertEqual(["portal", "kiosk"], [w.slug for w in spec.webs])   # a web module and an app module that chose only web
         self.assertEqual(["otp", "payments"], spec.sdks)
-        for part in ("web module 'portal'", "'driver' (Driver): platform android only was chosen", "app module 'kiosk' (Kiosk): only web was chosen",
-                     "admin module 'admin-two'", "SDK 'maps' (Maps): an SDK the engine cannot build yet", "SDK 'loyalty' (Loyalty): new SDK",
+        for gone in ("web module", "platform android only", "only web was chosen", "web target", "not generated yet"):
+            self.assertNotIn(gone, text)
+        for part in ("admin module 'admin-two'", "SDK 'maps' (Maps): an SDK the engine cannot build yet", "SDK 'loyalty' (Loyalty): new SDK",
                      "already published as @acme/storage 3.1.0", "SDK 'analytics' (Analytics): chosen as no code"):
             self.assertIn(part, text)
 
