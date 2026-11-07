@@ -25,6 +25,7 @@ from business import (FIELDS, PROMPT_FILE, REVIEW_PROMPT_NAME, Business, ask_bus
 from engine import EngineError, Result, check_target, instantiate, run_post_generate  # noqa: E402
 from kmp import check_kmp_manifest, identity_leftovers, instantiate_apps  # noqa: E402
 from manifest import KINDS, Manifest, ManifestError, available_kinds, load_manifest, templates_root, tool_root  # noqa: E402
+from lessons import module_tags  # noqa: E402
 from rules import load_rule_defs, write_rules  # noqa: E402
 from sdks import add_published_dependencies, append_backlog_rows, apply_providers, record_published  # noqa: E402
 from prompts import (SDK_CATALOG, SDK_DESCRIPTIONS, Spec, ask, parse_apps, parse_webs, slug_from, split_list, system_prefix_from,  # noqa: E402
@@ -287,7 +288,7 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         report.documents.status_text() if written else ""), REVIEW_PROMPT_NAME if written else "AGENT_PROMPT")
     if prompt_rel:
         report.created.append(prompt_rel)
-    report.knowledge = copy_knowledge(spec.target, knowledge if knowledge is not None else tool / "knowledge")
+    report.knowledge = copy_knowledge(spec.target, knowledge if knowledge is not None else tool / "knowledge", module_tags(spec))
     if run_post:
         for result in report.results:
             report.post_failures.extend(run_post_generate(result))
@@ -353,7 +354,7 @@ def print_report(report: Report, run_post: bool) -> None:
 
 
 def main(argv: List[str]) -> int:
-    if argv and argv[0] in ("intake", "new", "documents"):  # the plan-driven flow (commands.py); the flat command below is unchanged
+    if argv and argv[0] in ("intake", "new", "documents", "lessons"):  # the plan-driven flow (commands.py); the flat command below is unchanged
         from commands import run
         return run(argv, generate, print_report)
     args = parse_args(argv)

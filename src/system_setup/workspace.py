@@ -8,8 +8,9 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
+from lessons import LESSONS_FILE, for_project
 from prompts import FIXED_PREFIXES, Spec
 from rules import load_rule_defs, rules_map
 
@@ -209,15 +210,19 @@ def ensure_project_files(repo_root: Path, registry: Dict[str, object]) -> List[s
     return created
 
 
-def copy_knowledge(repo_root: Path, knowledge_dir: Optional[Path]) -> List[str]:
-    """Copies the tool's `knowledge/*.md` (lessons, playbooks) to `docs/knowledge/` and links it from the README."""
+def copy_knowledge(repo_root: Path, knowledge_dir: Optional[Path], lesson_tags: Optional[Set[str]] = None) -> List[str]:
+    """Copies the tool's `knowledge/*.md` (lessons, playbooks) to `docs/knowledge/` and links it from the README. With `lesson_tags`
+    (the project's module tags) LESSONS.md is cut down to the lessons that match them (lessons.py)."""
     if knowledge_dir is None or not knowledge_dir.is_dir():
         return []
     copied = []
     target = repo_root / KNOWLEDGE_REL
     for source in sorted(knowledge_dir.glob("*.md")):
         target.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target / source.name)
+        if lesson_tags is not None and source.name == LESSONS_FILE:
+            (target / source.name).write_text(for_project(source.read_text(encoding="utf-8"), lesson_tags), encoding="utf-8")
+        else:
+            shutil.copyfile(source, target / source.name)
         copied.append(f"{KNOWLEDGE_REL.as_posix()}/{source.name}")
     readme = repo_root / "README.md"
     if copied and readme.is_file() and KNOWLEDGE_REL.as_posix() not in readme.read_text(encoding="utf-8"):

@@ -25,7 +25,7 @@ from workspace import git_init, run_tasks_check
 INTAKE_PROMPT_FILE = "INTAKE_PROMPT.md"
 INTAKE_START = "Start the interview now."
 BUSINESS_DOC_REL = SAVED_DOCUMENT
-SUBCOMMANDS = ("intake", "new", "documents")
+SUBCOMMANDS = ("intake", "new", "documents", "lessons")
 NO_CLAUDE_MDS = {"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"}
 
 NO_CLAUDE_HELP = """\
@@ -262,6 +262,9 @@ def print_deferred(deferred: List[str], say: Callable[[str], None] = print) -> N
 
 
 def run(argv: List[str], generate: Callable, print_report: Callable, **seams) -> int:
+    if argv[0] == "lessons":   # lessons.py / lessons_cmd.py: list the tool's lessons, import a project's reviewed ones
+        from lessons_cmd import run_lessons
+        return run_lessons(argv[1:], **{k: v for k, v in seams.items() if k in ("say", "reader")})
     if argv[0] == "documents":
         return run_documents_command(argv[1:], **{k: v for k, v in seams.items() if k in ("analyzer", "say")})
     if argv[0] == "intake":
