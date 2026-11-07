@@ -240,6 +240,8 @@ def generate(spec: Spec, templates: Path, run_post: bool = False, git: bool = Tr
         result = instantiate(manifests["sdk"], spec.target, sdk_values, parts)
         applied = apply_providers(spec, sdk, manifests["sdk"].root, spec.skeleton_missing)   # chosen providers: adapter, builtin or skeleton
         sdk_rows[sdk] = applied.rows
+        if applied.written or spec.sdk_overrides.get(sdk):   # generated names change line breaks: format once before `verify`
+            result.post_generate = [part for command in result.post_generate for part in (["npm run format", command] if command == "npm run verify" else [command])]
         if applied.dependencies_added:   # the shipped lock does not list the adapters' packages: `npm ci` would refuse it
             result.post_generate = ["npm install" if command == "npm ci" else command for command in result.post_generate]
         report.results.append(result)

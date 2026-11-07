@@ -20,7 +20,7 @@
           "methods": [
             "send"
           ],
-          "call": "adapter.send({ to: '+10000000000', code: '123456', language: 'en', purpose: 'LOGIN', ttlSec: 300 })"
+          "call": "adapter.send({ to: '+1000', code: '1234', language: 'en', purpose: 'LOGIN', ttlSec: 60 })"
         }
       }
     },

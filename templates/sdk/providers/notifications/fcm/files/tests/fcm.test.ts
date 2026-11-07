@@ -22,9 +22,14 @@ const messagingOf = (
   },
 });
 
-const failure = (code: string, message = ''): Entry => ({ success: false, error: { code, message } });
+const failure = (code: string, message = ''): Entry => ({
+  success: false,
+  error: { code, message },
+});
 const sender = (entries: Entry[]): FcmPushSender =>
-  new FcmPushSender({ messaging: () => Promise.resolve(messagingOf(() => ({ responses: entries }))) });
+  new FcmPushSender({
+    messaging: () => Promise.resolve(messagingOf(() => ({ responses: entries }))),
+  });
 
 describe('buildFcmMessage', () => {
   it('maps a full message for both platforms', () => {
@@ -54,8 +59,14 @@ describe('buildFcmMessage', () => {
   });
 
   it('fills the missing half of a notification and drops empty data', () => {
-    expect(buildFcmMessage({ tokens: ['a'], body: 'b' }).notification).toEqual({ title: '', body: 'b' });
-    expect(buildFcmMessage({ tokens: ['a'], title: 't' }).notification).toEqual({ title: 't', body: '' });
+    expect(buildFcmMessage({ tokens: ['a'], body: 'b' }).notification).toEqual({
+      title: '',
+      body: 'b',
+    });
+    expect(buildFcmMessage({ tokens: ['a'], title: 't' }).notification).toEqual({
+      title: 't',
+      body: '',
+    });
     expect(buildFcmMessage({ tokens: ['a'], title: 't' }).data).toBeUndefined();
   });
 });
@@ -99,11 +110,22 @@ describe('FcmPushSender', () => {
   it('passes dryRun on, defaults it to false and normalizes whole-call failures', async () => {
     const calls: { message: FcmMulticastMessage; dryRun: boolean | undefined }[] = [];
     const ok = messagingOf(() => ({ responses: [{ success: true }] }), calls);
-    await new FcmPushSender({ messaging: () => Promise.resolve(ok), dryRun: true }).send({ tokens: ['t'], body: 'b' });
-    await new FcmPushSender({ messaging: () => Promise.resolve(ok) }).send({ tokens: ['t'], body: 'b' });
+    await new FcmPushSender({ messaging: () => Promise.resolve(ok), dryRun: true }).send({
+      tokens: ['t'],
+      body: 'b',
+    });
+    await new FcmPushSender({ messaging: () => Promise.resolve(ok) }).send({
+      tokens: ['t'],
+      body: 'b',
+    });
     expect(calls.map((c) => c.dryRun)).toEqual([true, false]);
     const down = new FcmPushSender({
-      messaging: () => Promise.resolve(messagingOf(() => Object.assign(new Error('x'), { code: 'messaging/server-unavailable' }))),
+      messaging: () =>
+        Promise.resolve(
+          messagingOf(() =>
+            Object.assign(new Error('x'), { code: 'messaging/server-unavailable' }),
+          ),
+        ),
     });
     await expect(down.send({ tokens: ['t'], body: 'b' })).rejects.toMatchObject({
       code: ERROR_CODES.UNAVAILABLE,
@@ -117,7 +139,10 @@ describe('FcmPushSender', () => {
       closed += 1;
       return Promise.resolve();
     };
-    await new FcmPushSender({ messaging: () => Promise.reject(new Error('unused')), close }).close();
+    await new FcmPushSender({
+      messaging: () => Promise.reject(new Error('unused')),
+      close,
+    }).close();
     await new FcmPushSender({ messaging: () => Promise.reject(new Error('unused')) }).close();
     expect(closed).toBe(1);
   });
@@ -127,10 +152,22 @@ describe('normalizeFcmError', () => {
   const code = (value: string): SdkError => normalizeFcmError({ code: value });
 
   it('maps every class of failure', () => {
-    expect(code('app/invalid-credential')).toMatchObject({ code: ERROR_CODES.AUTH_FAILED, retryable: false });
-    expect(code('messaging/message-rate-exceeded')).toMatchObject({ code: ERROR_CODES.RATE_LIMITED, retryable: true });
-    expect(code('messaging/invalid-payload')).toMatchObject({ code: ERROR_CODES.VALIDATION_FAILED, retryable: false });
-    expect(code('messaging/internal-error')).toMatchObject({ code: ERROR_CODES.UNAVAILABLE, retryable: true });
+    expect(code('app/invalid-credential')).toMatchObject({
+      code: ERROR_CODES.AUTH_FAILED,
+      retryable: false,
+    });
+    expect(code('messaging/message-rate-exceeded')).toMatchObject({
+      code: ERROR_CODES.RATE_LIMITED,
+      retryable: true,
+    });
+    expect(code('messaging/invalid-payload')).toMatchObject({
+      code: ERROR_CODES.VALIDATION_FAILED,
+      retryable: false,
+    });
+    expect(code('messaging/internal-error')).toMatchObject({
+      code: ERROR_CODES.UNAVAILABLE,
+      retryable: true,
+    });
     expect(code('')).toMatchObject({ code: ERROR_CODES.NETWORK_ERROR, retryable: true });
     expect(code('something/else')).toMatchObject({ code: ERROR_CODES.UNKNOWN, retryable: false });
   });

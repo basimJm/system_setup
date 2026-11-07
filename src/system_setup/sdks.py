@@ -189,7 +189,7 @@ def merge_dependencies(dest: Path, dependencies: Dict[str, str], dev_dependencie
 
 
 def providers_module(item: SdkPlan, uses: List[ProviderUse]) -> str:
-    entries = ",\n".join(f"  {{ id: '{u.id}', channel: '{u.channel or 'unspecified'}', adapter: '{'ready' if u.mode == MODE_ADAPTER else u.mode}' }}" for u in uses)
+    entries = ",\n".join(f"  {{\n    id: '{u.id}',\n    channel: '{u.channel or 'unspecified'}',\n    adapter: '{'ready' if u.mode == MODE_ADAPTER else u.mode}',\n  }}" for u in uses)
     default = uses[0].id if uses else ""
     return ("/** Written by SYSTEM_SETUP from the plan. `adapter`: ready = copied from a tested adapter, builtin = inside this SDK, "
             "skeleton = rejects every call until it is implemented (see the backlog). */\n"
@@ -209,7 +209,7 @@ def apply_providers(spec: Spec, sdk: str, template_root: Path, catalog_missing: 
     """Provider handling for one generated SDK (called right after the SDK template is instantiated)."""
     item: Optional[SdkPlan] = spec.sdk_plans.get(sdk)
     applied = Applied()
-    if item is None or not item.providers:
+    if item is None or not (template_root / PROVIDERS_DIR).is_dir():   # not a plan SDK, or a template older than phase 5
         return applied
     dest = spec.target / spec.sdk_dir(sdk)
     values = {**spec.token_values(), **spec.sdk_values(sdk)}
@@ -256,6 +256,8 @@ def apply_providers(spec: Spec, sdk: str, template_root: Path, catalog_missing: 
     if not item.dedicated:
         applied.rows.insert(0, (f"Write the BRD of {sdk} and shape its port (operations, request and result) from the real need", "port", "TODO",
                                 "owner input: which operations the business needs; generic skeleton in src/types.ts"))
+    if not item.providers:
+        return applied
     write_text(dest / PROVIDERS_MODULE, providers_module(item, item.providers))
     write_text(dest / "tests/providers.test.ts", providers_test())
     applied.written += [PROVIDERS_MODULE, "tests/providers.test.ts"]

@@ -1,6 +1,7 @@
-/* istanbul ignore file -- thin glue over firebase-admin; proven by a real push, not by unit tests. */
 import type { App } from 'firebase-admin/app';
 import type { FcmMessaging } from './fcm';
+
+/* istanbul ignore file -- thin glue over firebase-admin; proven by a real push, not by unit tests. */
 
 let appSequence = 0;
 

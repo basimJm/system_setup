@@ -43,7 +43,8 @@ const SMTP_CODES = {
 const has = (list: readonly string[], code: string): boolean => list.includes(code);
 
 const shape = (error: unknown): { code: string; reply: number | undefined } => {
-  const record = typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : {};
+  const record =
+    typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : {};
   return {
     code: typeof record['code'] === 'string' ? record['code'] : '',
     reply: typeof record['responseCode'] === 'number' ? record['responseCode'] : undefined,
@@ -58,13 +59,22 @@ export const normalizeSmtpError = (error: unknown): SdkError => {
   if (has(SMTP_CODES.auth, code) || reply === SMTP_CODES.authReply)
     return new SdkError(KERNEL_ERROR_CODES.AUTH_FAILED, 'SMTP rejected the credentials', base);
   if (has(SMTP_CODES.timeout, code))
-    return new SdkError(KERNEL_ERROR_CODES.TIMEOUT, 'SMTP request timed out', { ...base, retryable: true });
+    return new SdkError(KERNEL_ERROR_CODES.TIMEOUT, 'SMTP request timed out', {
+      ...base,
+      retryable: true,
+    });
   if (has(SMTP_CODES.network, code))
-    return new SdkError(KERNEL_ERROR_CODES.NETWORK_ERROR, 'SMTP server unreachable', { ...base, retryable: true });
+    return new SdkError(KERNEL_ERROR_CODES.NETWORK_ERROR, 'SMTP server unreachable', {
+      ...base,
+      retryable: true,
+    });
   if (reply !== undefined && reply >= SMTP_CODES.permanentFrom)
     return new SdkError(KERNEL_ERROR_CODES.VENDOR_ERROR, 'SMTP permanent failure', base);
   if (reply !== undefined && reply >= SMTP_CODES.transientFrom)
-    return new SdkError(KERNEL_ERROR_CODES.UNAVAILABLE, 'SMTP temporary failure', { ...base, retryable: true });
+    return new SdkError(KERNEL_ERROR_CODES.UNAVAILABLE, 'SMTP temporary failure', {
+      ...base,
+      retryable: true,
+    });
   return new SdkError(KERNEL_ERROR_CODES.UNKNOWN, 'unexpected SMTP error', base);
 };
 
@@ -74,7 +84,9 @@ export class SmtpEmailSender implements EmailSender {
 
   constructor(private readonly options: SmtpSenderOptions) {}
 
-  async send(message: EmailMessage): Promise<{ readonly id: string; readonly status: EmailStatus }> {
+  async send(
+    message: EmailMessage,
+  ): Promise<{ readonly id: string; readonly status: EmailStatus }> {
     const prefix = this.options.tagHeaderPrefix ?? SMTP_CODES.defaultTagPrefix;
     const headers = Object.fromEntries(
       Object.entries(message.tags ?? {}).map(([key, value]) => [`${prefix}${key}`, value]),

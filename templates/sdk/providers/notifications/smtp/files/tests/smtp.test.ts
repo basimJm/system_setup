@@ -25,7 +25,10 @@ describe('SmtpEmailSender', () => {
   it('sends text and html with reply-to and tags as X- headers', async () => {
     const sent: MailMessage[] = [];
     const sender = new SmtpEmailSender({
-      transport: transportOf(() => ({ messageId: '<m1>', accepted: ['a@example.com'], rejected: [] }), sent),
+      transport: transportOf(
+        () => ({ messageId: '<m1>', accepted: ['a@example.com'], rejected: [] }),
+        sent,
+      ),
       from,
     });
     await expect(
@@ -56,7 +59,9 @@ describe('SmtpEmailSender', () => {
       from,
       tagHeaderPrefix: 'Y-',
     });
-    await expect(sender.send({ to: ['a@example.com'], subject: 's', text: 't', tags: { k: 'v' } })).resolves.toEqual({ id: '', status: 'SENT' });
+    await expect(
+      sender.send({ to: ['a@example.com'], subject: 's', text: 't', tags: { k: 'v' } }),
+    ).resolves.toEqual({ id: '', status: 'SENT' });
     await sender.send({ to: ['a@example.com'], subject: 's', text: 't' });
     expect(sent[0]?.headers).toEqual({ 'Y-k': 'v' });
     expect(sent[1]).toEqual({ from, to: ['a@example.com'], subject: 's', text: 't' });
@@ -67,17 +72,30 @@ describe('SmtpEmailSender', () => {
       transport: transportOf(() => ({ accepted: [], rejected: ['a@example.com'] })),
       from,
     });
-    await expect(refused.send({ to: ['a@example.com'], subject: 's', text: 't' })).rejects.toMatchObject({ code: ERROR_CODES.VENDOR_ERROR });
+    await expect(
+      refused.send({ to: ['a@example.com'], subject: 's', text: 't' }),
+    ).rejects.toMatchObject({ code: ERROR_CODES.VENDOR_ERROR });
     const down = new SmtpEmailSender({
       transport: transportOf(() => Object.assign(new Error('x'), { code: 'ECONNREFUSED' })),
       from,
     });
-    await expect(down.send({ to: ['a@example.com'], subject: 's', text: 't' })).rejects.toMatchObject({ code: ERROR_CODES.NETWORK_ERROR, retryable: true });
+    await expect(
+      down.send({ to: ['a@example.com'], subject: 's', text: 't' }),
+    ).rejects.toMatchObject({ code: ERROR_CODES.NETWORK_ERROR, retryable: true });
   });
 
   it('closes the transport when it can be closed', async () => {
     let closed = false;
-    await new SmtpEmailSender({ transport: transportOf(() => new Error('unused'), [], () => { closed = true; }), from }).close();
+    await new SmtpEmailSender({
+      transport: transportOf(
+        () => new Error('unused'),
+        [],
+        () => {
+          closed = true;
+        },
+      ),
+      from,
+    }).close();
     await new SmtpEmailSender({ transport: transportOf(() => new Error('unused')), from }).close();
     expect(closed).toBe(true);
   });
@@ -92,7 +110,10 @@ describe('normalizeSmtpError', () => {
     expect(of('', 535)).toMatchObject({ code: ERROR_CODES.AUTH_FAILED });
     expect(of('ETIMEDOUT')).toMatchObject({ code: ERROR_CODES.TIMEOUT, retryable: true });
     expect(of('ENOTFOUND')).toMatchObject({ code: ERROR_CODES.NETWORK_ERROR, retryable: true });
-    expect(of('EENVELOPE', 550)).toMatchObject({ code: ERROR_CODES.VENDOR_ERROR, retryable: false });
+    expect(of('EENVELOPE', 550)).toMatchObject({
+      code: ERROR_CODES.VENDOR_ERROR,
+      retryable: false,
+    });
     expect(of('', 451)).toMatchObject({ code: ERROR_CODES.UNAVAILABLE, retryable: true });
     expect(of('weird')).toMatchObject({ code: ERROR_CODES.UNKNOWN });
     expect(normalizeSmtpError('text')).toMatchObject({ code: ERROR_CODES.UNKNOWN });

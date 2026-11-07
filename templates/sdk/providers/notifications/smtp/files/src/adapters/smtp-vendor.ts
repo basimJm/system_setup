@@ -1,6 +1,7 @@
-/* istanbul ignore file -- thin glue over nodemailer; proven by a real send, not by unit tests. */
 import nodemailer from 'nodemailer';
 import type { SmtpTransportLike } from './smtp';
+
+/* istanbul ignore file -- thin glue over nodemailer; proven by a real send, not by unit tests. */
 
 export interface SmtpConnection {
   readonly host: string;

@@ -14,15 +14,15 @@ import { assertRequest } from './validation';
 export class __SDK_TITLE__Service implements __SDK_TITLE__Client {
   constructor(
     private readonly config: ResolvedConfig,
-    private readonly port: __SDK_TITLE__Port,
+    private readonly adapter: __SDK_TITLE__Port,
     private readonly retryDeps: RetryDeps = realRetryDeps,
   ) {}
 
-  execute(request: __SDK_TITLE__Request): Promise<__SDK_TITLE__Result> {
+  async execute(request: __SDK_TITLE__Request): Promise<__SDK_TITLE__Result> {
     assertRequest(request);
-    return withRetry(
+    return await withRetry(
       () =>
-        withTimeout(this.port.execute(request), this.config.timeoutMs).catch((error: unknown) => {
+        withTimeout(this.adapter.execute(request), this.config.timeoutMs).catch((error: unknown) => {
           const wrapped = isSdkError(error)
             ? error
             : new SdkError(ERROR_CODES.OPERATION_FAILED, 'the adapter call failed', {
@@ -30,7 +30,7 @@ export class __SDK_TITLE__Service implements __SDK_TITLE__Client {
                 cause: error,
               });
           // `reason`, not `code`: the redacting logger masks any field named like a secret code.
-          this.config.logger.warn('call failed', { adapter: this.port.name, reason: wrapped.code });
+          this.config.logger.warn('call failed', { adapter: this.adapter.name, reason: wrapped.code });
           throw wrapped;
         }),
       this.config.retry,
@@ -39,6 +39,6 @@ export class __SDK_TITLE__Service implements __SDK_TITLE__Client {
   }
 
   async close(): Promise<void> {
-    await this.port.close?.();
+    await this.adapter.close?.();
   }
 }

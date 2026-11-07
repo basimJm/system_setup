@@ -46,7 +46,10 @@ export const mapSmsStatus = (status: number): SdkError | undefined => {
     return fail(KERNEL_ERROR_CODES.RATE_LIMITED, 'the SMS gateway is throttling', true);
   if (status >= HTTP.serverErrorFrom)
     return fail(KERNEL_ERROR_CODES.UNAVAILABLE, 'the SMS gateway is unavailable', true);
-  return fail(KERNEL_ERROR_CODES.VENDOR_ERROR, `the SMS gateway rejected the message (${String(status)})`);
+  return fail(
+    KERNEL_ERROR_CODES.VENDOR_ERROR,
+    `the SMS gateway rejected the message (${String(status)})`,
+  );
 };
 
 const idOf = (text: string): string | undefined => {
@@ -85,7 +88,8 @@ export class HttpSmsChannel implements OtpChannel {
         signal: AbortSignal.timeout(this.options.timeoutMs ?? HTTP.defaultTimeoutMs),
       });
     } catch (error) {
-      const name = typeof error === 'object' && error !== null && 'name' in error ? String(error.name) : '';
+      const name =
+        typeof error === 'object' && error !== null && 'name' in error ? String(error.name) : '';
       const timedOut = (HTTP.timeoutNames as readonly string[]).includes(name);
       throw new SdkError(
         timedOut ? KERNEL_ERROR_CODES.TIMEOUT : KERNEL_ERROR_CODES.NETWORK_ERROR,
@@ -97,7 +101,10 @@ export class HttpSmsChannel implements OtpChannel {
     if (failure !== undefined) throw failure;
     const id = idOf(await response.text());
     if (id === undefined)
-      throw new SdkError(KERNEL_ERROR_CODES.MALFORMED_RESPONSE, 'the SMS gateway answered without an id');
+      throw new SdkError(
+        KERNEL_ERROR_CODES.MALFORMED_RESPONSE,
+        'the SMS gateway answered without an id',
+      );
     return { id };
   }
 }

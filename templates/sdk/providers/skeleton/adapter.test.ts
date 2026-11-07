@@ -1,5 +1,6 @@
 import { KERNEL_ERROR_CODES } from '../src/constants/codes';
 import { __PROVIDER_CLASS__ } from '../src/adapters/__PROVIDER_ID__';
+import type { __PORT_INTERFACE__ } from '../src/types';
 
 /*
  * SKELETON, written by SYSTEM_SETUP: the __PROVIDER_ID__ adapter is not implemented yet.
@@ -12,7 +13,7 @@ __MISSING_LINES__
  */
 describe('__PROVIDER_ID__ adapter (skeleton)', () => {
   it.failing('NOT IMPLEMENTED: __PROVIDER_ID__ must accept a valid call', async () => {
-    const adapter = new __PROVIDER_CLASS__();
+    const adapter: __PORT_INTERFACE__ = new __PROVIDER_CLASS__();
     await __PORT_CALL__;
   });
 
