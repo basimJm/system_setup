@@ -99,7 +99,8 @@ class ReviewTest(TempDirTest):
         data["open_questions"].append({"id": "loyalty", "question": "Loyalty points?", "why": "scope", "proposed_default": ""})
         plan = Plan.from_dict(data, CATALOG)
         # Enter for everything up to the questions, then answer only the first question and the document language
-        answers = [""] * (len(run_review(plan)[1].prompts) - 3) + ["Yes, ID at the door", "", "en"]
+        roles = len([m for m in plan.modules if m.kind in ("app", "web")])   # the role question of each client module comes last
+        answers = [""] * (len(run_review(plan)[1].prompts) - 3 - roles) + ["Yes, ID at the door", "", "en"] + [""] * roles
         result, _, text = run_review(plan, answers)
         self.assertEqual("Yes, ID at the door", result.open_questions[0].answer)
         self.assertIsNone(result.open_questions[1].answer)

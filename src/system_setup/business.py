@@ -14,8 +14,8 @@ TBD = "TBD"
 DEFAULT_LANGUAGE = "ar"
 DEFAULT_STORED_TIME_ZONE = "UTC"
 # Code-facing defaults: what generated source uses while the business answer is still TBD (or is not a code / IANA name).
-# A neutral fixed-offset zone and the ISO 4217 code for "no currency"; the business documents keep saying TBD.
-FALLBACK_CODE_TIME_ZONE = "Etc/GMT-3"
+# UTC (no offset, no daylight saving: no business is assumed) and the ISO 4217 code for "no currency"; the business documents keep saying TBD.
+FALLBACK_CODE_TIME_ZONE = "UTC"
 FALLBACK_CODE_CURRENCY = "XXX"
 IANA_ZONE_RE = re.compile(r"^(?:UTC|Etc/[A-Za-z0-9+-]+|[A-Z][A-Za-z_]+(?:/[A-Za-z0-9_+-]+){1,2})$")
 CURRENCY_CODE_RE = re.compile(r"\b[A-Z]{3}\b")

@@ -1,7 +1,7 @@
 import type { Language } from './i18n';
 
 /** Business time zone of the platform: every admin date and hour is shown in it (PRD §2). Change per deployment. */
-export const BUSINESS_TIME_ZONE = 'Etc/GMT-3';
+export const BUSINESS_TIME_ZONE = 'UTC';
 
 /** Money: the API sends decimal strings; the panel computes in integer minor units (never floats). */
 export const MINOR_UNITS_PER_MAJOR = 1_000;

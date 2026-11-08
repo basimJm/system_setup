@@ -48,7 +48,7 @@ Rules
   `business` is an IANA name such as Europe/Paris. `countries` are two-letter codes.
 - `business`: actors with what each does, the business rules the document states, entities with their states in order, the
   jobs and reminders, and what already exists. Only what the document says.
-- `modules`: only the parts the document needs, one per kind of user or channel, each with its audience, why, and platforms.
+- `modules`: only the parts the document needs, one per kind of user or channel, each with its audience, why, and platforms. For an `app` or `web` module set `role`: `end_user` (people using the product for themselves) or `staff` (people who work for an organization that is a customer of the product); leave it empty for other kinds.
   A customer or merchant website is kind web; a phone app is kind app; add an admin panel when staff manage the system, a
   server when anything is stored or processed.
 - `sdks`: only the capabilities the document needs. Use a catalog id when one fits (`notifications` covers push and e-mail

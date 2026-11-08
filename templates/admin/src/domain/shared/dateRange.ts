@@ -8,7 +8,7 @@ import {
 } from '@/constants/dateRange';
 import { addDays, isLocalDate, localDateOf, localDayRange, type InstantRange } from './time';
 
-/** Inclusive range of calendar days (`YYYY-MM-DD`, Etc/GMT-3 unless said otherwise). */
+/** Inclusive range of calendar days (`YYYY-MM-DD`, business zone unless said otherwise). */
 export interface DateRange {
   readonly from: string;
   readonly to: string;

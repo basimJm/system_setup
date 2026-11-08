@@ -79,10 +79,16 @@ Each phase is one branch and one PR into `main`.
 - [x] The source system's recent lessons are harvested, generalized and added.
 
 ### 8. Update and full proof
-- [ ] Server audiences come from the plan: no `merchant` or `customer` module, route or contract unless the plan has that audience.
+- [~] Server audiences come from the plan: role per client module, rename by data, prune of the `staff` shape, second audience as a PENDING
+      row. Proven by generated systems whose server verify chain passes: the school portal (no staff app: zero `merchant`, 700 tests), the
+      booking marketplace (`/customer-app/v1` and `/facility-app/v1`, apps point at `openapi.customerApp.json` / `openapi.facilityApp.json`,
+      714 tests) and a staff-only system (714 tests). Not done: pruning the `end_user` shape (a staff-only system keeps the customer code as the
+      namespace `/end-user/v1` and gets a PENDING backlog row asking to remove it), and the staff domain layer (members, team, permissions)
+      stays as unwired code. The web app's contract files stay the admin sample under its prefix (`CONTRACT_IS_SAMPLE`) until its first `api:sync`.
 - [x] `update` adds a module or SDK and refreshes documents without overwriting work. (additions only; removals and changed parts become PENDING rows; an edited document gets a `.proposed.md`)
-- [ ] The fallback time zone is `UTC` and any zone or currency works without editing template tests (today the fallback is
-      `Etc/GMT-3` and template tests pin it).
+- [x] The fallback time zone is `UTC` and any zone or currency works without editing template tests (admin and web tests build their
+      instants from the configured zone; proven with `America/New_York`: web gate and server verify pass). The Kotlin tests were not run
+      with Gradle here; the one zone test there already names its own zone.
 - [ ] End to end on the three samples: generated, checked, built, first task run through the production line.
 
 ### 9. Release

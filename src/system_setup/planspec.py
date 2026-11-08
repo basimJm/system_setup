@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
 
+from audiences import infer_role, load_audience_catalog
 from business import Business
 from catalog import Catalog
 from deploy import plan_deployment
@@ -64,23 +65,25 @@ def plan_to_spec(plan: Plan, target: Path, catalog: Catalog) -> Conversion:
     webs: List[WebSpec] = []
     used = {module.id for module in plan.modules}
 
+    audiences = load_audience_catalog()
     for module in plan.modules:
         label = f"'{module.id}' ({module.name})"
         arabic = module.name if ARABIC.search(module.name) else ""
+        role = module.role or infer_role(module.id, module.name, audiences)
         if module.kind == "web":
-            webs.append(WebSpec(name=title_of(module.id), slug=module.id, name_ar=arabic))
+            webs.append(WebSpec(name=title_of(module.id), slug=module.id, name_ar=arabic, role=role))
         elif module.kind == "app":
             targets = [p for p in MOBILE if p in module.platforms]
             if targets:
-                apps.append(AppSpec(name=title_of(module.id), slug=module.id, name_ar=arabic, platforms=targets))
+                apps.append(AppSpec(name=title_of(module.id), slug=module.id, name_ar=arabic, platforms=targets, role=role))
             if "web" in module.platforms:
                 slug = module.id if not targets else f"{module.id}-web"
                 while slug != module.id and slug in used:
                     slug += "-2"
                 used.add(slug)
-                webs.append(WebSpec(name=title_of(slug), slug=slug, name_ar=arabic))
+                webs.append(WebSpec(name=title_of(slug), slug=slug, name_ar=arabic, role=role, api_slug=module.id if targets else ""))
                 if targets:
-                    deferred_notes.append(f"app module {label}: the web platform becomes its own web app '{slug}' next to the {'/'.join(targets)} app")
+                    deferred_notes.append(f"app module {label}: the web platform becomes its own web app '{slug}' next to the {'/'.join(targets)} app and calls the same server audience")
             if not targets and "web" not in module.platforms:
                 deferred.append(f"app module {label}: only {', '.join(module.platforms)} was chosen, and the engine generates Android, iOS and web apps")
         elif module.kind not in ("server", "admin"):

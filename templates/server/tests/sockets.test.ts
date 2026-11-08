@@ -156,7 +156,7 @@ describe('rooms and delivery', () => {
     hub.emit('merchant', `member:${ID}`, 'ping.test', { who: 'member' });
     hub.emit('admin', 'admin', 'ping.test', { who: 'admin' });
     expect(await got).toEqual([{ who: 'customer' }, { who: 'member' }, { who: 'admin' }]);
-    expect(seen.sort()).toEqual([`admin:${ID}`, `customer:${ID}`, `merchant:${ID}`]);
+    expect(seen.sort()).toEqual([`admin:${ID}`, `customer:${ID}`, `merchant:${ID}`].sort());
   });
   it('does not deliver to other accounts or other namespaces', async () => {
     const { url, hub } = await start();

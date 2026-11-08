@@ -30,7 +30,8 @@ SDK_KIND_KEYS = ("prefix", "title")   # optional: "dir" = overlay folder inside 
 # Copied byte for byte and never substituted, per kind (on top of binary_globs): vendored skills keep their files intact.
 DEFAULT_VERBATIM = {"workspace": [".claude/skills/**"]}
 TARGETED_KEYS = ("file", "placeholder", "find", "replace_with")
-PRUNE_KEYS = ("skip", "edits", "post_generate")
+PRUNE_KEYS = ("skip", "edits", "post_generate", "drop_lines", "drop_blocks")
+AUDIENCE_KEYS = ("word", "plural")   # the template's own words for one audience role (server): `customer` / `customers`
 PRUNE_EDIT_KEYS = ("file", "find")   # plus "replace_with": a string, empty to delete the text
 
 
@@ -57,6 +58,9 @@ class Manifest:
     # Optional parts of the template, e.g. a platform: group -> {skip: [globs], edits: [{file, find, replace_with}],
     # post_generate: [commands]}. A group the caller drops removes those files, edits and commands (see `instantiate`).
     prune: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Server audiences: role (end_user, staff) -> {word, plural}. The words are renamed to the plan's audience of that role and
+    # `prune[<role>]` removes the role when the plan has none (see audiences.py).
+    audiences: Dict[str, Dict[str, str]] = field(default_factory=dict)
     base: Optional["Manifest"] = None   # `"base": "<template>"`: that template's files, rules and tokens come first
 
     @property
@@ -114,6 +118,11 @@ def parse_manifest(data: object, root: Path) -> Manifest:
         _expect(TOKEN_RE.fullmatch(edit["placeholder"]) is not None,
                 f"{where}: targeted placeholder {edit['placeholder']!r} is not a __TOKEN__")
     prune = _prune(data.get("prune", {}), where)
+    audiences = data.get("audiences", {})
+    _expect(isinstance(audiences, dict), f"{where}: 'audiences' must map a role to its words")
+    for role, words in audiences.items():
+        _expect(isinstance(words, dict) and all(isinstance(words.get(k), str) and words[k] for k in AUDIENCE_KEYS) and set(words) <= set(AUDIENCE_KEYS),
+                f"{where}: audiences[{role!r}] needs the string keys {', '.join(AUDIENCE_KEYS)}")
     base = data.get("base", "")
     _expect(isinstance(base, str) and (not base or re.fullmatch(r"[a-z][a-z0-9-]*", base) is not None and base != kind),
             f"{where}: 'base' must be the folder name of another template")
@@ -122,7 +131,8 @@ def parse_manifest(data: object, root: Path) -> Manifest:
                     skip=list(data.get("skip", [])), post_generate=list(data.get("post_generate", [])),
                     binary_globs=list(data.get("binary_globs", [])), dest=dest, layers=layers,
                     verbatim_globs=list(DEFAULT_VERBATIM.get(kind, [])),
-                    kinds={k: dict(v) for k, v in kinds.items()}, targeted=[dict(e) for e in targeted], prune=prune)
+                    kinds={k: dict(v) for k, v in kinds.items()}, targeted=[dict(e) for e in targeted], prune=prune,
+                    audiences={r: dict(w) for r, w in audiences.items()})
 
 
 def _prune(raw: object, where: Path) -> Dict[str, Dict[str, Any]]:
@@ -141,8 +151,15 @@ def _prune(raw: object, where: Path) -> Dict[str, Dict[str, Any]]:
             _expect(isinstance(edit, dict) and all(isinstance(edit.get(k), str) and edit[k] for k in PRUNE_EDIT_KEYS)
                     and isinstance(edit.get("replace_with"), str),
                     f"{where}: every prune[{name!r}] edit needs the string keys file and find, and a string replace_with (may be empty)")
-        groups[name] = {"skip": list(group.get("skip", [])), "edits": [dict(e) for e in edits],
-                        "post_generate": list(group.get("post_generate", []))}
+        lines = group.get("drop_lines", [])
+        _expect(isinstance(lines, list) and all(isinstance(e, dict) and isinstance(e.get("file"), str) and isinstance(e.get("contains"), list)
+                                                 and e["contains"] and all(isinstance(c, str) and c for c in e["contains"]) for e in lines),
+                f"{where}: prune[{name!r}].drop_lines must be a list of {{file, contains: [text, ...]}}")
+        blocks = group.get("drop_blocks", [])
+        _expect(isinstance(blocks, list) and all(isinstance(e, dict) and all(isinstance(e.get(k), str) and e[k] for k in ("file", "start", "end")) for e in blocks),
+                f"{where}: prune[{name!r}].drop_blocks must be a list of {{file, start, end}}")
+        groups[name] = {"skip": list(group.get("skip", [])), "edits": [dict(e) for e in edits], "post_generate": list(group.get("post_generate", [])),
+                        "drop_lines": [dict(e) for e in lines], "drop_blocks": [dict(e) for e in blocks]}
     return groups
 
 

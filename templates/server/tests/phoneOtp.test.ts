@@ -8,6 +8,7 @@ import { createOtpGate, type OtpGate } from '../src/domain/otp/otpGate.service';
 import { createPhoneOtpService } from '../src/domain/otp/phoneOtp.service';
 import { FakeOtpProvider } from '../src/providers/otp';
 import { createLogger } from '../src/utils/logger';
+import { API_PREFIXES, type ApiNamespace } from '../src/constants/server';
 import { connectRedis, disconnectRedis } from '../src/utils/redis/client';
 import { redisKey } from '../src/utils/redis/keys';
 import { startTestRedis, type TestRedis } from './helpers/redis';
@@ -63,7 +64,7 @@ const post = (
   options: { namespace?: string; language?: string } = {},
 ): request.Test =>
   request(app)
-    .post(`/${options.namespace ?? 'customer'}/v1/auth/otp/${path}`)
+    .post(`${API_PREFIXES[(options.namespace ?? 'customer') as ApiNamespace]}/auth/otp/${path}`)
     .set('Accept-Language', options.language ?? 'ar')
     .send(body);
 const sentCode = (phone = PHONE): string => provider.channel.lastCode(phone) ?? '';
@@ -375,7 +376,7 @@ describe('POST /auth/otp/verify', () => {
   it('has no wrong-attempt route any more (the server counts wrong codes itself)', async () => {
     for (const namespace of ['customer', 'merchant']) {
       const res = await request(makeApp())
-        .post(`/${namespace}/v1/auth/otp/wrong-attempt`)
+        .post(`${API_PREFIXES[namespace as ApiNamespace]}/auth/otp/wrong-attempt`)
         .send({ phone: PHONE });
       expect(res.status).toBe(404);
     }

@@ -352,7 +352,7 @@ class GeneratedSystemFromTheRealTemplatesTest(unittest.TestCase):
             self.generate(target)
             self.assertEqual([], scan_directory(target))
             kernel = (target / "BETA-Admin-Dashboard" / "src" / "constants" / "kernel.ts").read_text(encoding="utf-8")
-            self.assertIn("BUSINESS_TIME_ZONE = 'Etc/GMT-3'", kernel)
+            self.assertIn("BUSINESS_TIME_ZONE = 'UTC'", kernel)
             core = (target / "BETA-Admin-Dashboard" / "src" / "locales" / "en" / "core.json").read_text(encoding="utf-8")
             self.assertIn('"currency": "XXX"', core)
 

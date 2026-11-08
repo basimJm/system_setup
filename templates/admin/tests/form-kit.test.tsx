@@ -10,6 +10,7 @@ import { NumberField } from '@/presentation/components/form/NumberField';
 import { SearchField } from '@/presentation/components/form/SearchField';
 import { FormsSection } from '@/presentation/pages/design/FormsSection';
 import { axeViolations } from './helpers/axe';
+import { localInstant } from './helpers/zone';
 import { renderWithApp } from './helpers/render';
 
 afterEach(() => vi.useRealTimers());
@@ -184,7 +185,7 @@ describe('FormActions', () => {
   });
 
   it('prints who and when in the business zone 12-hour time, with Arabic digits in Arabic', () => {
-    const lastUpdated = { by: 'Dana', at: '2026-10-12T09:30:00Z' };
+    const lastUpdated = { by: 'Dana', at: localInstant('2026-10-12', 12, 30).toISOString() };
     const { unmount } = renderWithApp(<FormActions dirty={false} lastUpdated={lastUpdated} />);
     expect(screen.getByText(/Last updated by Dana/)).toHaveTextContent(/12:30/);
     unmount();

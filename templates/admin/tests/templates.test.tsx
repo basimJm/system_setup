@@ -9,6 +9,7 @@ import { Timeline } from '@/presentation/components/templates/Timeline';
 import { TemplatesSection } from '@/presentation/pages/design/TemplatesSection';
 import { axeViolations } from './helpers/axe';
 import { renderWithApp } from './helpers/render';
+import { localInstant } from './helpers/zone';
 
 interface Row {
   id: string;
@@ -144,7 +145,7 @@ describe('Timeline', () => {
       id: '2',
       title: 'Approved',
       actor: 'System',
-      at: '2026-10-12T09:40:00Z',
+      at: localInstant('2026-10-12', 12, 40).toISOString(),
       tone: 'green' as const,
     },
     { id: '1', title: 'Requested', at: '2026-10-11T18:20:00Z', reason: 'Because' },

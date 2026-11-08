@@ -11,7 +11,11 @@ import {
   SHA_MARKER,
   type Spec,
 } from '../scripts/lib/contract.ts';
-import { CONTRACT_FILES, SERVER_SPEC_FILE } from '../scripts/lib/contractFiles.ts';
+import {
+  CONTRACT_FILES,
+  CONTRACT_IS_SAMPLE,
+  SERVER_SPEC_FILE,
+} from '../scripts/lib/contractFiles.ts';
 import { OPERATIONS } from '../src/data/contract/generated/operations';
 import {
   components,
@@ -21,9 +25,11 @@ import {
 } from '../src/data/contract/generated/dto';
 import { ROOT } from './helpers/files';
 
+// The namespace of this app; kept in one constant so the formatting of the lines below does not depend on its length.
+const API = '/admin/v1';
 const text = (file: string) => readFileSync(join(ROOT, file), 'utf8');
 // The server project is a sibling checkout; without it the committed snapshot is the contract of record.
-const hasServerSpec = existsSync(join(ROOT, SERVER_SPEC_FILE));
+const hasServerSpec = !CONTRACT_IS_SAMPLE && existsSync(join(ROOT, SERVER_SPEC_FILE));
 const serverText = text(hasServerSpec ? SERVER_SPEC_FILE : CONTRACT_FILES.snapshot);
 const spec = JSON.parse(serverText) as Spec;
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
@@ -80,9 +86,11 @@ describe('operations', () => {
 
   it('fails the build on duplicate ids and on operations without a JSON success response', () => {
     const op = { responses: { '200': { content: { 'application/json': { schema: {} } } } } };
-    const dup: Spec = { paths: { '/admin/v1/a-b': { get: op }, '/admin/v1/a/b': { get: op } } };
+    const dup: Spec = {
+      paths: { [`${API}/a-b`]: { get: op }, [`${API}/a/b`]: { get: op } },
+    };
     expect(() => readOperations(dup)).toThrow('Duplicate operation id');
-    const none: Spec = { paths: { '/admin/v1/x': { get: { responses: { '204': {} } } } } };
+    const none: Spec = { paths: { [`${API}/x`]: { get: { responses: { '204': {} } } } } };
     expect(() => readOperations(none)).toThrow('no JSON success response');
   });
 });
