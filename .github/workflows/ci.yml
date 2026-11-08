@@ -11,7 +11,7 @@ permissions:
 jobs:
   tests:
     name: tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Python 3.9 is not available on the newer runner image
     strategy:
       fail-fast: false
       matrix:
